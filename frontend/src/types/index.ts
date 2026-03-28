@@ -180,3 +180,5 @@ export interface ActionPlanItem {
   icon: string;
   category: string;
 }
+
+export * from './housing';
