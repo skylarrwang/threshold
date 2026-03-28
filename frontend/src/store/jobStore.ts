@@ -3,50 +3,44 @@ import type { JobApplication } from '@/types';
 
 interface JobState {
   jobs: JobApplication[];
-  addJob: (job: JobApplication) => void;
-  updateJob: (id: string, updates: Partial<JobApplication>) => void;
 }
 
 const mockJobs: JobApplication[] = [
   {
     id: 'job-001',
-    company: 'Bay Area Culinary Co.',
+    company: 'Hartford Culinary Group',
     title: 'Line Cook',
     status: 'applied',
     appliedDate: '2024-10-18',
-    location: 'Oakland, CA',
+    location: 'Hartford, CT',
     salary: '$18-22/hr',
     notes: 'Second Chance employer',
-    logoInitial: 'B',
+    logoInitial: 'H',
   },
   {
     id: 'job-002',
-    company: 'Green Roots Landscaping',
+    company: 'New England Groundskeeping',
     title: 'Landscape Technician',
     status: 'interviewing',
     appliedDate: '2024-10-10',
-    location: 'San Jose, CA',
+    location: 'New Haven, CT',
     salary: '$20/hr',
     notes: 'Phone screen Oct 27',
-    logoInitial: 'G',
+    logoInitial: 'N',
   },
   {
     id: 'job-003',
-    company: 'Metro Transit Authority',
+    company: 'CT Transit',
     title: 'Bus Maintenance Tech',
     status: 'offer',
     appliedDate: '2024-09-28',
-    location: 'San Francisco, CA',
+    location: 'Hartford, CT',
     salary: '$26/hr',
     notes: 'Offer received Oct 20 — reviewing benefits',
-    logoInitial: 'M',
+    logoInitial: 'C',
   },
 ];
 
-export const useJobStore = create<JobState>()((set) => ({
+export const useJobStore = create<JobState>()(() => ({
   jobs: mockJobs,
-  addJob: (job) => set((state) => ({ jobs: [...state.jobs, job] })),
-  updateJob: (id, updates) => set((state) => ({
-    jobs: state.jobs.map((j) => (j.id === id ? { ...j, ...updates } : j)),
-  })),
 }));

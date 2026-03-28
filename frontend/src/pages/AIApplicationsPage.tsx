@@ -37,7 +37,7 @@ const MOCK_AGENTS: AgentData[] = [
     description: 'Monitoring Section 8 waitlists and vacancies',
     status: 'running',
     progressPercent: 45,
-    currentTask: 'Checking Oakland Housing Authority updates',
+    currentTask: 'Checking CT Housing Finance Authority updates',
     applications: 8,
     icon: 'home_work',
   },

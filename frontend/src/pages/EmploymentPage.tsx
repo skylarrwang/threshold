@@ -45,7 +45,7 @@ const workshops = [
     description: 'Build a compelling resume and digital presence from scratch.',
     date: 'Nov 4',
     time: '10:00 – 11:30 AM',
-    location: 'Oakland Workforce Center',
+    location: 'Hartford Workforce Center',
     featured: false,
   },
 ];

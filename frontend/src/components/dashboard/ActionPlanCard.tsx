@@ -1,32 +1,16 @@
 import type { ActionPlanItem } from '@/types';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/shared/Badge';
 
 interface ActionPlanCardProps {
   item: ActionPlanItem;
 }
 
-function getStatusBadge(status: ActionPlanItem['status']) {
-  switch (status) {
-    case 'in_progress':
-      return (
-        <span className="px-3 py-1 bg-secondary-fixed text-on-secondary-fixed text-[10px] font-bold rounded-full uppercase tracking-wider">
-          In Progress
-        </span>
-      );
-    case 'pending':
-      return (
-        <span className="px-3 py-1 bg-surface-container-high text-on-surface-variant text-[10px] font-bold rounded-full uppercase tracking-wider">
-          Pending
-        </span>
-      );
-    case 'done':
-      return (
-        <span className="px-3 py-1 bg-primary text-on-primary text-[10px] font-bold rounded-full uppercase tracking-wider">
-          Done
-        </span>
-      );
-  }
-}
+const ACTION_BADGE: Record<ActionPlanItem['status'], { variant: 'pending' | 'default' | 'done'; label: string }> = {
+  in_progress: { variant: 'pending', label: 'In Progress' },
+  pending: { variant: 'default', label: 'Pending' },
+  done: { variant: 'done', label: 'Done' },
+};
 
 export function ActionPlanCard({ item }: ActionPlanCardProps) {
   const isDone = item.status === 'done';
@@ -58,7 +42,9 @@ export function ActionPlanCard({ item }: ActionPlanCardProps) {
             >
               {item.title}
             </h4>
-            {getStatusBadge(item.status)}
+            <Badge variant={ACTION_BADGE[item.status].variant}>
+              {ACTION_BADGE[item.status].label}
+            </Badge>
           </div>
           <p className="text-sm text-on-surface-variant leading-relaxed">{item.description}</p>
         </div>

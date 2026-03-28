@@ -3,7 +3,7 @@ import { useChatStore } from '@/store/chatStore';
 import { Avatar } from '@/components/shared/Avatar';
 import { cn } from '@/lib/utils';
 
-const USER_ID = 'marcus-001';
+const USER_ID = 'tyler-001';
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });

@@ -10,12 +10,12 @@ export const useDocumentsStore = create<DocumentsState>()(() => ({
   documents: [
     {
       id: 'doc-001',
-      name: 'California State ID',
+      name: 'Connecticut State ID',
       category: 'identity',
       status: 'verified',
       uploadedDate: '2024-10-12',
       expiryDate: '2028-10-12',
-      notes: 'Issued at Oakland DMV',
+      notes: 'Issued at Hartford DMV',
     },
     {
       id: 'doc-002',

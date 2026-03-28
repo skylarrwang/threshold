@@ -4,18 +4,17 @@ import type { UserProfile } from '@/types';
 interface ProfileState {
   profile: UserProfile;
   overallProgress: number;
-  updateProfile: (updates: Partial<UserProfile>) => void;
 }
 
 const mockProfile: UserProfile = {
-  user_id: 'marcus-001',
+  user_id: 'tyler-001',
   created_at: '2024-08-15T10:00:00Z',
   last_updated: '2024-10-20T14:30:00Z',
   personal: {
-    name: 'Marcus Chen',
+    name: 'Tyler Chen',
     age_range: '30-35',
     gender_identity: 'male',
-    home_state: 'California',
+    home_state: 'Connecticut',
     release_date: '2024-08-01',
     time_served: '3 years',
     offense_category: 'non-violent',
@@ -50,8 +49,7 @@ const mockProfile: UserProfile = {
   },
 };
 
-export const useProfileStore = create<ProfileState>()((set) => ({
+export const useProfileStore = create<ProfileState>()(() => ({
   profile: mockProfile,
   overallProgress: 64,
-  updateProfile: (updates) => set((state) => ({ profile: { ...state.profile, ...updates } })),
 }));

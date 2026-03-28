@@ -103,7 +103,7 @@ export function DashboardPage() {
       {/* Counselor Sticky Note */}
       <div className="mb-10">
         <StickyNote author={`${profile.support.case_worker_name ?? 'Sarah'} (Counselor)`}>
-          "Marcus, great job securing your primary ID documents last week. Let's focus our energy
+          "Tyler, great job securing your primary ID documents last week. Let's focus our energy
           on the 'Ready-to-Work' certification today. You're closer than you think."
         </StickyNote>
       </div>

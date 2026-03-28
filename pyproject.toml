@@ -8,6 +8,7 @@ dependencies = [
     "deepagents>=0.4.12",
     "httpx>=0.28.1",
     "langchain-anthropic>=1.4.0",
+    "langchain-openai>=0.3.0",
     "langgraph-checkpoint-sqlite>=3.0.3",
     "pydantic>=2.12.5",
     "python-dotenv>=1.2.2",

@@ -102,7 +102,7 @@ export function ResourcesPage() {
 
           {/* Sticky Note */}
           <StickyNote author={counselorName}>
-            "Keep up the momentum, Marcus! Your consistency is what will make the difference. See you Thursday."
+            "Keep up the momentum, Tyler! Your consistency is what will make the difference. See you Thursday."
           </StickyNote>
 
           {/* Next Milestone */}

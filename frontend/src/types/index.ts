@@ -134,28 +134,7 @@ export interface Conversation {
   avatar?: string;
 }
 
-export interface SupervisionCondition {
-  id: string;
-  description: string;
-  type: 'check_in' | 'employment' | 'residence' | 'travel' | 'substance' | 'other';
-  dueDate?: string;
-  completed: boolean;
-}
-
 export type AgentStatus = 'running' | 'waiting' | 'completed' | 'failed';
-
-export interface AIAgent {
-  id: string;
-  name: string;
-  description: string;
-  status: AgentStatus;
-  progressPercent: number;
-  currentTask?: string;
-  startedAt: string;
-  completedAt?: string;
-  successRate?: number;
-  applications?: number;
-}
 
 export interface Milestone {
   id: string;

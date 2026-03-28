@@ -19,9 +19,9 @@ export const useHousingStore = create<HousingState>()(() => ({
     progressPercent: 68,
   },
   shelter: {
-    name: 'Sunrise Transitional Housing',
-    address: '1402 Broadway Ave, Oakland, CA 94612',
-    phone: '(510) 555-0187',
+    name: 'Capitol Region Transitional House',
+    address: '85 Wethersfield Ave, Hartford, CT 06114',
+    phone: '(860) 555-0187',
     checkInDate: '2024-08-05',
     notes: 'Single room, curfew 10pm. Case manager: David Rodriguez',
   },

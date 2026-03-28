@@ -1,35 +1,13 @@
 import { useBenefitsStore } from '@/store/benefitsStore';
+import { Badge } from '@/components/shared/Badge';
 import type { BenefitApplication, BenefitStatus } from '@/types';
 
-function getBadgeClasses(status: BenefitStatus): string {
-  switch (status) {
-    case 'active':
-      return 'bg-primary text-on-primary';
-    case 'pending':
-      return 'bg-secondary-fixed text-on-secondary-fixed';
-    case 'action_needed':
-      return 'bg-tertiary-fixed text-on-tertiary-fixed';
-    case 'expired':
-      return 'bg-error-container text-on-error-container';
-    default:
-      return 'bg-surface-container-high text-on-surface-variant';
-  }
-}
-
-function getBadgeLabel(status: BenefitStatus): string {
-  switch (status) {
-    case 'active':
-      return 'Active';
-    case 'pending':
-      return 'Pending';
-    case 'action_needed':
-      return 'Action Needed';
-    case 'expired':
-      return 'Expired';
-    default:
-      return status;
-  }
-}
+const BENEFIT_BADGE: Record<BenefitStatus, { variant: 'active' | 'pending' | 'action' | 'error'; label: string }> = {
+  active: { variant: 'active', label: 'Active' },
+  pending: { variant: 'pending', label: 'Pending' },
+  action_needed: { variant: 'action', label: 'Action Needed' },
+  expired: { variant: 'error', label: 'Expired' },
+};
 
 function getIconBgClasses(status: BenefitStatus): string {
   switch (status) {
@@ -59,11 +37,9 @@ function BenefitCard({ benefit }: { benefit: BenefitApplication }) {
             {benefit.icon}
           </span>
         </div>
-        <span
-          className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getBadgeClasses(benefit.status)}`}
-        >
-          {getBadgeLabel(benefit.status)}
-        </span>
+        <Badge variant={BENEFIT_BADGE[benefit.status].variant}>
+          {BENEFIT_BADGE[benefit.status].label}
+        </Badge>
       </div>
 
       {/* Title & description */}

@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useChatStore } from '@/store/chatStore';
 import { cn } from '@/lib/utils';
 
-const USER_ID = 'marcus-001';
-const USER_NAME = 'Marcus Chen';
+const USER_ID = 'tyler-001';
+const USER_NAME = 'Tyler Chen';
 
 const AI_RESPONSES = [
   "Thanks for your message! I'm looking into that for you now. Give me just a moment to find the most relevant information.",

@@ -1,3 +1,7 @@
+import os
+
+from langchain_openai import ChatOpenAI
+
 from ...tools import (
     get_fair_chance_housing_laws,
     get_fair_market_rents,
@@ -6,6 +10,9 @@ from ...tools import (
     read_user_memory,
     search_housing,
 )
+
+XAI_API_KEY = os.getenv("XAI_API_KEY", "")
+HOUSING_MODEL = os.getenv("THRESHOLD_HOUSING_MODEL", "grok-4-1-fast")
 
 HOUSING_SYSTEM_PROMPT = """\
 You are a housing specialist for people in re-entry after incarceration.
@@ -63,5 +70,9 @@ housing_subagent = {
         get_fair_market_rents,
         get_fair_chance_housing_laws,
     ],
-    "model": "claude-haiku-4-5-20251001",
+    "model": ChatOpenAI(
+        model=HOUSING_MODEL,
+        base_url="https://api.x.ai/v1",
+        api_key=XAI_API_KEY or "not-set",
+    ),
 }
