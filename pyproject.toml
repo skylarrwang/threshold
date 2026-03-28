@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     "cryptography>=46.0.6",
     "deepagents>=0.4.12",
+    "google-genai>=1.69.0",
     "httpx>=0.28.1",
     "langchain-anthropic>=1.4.0",
     "langchain-openai>=0.3.0",
@@ -13,6 +14,7 @@ dependencies = [
     "pydantic>=2.12.5",
     "python-dotenv>=1.2.2",
     "rich>=14.3.3",
+    "sqlalchemy>=2.0",
     "typer>=0.24.1",
     "playwright>=1.50.0",
 ]
