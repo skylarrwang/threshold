@@ -1,0 +1,8 @@
+{
+  "graphs": {
+    "orchestrator": "./threshold/agents/orchestrator.py:graph",
+    "interview": "./threshold/agents/interview.py:graph"
+  },
+  "dependencies": ["."],
+  "env": ".env"
+}

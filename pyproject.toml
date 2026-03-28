@@ -1,0 +1,16 @@
+[project]
+name = "threshold"
+version = "0.1.0"
+description = "Local-first, trauma-informed AI assistant for people navigating re-entry after incarceration"
+requires-python = ">=3.12"
+dependencies = [
+    "cryptography>=46.0.6",
+    "deepagents>=0.4.12",
+    "httpx>=0.28.1",
+    "langchain-anthropic>=1.4.0",
+    "langgraph-checkpoint-sqlite>=3.0.3",
+    "pydantic>=2.12.5",
+    "python-dotenv>=1.2.2",
+    "rich>=14.3.3",
+    "typer>=0.24.1",
+]
