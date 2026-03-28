@@ -199,18 +199,18 @@ export function ChatPage() {
                       {activeConversation.participantName}
                     </h2>
                     {activeConversation.isOnline ? (
-                      <p className="text-[11px] text-primary font-bold flex items-center gap-1.5">
+                      <span className="text-[11px] text-primary font-bold flex items-center gap-1.5">
                         <span className="relative flex h-2 w-2">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
                           <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
                         </span>
                         Active now
-                      </p>
+                      </span>
                     ) : (
-                      <p className="text-[11px] text-outline font-medium flex items-center gap-1.5">
+                      <span className="text-[11px] text-outline font-medium flex items-center gap-1.5">
                         <StatusDot online={false} pulse={false} />
                         Offline
-                      </p>
+                      </span>
                     )}
                   </div>
                 </>
