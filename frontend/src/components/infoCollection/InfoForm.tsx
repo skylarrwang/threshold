@@ -5,8 +5,9 @@ import type {
   InfoCollectionPayload,
 } from '@/types/infoCollection';
 import { postCollectInfo } from '@/lib/api/infoCollection';
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { validateInfoForm } from './validation';
+import { ValidationMessage } from './ValidationMessage';
+import { SubmitButton } from './SubmitButton';
 
 const initialPayload: InfoCollectionPayload = {
   name: '',
@@ -24,26 +25,10 @@ export function InfoForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitState, setSubmitState] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  const validate = (nextPayload: InfoCollectionPayload): { name?: string; email?: string } => {
-    const nextErrors: { name?: string; email?: string } = {};
-
-    if (!nextPayload.name.trim()) {
-      nextErrors.name = 'Name is required.';
-    }
-
-    if (!nextPayload.email.trim()) {
-      nextErrors.email = 'Email is required.';
-    } else if (!EMAIL_RE.test(nextPayload.email)) {
-      nextErrors.email = 'Enter a valid email address.';
-    }
-
-    return nextErrors;
-  };
-
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const nextErrors = validate(payload);
+    const nextErrors = validateInfoForm(payload);
     setErrors(nextErrors);
     setSubmitState(null);
 
@@ -107,7 +92,7 @@ export function InfoForm() {
           className="w-full rounded-lg border border-outline-variant/40 bg-surface px-3 py-2 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
           placeholder="Jane Doe"
         />
-        {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+        <ValidationMessage message={errors.name} />
       </div>
 
       <div>
@@ -122,7 +107,7 @@ export function InfoForm() {
           className="w-full rounded-lg border border-outline-variant/40 bg-surface px-3 py-2 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
           placeholder="jane@example.com"
         />
-        {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+        <ValidationMessage message={errors.email} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -178,13 +163,7 @@ export function InfoForm() {
       </label>
 
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full sm:w-auto px-8 py-3 bg-primary text-on-primary font-headline font-bold rounded-xl shadow-[0_8px_32px_rgba(26,28,28,0.06)] hover:bg-primary-container hover:text-on-primary-container disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-150"
-        >
-          {isSubmitting ? 'Submitting...' : 'Submit Info'}
-        </button>
+        <SubmitButton isSubmitting={isSubmitting} />
         {submitState && (
           <p className={`text-sm ${submitState.type === 'success' ? 'text-green-700' : 'text-red-600'}`}>
             {submitState.message}
