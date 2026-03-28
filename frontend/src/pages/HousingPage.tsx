@@ -1,9 +1,70 @@
+import { useEffect } from 'react';
 import { useHousingStore } from '@/store/housingStore';
+import { useProfileStore } from '@/store/profileStore';
+import { useHousingWorkflowStore } from '@/store/housingWorkflowStore';
+import { postInitHousingWorkflow } from '@/lib/api/housing';
+import type { HousingQuestionnaireInput } from '@/types/housing';
+import { HousingQuestionnaire } from '@/components/housing/HousingQuestionnaire';
+import { SubagentProgress } from '@/components/housing/SubagentProgress';
 import { Badge } from '@/components/shared/Badge';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 
 export function HousingPage() {
   const { voucher, shelter, moveInChecklist } = useHousingStore();
+  const profile = useProfileStore((state) => state.profile);
+
+  const {
+    isFirstTime,
+    isSubmitting,
+    error,
+    subagentProgress,
+    results,
+    resultSource,
+    initializeFromProfile,
+    setQuestionnaire,
+    startWorkflow,
+    applyInitResponse,
+    setError,
+  } = useHousingWorkflowStore();
+
+  useEffect(() => {
+    initializeFromProfile(profile.situation.housing_status);
+  }, [initializeFromProfile, profile.situation.housing_status]);
+
+  const handleQuestionnaireSubmit = async (payload: HousingQuestionnaireInput) => {
+    setQuestionnaire(payload);
+    startWorkflow();
+
+    try {
+      const response = await postInitHousingWorkflow(payload);
+      applyInitResponse(response);
+    } catch (submitError) {
+      const message = submitError instanceof Error ? submitError.message : 'Unable to start housing workflow.';
+      setError(message);
+    }
+  };
+
+  if (isFirstTime) {
+    return (
+      <div className="px-8 md:px-12 py-10 space-y-8 max-w-4xl mx-auto">
+        <section className="space-y-2">
+          <span className="text-primary font-bold tracking-widest text-xs uppercase">Housing Onboarding</span>
+          <h2 className="text-4xl font-headline font-extrabold tracking-tight text-on-surface">
+            Start Housing Workflow
+          </h2>
+          <p className="text-on-surface-variant text-base max-w-2xl leading-relaxed">
+            Complete intake once so subagents can qualify your options, search listings, and prep applications.
+          </p>
+        </section>
+
+        <HousingQuestionnaire
+          isSubmitting={isSubmitting}
+          error={error}
+          onSubmit={handleQuestionnaireSubmit}
+        />
+      </div>
+    );
+  }
 
   const completedItems = moveInChecklist.filter((i) => i.done).length;
   const totalItems = moveInChecklist.length;
@@ -11,13 +72,11 @@ export function HousingPage() {
 
   const voucherBadgeVariant = voucher.status === 'active' ? 'active' : voucher.status === 'pending' ? 'pending' : 'error';
 
-  // Extract case manager name from shelter notes
   const caseManagerMatch = shelter.notes.match(/Case manager:\s*(.+)$/i);
   const caseManagerName = caseManagerMatch ? caseManagerMatch[1].trim() : 'David Rodriguez';
 
   return (
     <div className="px-8 md:px-12 py-10 space-y-10 max-w-7xl mx-auto">
-      {/* Page header */}
       <section className="space-y-2">
         <div className="flex items-center gap-3">
           <span className="text-primary font-bold tracking-widest text-xs uppercase">
@@ -38,9 +97,7 @@ export function HousingPage() {
         </p>
       </section>
 
-      {/* Two-column grid: Voucher + Shelter */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Housing Voucher card */}
         <div className="bg-surface-container-lowest rounded-xl p-7 shadow-[0_4px_16px_rgba(26,28,28,0.06)]">
           <div className="flex items-start justify-between mb-6">
             <div>
@@ -54,7 +111,6 @@ export function HousingPage() {
             </Badge>
           </div>
 
-          {/* Progress */}
           <div className="mb-6">
             <div className="flex justify-between text-sm mb-2">
               <span className="font-medium text-on-surface">Application Maturity</span>
@@ -63,7 +119,6 @@ export function HousingPage() {
             <ProgressBar value={voucher.progressPercent} />
           </div>
 
-          {/* Stats grid */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-surface-container-low rounded-xl p-4">
               <span className="material-symbols-outlined text-primary mb-1 block">
@@ -98,7 +153,6 @@ export function HousingPage() {
           </div>
         </div>
 
-        {/* Current Shelter card */}
         <div className="bg-primary text-on-primary rounded-xl p-7 shadow-[0_4px_16px_rgba(26,28,28,0.10)] flex flex-col justify-between">
           <div>
             <h3 className="text-xl font-headline font-bold mb-1">Current Shelter</h3>
@@ -168,14 +222,12 @@ export function HousingPage() {
         </div>
       </div>
 
-      {/* Map placeholder */}
       <div className="bg-surface-container-high rounded-xl h-48 flex flex-col items-center justify-center gap-2 text-on-surface-variant">
         <span className="material-symbols-outlined text-4xl opacity-40">location_on</span>
         <p className="text-sm font-medium opacity-60">Housing Search Area</p>
         <p className="text-xs opacity-40">Map integration coming soon</p>
       </div>
 
-      {/* Move-in Readiness Checklist */}
       <div className="bg-surface-container-lowest rounded-xl p-7 shadow-[0_4px_16px_rgba(26,28,28,0.06)]">
         <div className="flex items-start justify-between mb-6">
           <div>
@@ -221,12 +273,14 @@ export function HousingPage() {
           <div>
             <p className="text-sm font-bold text-on-tertiary-fixed">Counselor Note</p>
             <p className="text-xs text-on-tertiary-fixed-variant leading-relaxed mt-0.5">
-              "Spoke with Oakwood management — they are friendly to reentry applicants. Let&apos;s
-              finish the deposit application by Friday." — Sarah
+              "Spoke with Oakwood management - they are friendly to reentry applicants. Let&apos;s
+              finish the deposit application by Friday." - Sarah
             </p>
           </div>
         </div>
       </div>
+
+      <SubagentProgress progress={subagentProgress} results={results} source={resultSource} />
     </div>
   );
 }
