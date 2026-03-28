@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useDocumentsStore } from '@/store/documentsStore';
 import type { Document, DocumentStatus } from '@/types';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 import { Button } from '@/components/shared/Button';
+import { uploadDocument } from '@/lib/api';
 
 const categoryLabel: Record<Document['category'], string> = {
   identity: 'Identity',
@@ -66,6 +67,26 @@ const RECENT_ACTIVITY = [
 export function DocumentsPage() {
   const { documents, completionPercent } = useDocumentsStore();
   const [dragOver, setDragOver] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadResult, setUploadResult] = useState<Record<string, unknown> | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    setUploadResult(null);
+    setUploadError(null);
+
+    try {
+      const result = await uploadDocument(files[0]);
+      setUploadResult(result);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  }
 
   const verifiedCount = documents.filter((d) => d.status === 'verified').length;
   const totalCount = documents.length;
@@ -156,30 +177,96 @@ export function DocumentsPage() {
           </section>
 
           {/* Upload Area */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,application/pdf"
+            className="hidden"
+            onChange={(e) => handleFiles(e.target.files)}
+          />
           <section
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
-            onDrop={(e) => { e.preventDefault(); setDragOver(false); }}
+            onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
             className={`rounded-xl p-10 flex flex-col items-center justify-center text-center border-2 border-dashed transition-colors duration-200 ${dragOver ? 'border-primary bg-primary-fixed/10' : 'border-outline-variant bg-surface-container-lowest'}`}
           >
             <div className="w-16 h-16 bg-primary-fixed/20 text-primary rounded-full flex items-center justify-center mb-4">
-              <span className="material-symbols-outlined text-3xl">cloud_upload</span>
+              <span className="material-symbols-outlined text-3xl">
+                {uploading ? 'hourglass_top' : 'cloud_upload'}
+              </span>
             </div>
-            <h3 className="font-headline font-bold text-xl mb-2">Drop files here or click to upload</h3>
+            <h3 className="font-headline font-bold text-xl mb-2">
+              {uploading ? 'Extracting information...' : 'Drop files here or click to upload'}
+            </h3>
             <p className="text-on-surface-variant text-sm mb-6 max-w-xs">
-              Accepts PDF, JPG, PNG · Max 10 MB per document
+              {uploading
+                ? 'Scanning your document with AI to extract relevant details.'
+                : 'Accepts PDF, JPG, PNG · Max 10 MB per document'}
             </p>
-            <div className="flex gap-3">
-              <Button variant="primary" size="md">
-                <span className="material-symbols-outlined text-sm">upload_file</span>
-                Select Files
-              </Button>
-              <Button variant="secondary" size="md">
-                <span className="material-symbols-outlined text-sm">photo_camera</span>
-                Scan with Phone
-              </Button>
-            </div>
+            {!uploading && (
+              <div className="flex gap-3">
+                <Button variant="primary" size="md" onClick={() => fileInputRef.current?.click()}>
+                  <span className="material-symbols-outlined text-sm">upload_file</span>
+                  Select Files
+                </Button>
+                <Button variant="secondary" size="md">
+                  <span className="material-symbols-outlined text-sm">photo_camera</span>
+                  Scan with Phone
+                </Button>
+              </div>
+            )}
           </section>
+
+          {/* Upload Result */}
+          {uploadResult && (
+            <section className="rounded-xl bg-surface-container-lowest p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary-fixed/30 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-xl text-primary">fact_check</span>
+                </div>
+                <div>
+                  <h3 className="font-headline font-bold text-on-surface">Extraction Complete</h3>
+                  <p className="text-xs text-on-surface-variant">
+                    Detected: {String(uploadResult.document_type || 'Document')} · {String(uploadResult.fields_written || 0)} fields extracted
+                  </p>
+                </div>
+              </div>
+
+              {uploadResult.mapped_fields && typeof uploadResult.mapped_fields === 'object' && (
+                <div className="space-y-3">
+                  {Object.entries(uploadResult.mapped_fields as Record<string, Record<string, unknown>>).map(([section, fields]) => (
+                    <div key={section}>
+                      <h4 className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">
+                        {section}
+                      </h4>
+                      <div className="bg-surface-container-low rounded-lg p-3 space-y-1">
+                        {Object.entries(fields).map(([key, value]) => (
+                          <div key={key} className="flex justify-between text-xs">
+                            <span className="text-on-surface-variant">{key.replace(/_/g, ' ')}</span>
+                            <span className="text-on-surface font-medium">{String(value)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {(uploadResult.sections_updated as string[])?.length > 0 && (
+                <p className="text-xs text-primary font-bold">
+                  Updated: {(uploadResult.sections_updated as string[]).join(', ')}
+                </p>
+              )}
+            </section>
+          )}
+
+          {/* Upload Error */}
+          {uploadError && (
+            <section className="rounded-xl bg-error-container p-4 flex items-center gap-3">
+              <span className="material-symbols-outlined text-on-error-container">error</span>
+              <p className="text-sm text-on-error-container">{uploadError}</p>
+            </section>
+          )}
         </div>
 
         {/* Side panel */}

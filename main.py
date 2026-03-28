@@ -253,6 +253,31 @@ def _run_reflect():
     ))
 
 
+@app.command()
+def serve(
+    port: int = typer.Option(8000, help="Port to run the API server on"),
+    reload: bool = typer.Option(False, help="Enable auto-reload for development"),
+):
+    """Start the Threshold API server (FastAPI + WebSocket)."""
+    _ensure_data_dirs()
+    import uvicorn
+    console.print(Panel(
+        f"[bold]Starting Threshold API server[/bold]\n\n"
+        f"  REST:      http://localhost:{port}/api\n"
+        f"  WebSocket: ws://localhost:{port}/ws\n"
+        f"  Docs:      http://localhost:{port}/docs\n\n"
+        "The frontend (Vite dev server) proxies to this automatically.",
+        title="Threshold Server",
+        border_style="blue",
+    ))
+    uvicorn.run(
+        "threshold.server:app",
+        host="127.0.0.1",
+        port=port,
+        reload=reload,
+    )
+
+
 def _ensure_encryption_key():
     if not os.getenv("THRESHOLD_ENCRYPTION_KEY"):
         console.print(

@@ -28,7 +28,7 @@ from threshold.db.database import get_db
 
 logger = logging.getLogger(__name__)
 
-GEMINI_MODEL = "gemini-2.0-flash"
+GEMINI_MODEL = "gemini-2.5-flash"
 
 _MIME_MAP = {
     ".jpg": "image/jpeg",
