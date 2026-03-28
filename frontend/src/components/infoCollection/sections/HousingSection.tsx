@@ -70,6 +70,8 @@ export function HousingSection({ payload, setPayload, errors }: HousingSectionPr
           value={payload.housing.sex_offender_registry_tier}
           onChange={(value) => setHousing('sex_offender_registry_tier', value)}
           error={errors['housing.sex_offender_registry_tier']}
+          required={payload.housing.sex_offender_registry}
+          disabled={!payload.housing.sex_offender_registry}
         />
         <ToggleField
           id="eviction-history"

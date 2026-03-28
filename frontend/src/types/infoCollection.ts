@@ -154,4 +154,6 @@ export interface InfoCollectionResponse {
   success: boolean;
   message?: string;
   id?: string;
+  saved_profile_id?: string;
+  saved_at?: string;
 }

@@ -150,6 +150,8 @@ export function HealthSection({ payload, setPayload, errors }: HealthSectionProp
           value={payload.health.disability_type}
           onChange={(value) => setHealth('disability_type', value)}
           error={errors['health.disability_type']}
+          required={payload.health.disability_status}
+          disabled={!payload.health.disability_status}
         />
         <ToggleField
           id="sud-diagnosis"

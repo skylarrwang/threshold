@@ -24,6 +24,8 @@ const reportingOptions = [
 ];
 
 export function SupervisionSection({ payload, setPayload, errors }: SupervisionSectionProps) {
+  const hasActiveSupervision = payload.supervision.supervision_type !== 'none';
+
   const setSupervision = (key: keyof InfoCollectionPayload['supervision'], value: string | boolean) => {
     setPayload((current) => ({
       ...current,
@@ -53,6 +55,8 @@ export function SupervisionSection({ payload, setPayload, errors }: SupervisionS
           value={payload.supervision.supervision_end_date}
           onChange={(value) => setSupervision('supervision_end_date', value)}
           error={errors['supervision.supervision_end_date']}
+          required={hasActiveSupervision}
+          disabled={!hasActiveSupervision}
         />
         <TextField
           id="po-name"
@@ -60,6 +64,8 @@ export function SupervisionSection({ payload, setPayload, errors }: SupervisionS
           value={payload.supervision.po_name}
           onChange={(value) => setSupervision('po_name', value)}
           error={errors['supervision.po_name']}
+          required={hasActiveSupervision}
+          disabled={!hasActiveSupervision}
         />
         <TextField
           id="po-phone"
@@ -67,6 +73,8 @@ export function SupervisionSection({ payload, setPayload, errors }: SupervisionS
           value={payload.supervision.po_phone}
           onChange={(value) => setSupervision('po_phone', value)}
           error={errors['supervision.po_phone']}
+          required={hasActiveSupervision}
+          disabled={!hasActiveSupervision}
         />
         <TextField
           id="next-reporting-date"
@@ -75,6 +83,8 @@ export function SupervisionSection({ payload, setPayload, errors }: SupervisionS
           value={payload.supervision.next_reporting_date}
           onChange={(value) => setSupervision('next_reporting_date', value)}
           error={errors['supervision.next_reporting_date']}
+          required={hasActiveSupervision}
+          disabled={!hasActiveSupervision}
         />
         <SelectField
           id="reporting-frequency"
@@ -83,6 +93,8 @@ export function SupervisionSection({ payload, setPayload, errors }: SupervisionS
           onChange={(value) => setSupervision('reporting_frequency', value)}
           options={reportingOptions}
           error={errors['supervision.reporting_frequency']}
+          required={hasActiveSupervision}
+          disabled={!hasActiveSupervision}
         />
         <TextField
           id="curfew-start"
@@ -115,6 +127,8 @@ export function SupervisionSection({ payload, setPayload, errors }: SupervisionS
           value={payload.supervision.drug_testing_frequency}
           onChange={(value) => setSupervision('drug_testing_frequency', value)}
           error={errors['supervision.drug_testing_frequency']}
+          required={payload.supervision.drug_testing_required}
+          disabled={!payload.supervision.drug_testing_required}
         />
         <ToggleField
           id="electronic-monitoring"
@@ -134,6 +148,8 @@ export function SupervisionSection({ payload, setPayload, errors }: SupervisionS
           value={payload.supervision.geographic_restrictions_detail}
           onChange={(value) => setSupervision('geographic_restrictions_detail', value)}
           error={errors['supervision.geographic_restrictions_detail']}
+          required={payload.supervision.geographic_restrictions}
+          disabled={!payload.supervision.geographic_restrictions}
         />
         <ToggleField
           id="no-contact-orders"
@@ -147,6 +163,8 @@ export function SupervisionSection({ payload, setPayload, errors }: SupervisionS
           value={payload.supervision.no_contact_orders_detail}
           onChange={(value) => setSupervision('no_contact_orders_detail', value)}
           error={errors['supervision.no_contact_orders_detail']}
+          required={payload.supervision.no_contact_orders}
+          disabled={!payload.supervision.no_contact_orders}
         />
         <ToggleField
           id="mandatory-treatment"
@@ -160,6 +178,8 @@ export function SupervisionSection({ payload, setPayload, errors }: SupervisionS
           value={payload.supervision.mandatory_treatment_detail}
           onChange={(value) => setSupervision('mandatory_treatment_detail', value)}
           error={errors['supervision.mandatory_treatment_detail']}
+          required={payload.supervision.mandatory_treatment}
+          disabled={!payload.supervision.mandatory_treatment}
         />
       </div>
 
@@ -177,6 +197,8 @@ export function SupervisionSection({ payload, setPayload, errors }: SupervisionS
           onChange={(value) => setSupervision('restitution_amount', value)}
           error={errors['supervision.restitution_amount']}
           placeholder="1200.00"
+          required={payload.supervision.restitution_owed}
+          disabled={!payload.supervision.restitution_owed}
         />
         <ToggleField
           id="outstanding-fines"
@@ -191,6 +213,8 @@ export function SupervisionSection({ payload, setPayload, errors }: SupervisionS
           onChange={(value) => setSupervision('outstanding_fines_amount', value)}
           error={errors['supervision.outstanding_fines_amount']}
           placeholder="300.00"
+          required={payload.supervision.outstanding_fines}
+          disabled={!payload.supervision.outstanding_fines}
         />
       </div>
     </SectionAccordion>

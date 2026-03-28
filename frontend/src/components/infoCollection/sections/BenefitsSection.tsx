@@ -50,6 +50,8 @@ export function BenefitsSection({ payload, setPayload, errors }: BenefitsSection
           onChange={(value) => setBenefits('child_support_amount_monthly', value)}
           error={errors['benefits.child_support_amount_monthly']}
           placeholder="400.00"
+          required={payload.benefits.child_support_obligations}
+          disabled={!payload.benefits.child_support_obligations}
         />
         <ToggleField
           id="veteran-status"

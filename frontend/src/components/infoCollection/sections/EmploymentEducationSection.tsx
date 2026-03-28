@@ -87,6 +87,8 @@ export function EmploymentEducationSection({ payload, setPayload, errors }: Empl
           value={payload.employment_education.physical_limitations_detail}
           onChange={(value) => setEmployment('physical_limitations_detail', value)}
           error={errors['employment_education.physical_limitations_detail']}
+          required={payload.employment_education.physical_limitations}
+          disabled={!payload.employment_education.physical_limitations}
         />
         <TextField
           id="certifications"

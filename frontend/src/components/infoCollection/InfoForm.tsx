@@ -101,12 +101,44 @@ const initialPayload: InfoCollectionPayload = {
   },
 };
 
+const formSections = [
+  { key: 'identity', label: 'Identity' },
+  { key: 'documents', label: 'Documents' },
+  { key: 'supervision', label: 'Supervision' },
+  { key: 'housing', label: 'Housing' },
+  { key: 'employment_education', label: 'Employment' },
+  { key: 'health', label: 'Health' },
+  { key: 'benefits', label: 'Benefits' },
+  { key: 'preferences_meta', label: 'Preferences' },
+] as const;
+
+type FormSectionKey = (typeof formSections)[number]['key'];
+
+function hasSectionErrors(errors: Record<string, string>, section: FormSectionKey): boolean {
+  return Object.keys(errors).some((key) => key === section || key.startsWith(`${section}.`));
+}
+
 export function InfoForm() {
   const { profile, updateProfile } = useProfileStore();
   const [payload, setPayload] = useState<InfoCollectionPayload>(initialPayload);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitState, setSubmitState] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const currentSection = formSections[currentStep];
+  const isFinalStep = currentStep === formSections.length - 1;
+
+  const handleNextStep = () => {
+    const nextErrors = validateInfoForm(payload);
+    setErrors(nextErrors);
+    setSubmitState(null);
+
+    if (hasSectionErrors(nextErrors, currentSection.key)) {
+      return;
+    }
+
+    setCurrentStep((step) => Math.min(step + 1, formSections.length - 1));
+  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -122,8 +154,13 @@ export function InfoForm() {
     try {
       setIsSubmitting(true);
       const response = await postCollectInfo(payload);
+      const savedAt = response.saved_at ?? new Date().toISOString();
+      const savedProfileId = response.saved_profile_id ?? response.id ?? profile.user_id;
 
-      const offenseMap: Record<InfoCollectionPayload['employment_education']['felony_category'], 'non-violent' | 'violent' | 'drug' | 'financial' | 'other'> = {
+      const offenseMap: Record<
+        InfoCollectionPayload['employment_education']['felony_category'],
+        'non-violent' | 'violent' | 'drug' | 'financial' | 'other'
+      > = {
         non_violent: 'non-violent',
         violent: 'violent',
         drug: 'drug',
@@ -132,7 +169,10 @@ export function InfoForm() {
         other: 'other',
       };
 
-      const housingMap: Record<InfoCollectionPayload['housing']['housing_status'], 'housed' | 'shelter' | 'couch_surfing' | 'unhoused' | 'unknown'> = {
+      const housingMap: Record<
+        InfoCollectionPayload['housing']['housing_status'],
+        'housed' | 'shelter' | 'couch_surfing' | 'unhoused' | 'unknown'
+      > = {
         stable: 'housed',
         transitional: 'housed',
         shelter: 'shelter',
@@ -140,9 +180,24 @@ export function InfoForm() {
         unhoused: 'unhoused',
       };
 
+      const employmentMap: Record<
+        InfoCollectionPayload['employment_education']['employment_status'],
+        string
+      > = {
+        employed: 'employed',
+        actively_looking: 'job searching',
+        not_looking: 'not looking',
+        unable_to_work: 'unable to work',
+      };
+
+      const poContact = payload.supervision.po_name.trim() ? `PO: ${payload.supervision.po_name.trim()}` : null;
+      const supportContacts = poContact
+        ? Array.from(new Set([...profile.support.support_contacts, poContact]))
+        : profile.support.support_contacts;
+
       updateProfile({
-        user_id: response.id ?? profile.user_id,
-        last_updated: new Date().toISOString(),
+        user_id: savedProfileId,
+        last_updated: savedAt,
         personal: {
           ...profile.personal,
           name: payload.identity.legal_name,
@@ -154,10 +209,16 @@ export function InfoForm() {
         situation: {
           ...profile.situation,
           housing_status: housingMap[payload.housing.housing_status],
-          employment_status: payload.employment_education.employment_status,
+          employment_status: employmentMap[payload.employment_education.employment_status],
           benefits_enrolled: payload.benefits.benefits_enrolled,
           supervision_type: payload.supervision.supervision_type,
           supervision_end_date: payload.supervision.supervision_end_date || undefined,
+        },
+        support: {
+          ...profile.support,
+          has_case_worker: Boolean(payload.supervision.po_name.trim()) || profile.support.has_case_worker,
+          case_worker_name: payload.supervision.po_name.trim() || profile.support.case_worker_name,
+          support_contacts: supportContacts,
         },
         preferences: {
           ...profile.preferences,
@@ -166,6 +227,7 @@ export function InfoForm() {
           wants_reminders: payload.preferences_meta.wants_reminders,
           privacy_level: payload.preferences_meta.privacy_level,
         },
+        intake_profile: payload,
       });
 
       setSubmitState({
@@ -173,6 +235,7 @@ export function InfoForm() {
         message: response.message ?? 'Your profile was saved successfully.',
       });
       setPayload(initialPayload);
+      setCurrentStep(0);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to submit your information.';
       setSubmitState({ type: 'error', message });
@@ -191,29 +254,66 @@ export function InfoForm() {
       </div>
 
       <div className="flex flex-wrap gap-2 text-xs text-on-surface-variant">
-        <span className="px-2 py-1 rounded-full bg-surface-container-low">1 Identity</span>
-        <span className="px-2 py-1 rounded-full bg-surface-container-low">2 Documents</span>
-        <span className="px-2 py-1 rounded-full bg-surface-container-low">3 Supervision</span>
-        <span className="px-2 py-1 rounded-full bg-surface-container-low">4 Housing</span>
-        <span className="px-2 py-1 rounded-full bg-surface-container-low">5 Employment</span>
-        <span className="px-2 py-1 rounded-full bg-surface-container-low">6 Health</span>
-        <span className="px-2 py-1 rounded-full bg-surface-container-low">7 Benefits</span>
-        <span className="px-2 py-1 rounded-full bg-surface-container-low">8 Preferences</span>
+        {formSections.map((section, index) => {
+          const active = index === currentStep;
+          const hasErrors = hasSectionErrors(errors, section.key);
+
+          return (
+            <button
+              key={section.key}
+              type="button"
+              onClick={() => setCurrentStep(index)}
+              className={`px-2 py-1 rounded-full border text-xs ${
+                active ? 'bg-primary text-on-primary border-primary' : 'bg-surface-container-low border-outline-variant/40'
+              } ${hasErrors ? 'ring-1 ring-red-400' : ''}`}
+            >
+              {index + 1} {section.label}
+            </button>
+          );
+        })}
       </div>
 
-      <IdentitySection payload={payload} setPayload={setPayload} errors={errors} />
-      <DocumentsSection payload={payload} setPayload={setPayload} errors={errors} />
-      <SupervisionSection payload={payload} setPayload={setPayload} errors={errors} />
-      <HousingSection payload={payload} setPayload={setPayload} errors={errors} />
-      <EmploymentEducationSection payload={payload} setPayload={setPayload} errors={errors} />
-      <HealthSection payload={payload} setPayload={setPayload} errors={errors} />
-      <BenefitsSection payload={payload} setPayload={setPayload} errors={errors} />
-      <PreferencesMetaSection payload={payload} setPayload={setPayload} errors={errors} />
+      <p className="text-sm text-on-surface-variant">
+        Step {currentStep + 1} of {formSections.length}: {currentSection.label}
+      </p>
+
+      {currentSection.key === 'identity' && <IdentitySection payload={payload} setPayload={setPayload} errors={errors} />}
+      {currentSection.key === 'documents' && <DocumentsSection payload={payload} setPayload={setPayload} errors={errors} />}
+      {currentSection.key === 'supervision' && <SupervisionSection payload={payload} setPayload={setPayload} errors={errors} />}
+      {currentSection.key === 'housing' && <HousingSection payload={payload} setPayload={setPayload} errors={errors} />}
+      {currentSection.key === 'employment_education' && (
+        <EmploymentEducationSection payload={payload} setPayload={setPayload} errors={errors} />
+      )}
+      {currentSection.key === 'health' && <HealthSection payload={payload} setPayload={setPayload} errors={errors} />}
+      {currentSection.key === 'benefits' && <BenefitsSection payload={payload} setPayload={setPayload} errors={errors} />}
+      {currentSection.key === 'preferences_meta' && (
+        <PreferencesMetaSection payload={payload} setPayload={setPayload} errors={errors} />
+      )}
 
       <ValidationMessage message={errors.form} />
 
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <SubmitButton isSubmitting={isSubmitting} />
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setCurrentStep((step) => Math.max(step - 1, 0))}
+            disabled={currentStep === 0 || isSubmitting}
+            className="px-4 py-2 rounded-lg border border-outline-variant/40 text-on-surface disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            Back
+          </button>
+          {!isFinalStep && (
+            <button
+              type="button"
+              onClick={handleNextStep}
+              disabled={isSubmitting}
+              className="px-4 py-2 rounded-lg bg-primary text-on-primary disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              Next Section
+            </button>
+          )}
+          {isFinalStep && <SubmitButton isSubmitting={isSubmitting} />}
+        </div>
         {submitState && (
           <p className={`text-sm ${submitState.type === 'success' ? 'text-green-700' : 'text-red-600'}`}>
             {submitState.message}

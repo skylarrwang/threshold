@@ -1,3 +1,5 @@
+import type { InfoCollectionPayload } from '@/types/infoCollection';
+
 export interface PersonalContext {
   name: string;
   age_range: string;
@@ -49,6 +51,7 @@ export interface UserProfile {
   goals: GoalsContext;
   support: SupportContext;
   preferences: PreferenceContext;
+  intake_profile?: InfoCollectionPayload;
 }
 
 export type JobStatus = 'applied' | 'interviewing' | 'offer' | 'rejected' | 'saved';

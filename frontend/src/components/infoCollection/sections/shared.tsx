@@ -35,9 +35,10 @@ interface TextFieldProps {
   required?: boolean;
   type?: string;
   placeholder?: string;
+  disabled?: boolean;
 }
 
-export function TextField({ id, label, value, onChange, error, required, type = 'text', placeholder }: TextFieldProps) {
+export function TextField({ id, label, value, onChange, error, required, type = 'text', placeholder, disabled }: TextFieldProps) {
   return (
     <div>
       <label htmlFor={id} className="text-sm font-semibold text-on-surface block mb-1">
@@ -50,6 +51,7 @@ export function TextField({ id, label, value, onChange, error, required, type = 
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
+        disabled={disabled}
         className={inputClassName}
       />
       <ValidationMessage message={error} />
@@ -65,9 +67,10 @@ interface TextAreaFieldProps {
   error?: string;
   required?: boolean;
   placeholder?: string;
+  disabled?: boolean;
 }
 
-export function TextAreaField({ id, label, value, onChange, error, required, placeholder }: TextAreaFieldProps) {
+export function TextAreaField({ id, label, value, onChange, error, required, placeholder, disabled }: TextAreaFieldProps) {
   return (
     <div>
       <label htmlFor={id} className="text-sm font-semibold text-on-surface block mb-1">
@@ -80,6 +83,7 @@ export function TextAreaField({ id, label, value, onChange, error, required, pla
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         rows={3}
+        disabled={disabled}
         className={inputClassName}
       />
       <ValidationMessage message={error} />
@@ -95,16 +99,17 @@ interface SelectFieldProps {
   options: Array<{ value: string; label: string }>;
   error?: string;
   required?: boolean;
+  disabled?: boolean;
 }
 
-export function SelectField({ id, label, value, onChange, options, error, required }: SelectFieldProps) {
+export function SelectField({ id, label, value, onChange, options, error, required, disabled }: SelectFieldProps) {
   return (
     <div>
       <label htmlFor={id} className="text-sm font-semibold text-on-surface block mb-1">
         {label}
         {required ? ' *' : ''}
       </label>
-      <select id={id} value={value} onChange={(event) => onChange(event.target.value)} className={inputClassName}>
+      <select id={id} value={value} onChange={(event) => onChange(event.target.value)} className={inputClassName} disabled={disabled}>
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
