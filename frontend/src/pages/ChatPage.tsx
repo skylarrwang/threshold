@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Conversation } from '@/types';
 import { useChatStore } from '@/store/chatStore';
 import { MessageThread } from '@/components/chat/MessageThread';
@@ -139,9 +139,13 @@ function ConversationListPanel({ conversations, activeId, onSelect }: Conversati
 // ── ChatPage ──────────────────────────────────────────────────────────────────
 
 export function ChatPage() {
-  const { conversations, activeConversationId, setActiveConversation } = useChatStore();
-  // Mobile view state: true = show list, false = show thread
+  const { conversations, activeConversationId, setActiveConversation, initSocket, disconnectSocket } = useChatStore();
   const [mobileShowList, setMobileShowList] = useState(true);
+
+  useEffect(() => {
+    initSocket();
+    return () => disconnectSocket();
+  }, [initSocket, disconnectSocket]);
 
   const activeConversation = conversations.find((c) => c.id === activeConversationId);
 

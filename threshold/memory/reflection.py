@@ -74,10 +74,10 @@ def synthesize_reflections(
 ) -> list[str]:
     """Synthesize observations into reflections. Uses LLM if available, otherwise heuristic."""
     try:
-        from langchain_anthropic import ChatAnthropic
+        from langchain_google_genai import ChatGoogleGenerativeAI
 
-        model = ChatAnthropic(
-            model=os.getenv("THRESHOLD_MODEL", "claude-haiku-4-5-20251001")
+        model = ChatGoogleGenerativeAI(
+            model=os.getenv("THRESHOLD_MODEL", "gemini-2.5-flash")
         )
         obs_text = "\n".join(
             f"- [{o.event_type}] {o.content}" for o in recent_obs

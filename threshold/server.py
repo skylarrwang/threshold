@@ -292,9 +292,18 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
             await ws.send_json({"type": "message_complete"})
             return
 
-        # Get the last assistant message
+        # Get the last assistant message — Gemini returns content as a list
+        # of block objects like [{"type": "text", "text": "..."}] instead of
+        # a plain string, so we need to extract the text.
         last = messages[-1]
-        response_text = last.content if hasattr(last, "content") else str(last)
+        raw = last.content if hasattr(last, "content") else str(last)
+        if isinstance(raw, list):
+            response_text = "".join(
+                block.get("text", "") if isinstance(block, dict) else str(block)
+                for block in raw
+            )
+        else:
+            response_text = str(raw)
 
         # Stream character-by-character for a natural feel
         chunk_size = 4

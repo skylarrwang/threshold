@@ -3,7 +3,7 @@ import { useChatStore } from '@/store/chatStore';
 import { Avatar } from '@/components/shared/Avatar';
 import { cn } from '@/lib/utils';
 
-const USER_ID = 'tyler-001';
+const USER_ID = 'user';
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
@@ -47,15 +47,17 @@ function TypingIndicator() {
 }
 
 export function MessageThread() {
-  const { messages, activeConversationId, isTyping } = useChatStore();
+  const { messages, activeConversationId, isTyping, streamingMessageId } = useChatStore();
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const threadMessages = messages.filter((m) => m.conversationId === activeConversationId);
 
-  // Auto-scroll to bottom when messages or typing state changes
+  const lastMessage = threadMessages[threadMessages.length - 1];
+  const streamingContent = streamingMessageId ? lastMessage?.content : null;
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [threadMessages.length, isTyping]);
+  }, [threadMessages.length, isTyping, streamingContent]);
 
   // Group messages by date for date separators
   const groups: { dateLabel: string; messages: typeof threadMessages }[] = [];
