@@ -56,7 +56,7 @@ def seed():
 
     profile = UserProfile(
         personal={
-            "name": "Marcus",
+            "name": "Marcus Chen",
             "age_range": "30-35",
             "home_state": "CT",
             "release_date": "2026-02-15",
@@ -77,7 +77,7 @@ def seed():
             "long_term_goals": ["Career in construction", "Own apartment", "Reconnect with family"],
             "values": ["independence", "stability", "family"],
             "strengths": ["Carpentry skills", "Reliability", "GED completed", "Forklift certification"],
-            "concerns": ["Background check barriers", "Finding affordable housing"],
+            "concerns": ["Background check barriers", "Finding affordable housing in Hartford"],
         },
         support={
             "has_case_worker": True,
@@ -95,8 +95,8 @@ def seed():
 
     save_profile(profile)
     console.print(Panel(
-        "[bold green]Test profile created for Marcus.[/bold green]\n\n"
-        "30-35 y/o, released 2026-02-15 from CT.\n"
+        "[bold green]Test profile created for Tyler Chen.[/bold green]\n\n"
+        "30-35 y/o, released 2026-02-15 from CT (Hartford area).\n"
         "Currently in a shelter, on parole, looking for work and housing.\n"
         "Strengths: carpentry, forklift cert, GED.\n\n"
         "Run [bold]python main.py chat[/bold] to start talking to Threshold.",

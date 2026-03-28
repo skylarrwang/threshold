@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Counseling Assistant - Reentry Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "inverse-on-surface": "#f1f1f1",
+              "on-primary": "#ffffff",
+              "surface-container": "#eeeeee",
+              "error-container": "#ffdad6",
+              "tertiary-container": "#a96039",
+              "on-tertiary": "#ffffff",
+              "on-surface-variant": "#3e4949",
+              "primary": "#006565",
+              "outline-variant": "#bdc9c8",
+              "primary-fixed": "#93f2f2",
+              "tertiary-fixed-dim": "#ffb692",
+              "on-background": "#1a1c1c",
+              "secondary-fixed": "#e0e0ff",
+              "surface-dim": "#dadada",
+              "surface-variant": "#e2e2e2",
+              "on-primary-container": "#e3fffe",
+              "primary-container": "#008080",
+              "secondary-fixed-dim": "#bfc2ff",
+              "error": "#ba1a1a",
+              "secondary-container": "#8991fe",
+              "surface": "#f9f9f9",
+              "tertiary-fixed": "#ffdbcb",
+              "on-surface": "#1a1c1c",
+              "surface-bright": "#f9f9f9",
+              "inverse-primary": "#76d6d5",
+              "surface-container-highest": "#e2e2e2",
+              "on-secondary-fixed": "#00006e",
+              "on-secondary-container": "#1b218f",
+              "on-primary-fixed-variant": "#004f4f",
+              "on-tertiary-fixed": "#341100",
+              "on-tertiary-container": "#fff9f7",
+              "on-error": "#ffffff",
+              "on-secondary": "#ffffff",
+              "primary-fixed-dim": "#76d6d5",
+              "inverse-surface": "#2f3131",
+              "outline": "#6e7979",
+              "on-primary-fixed": "#002020",
+              "surface-tint": "#006a6a",
+              "surface-container-low": "#f3f3f3",
+              "background": "#f9f9f9",
+              "on-error-container": "#93000a",
+              "tertiary": "#8b4823",
+              "on-tertiary-fixed-variant": "#733512",
+              "secondary": "#4b53bc",
+              "surface-container-high": "#e8e8e8",
+              "surface-container-lowest": "#ffffff",
+              "on-secondary-fixed-variant": "#3239a3"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased">
+<!-- SideNavBar (Shared Component) -->
+<aside class="h-screen w-64 fixed left-0 top-0 overflow-y-auto bg-slate-100 dark:bg-slate-900 flex flex-col py-8 z-50">
+<div class="px-6 mb-10">
+<h1 class="text-xl font-bold text-slate-900 dark:text-white mb-1">Counseling Assistant</h1>
+<p class="text-xs font-medium text-slate-500 tracking-wider">The Guided Path</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="text-teal-700 dark:text-teal-300 font-bold border-r-4 border-teal-600 dark:border-teal-400 bg-white dark:bg-slate-800 transition-all px-6 py-4 flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="fact_check">fact_check</span>
+<span class="font-manrope text-sm tracking-tight">Checklist</span>
+</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-white/50 dark:hover:bg-slate-800/50 px-6 py-4 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="work">work</span>
+<span class="font-manrope text-sm tracking-tight">Employment</span>
+</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-white/50 dark:hover:bg-slate-800/50 px-6 py-4 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-manrope text-sm tracking-tight">Benefits</span>
+</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-white/50 dark:hover:bg-slate-800/50 px-6 py-4 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-manrope text-sm tracking-tight">Housing</span>
+</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-white/50 dark:hover:bg-slate-800/50 px-6 py-4 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-manrope text-sm tracking-tight">Documents</span>
+</a>
+</nav>
+<div class="mt-auto px-6">
+<button class="w-full bg-primary text-on-primary py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary-container transition-all scale-98 active:opacity-80">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+<span>New Case</span>
+</button>
+<div class="mt-8 flex items-center gap-3 py-4 border-t border-slate-200 dark:border-slate-800">
+<div class="w-10 h-10 rounded-full bg-slate-300 overflow-hidden">
+<img alt="Counselor Profile Picture" class="w-full h-full object-cover" data-alt="portrait of a professional male counselor with a friendly smile and warm natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdVWwqOgXJm9RfmRD0Kjd5RxJFxQSzPsGoykT18mIq2_qsyttLd4bGm-N-2GL4X4DpIaVFt2CDUQ1NKkRNzWG0aD56iupjtpor2id4P85QmK1LUQ-tb6RhpuhQ6Vtnouc_sdzUXD8bULy9VX4eTcQm3D9qprSFfFRQ_aCc1pTsZZi7pEO93MqQ3MwGaQVRRfUGj17rlvbqdxJ16emEpj_9PTjYIsaqfwycCMquh5T3SB9yL-QyunRsduqUdG_i9ZG_sLrOFK6PzJ4"/>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-slate-900 dark:text-white">Marcus Vance</span>
+<span class="text-[10px] uppercase text-slate-500 tracking-widest">Lead Counselor</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar (Shared Component) -->
+<header class="flex justify-between items-center h-16 px-12 w-full fixed top-0 left-0 z-40 ml-64 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
+<div class="flex items-center flex-1">
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg" data-icon="search">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-full py-1.5 pl-10 text-sm focus:ring-1 focus:ring-primary" placeholder="Search milestones..." type="text"/>
+</div>
+</div>
+<nav class="flex items-center gap-8">
+<a class="text-teal-600 dark:text-teal-400 border-b-2 border-teal-600 dark:border-teal-400 pb-1 font-manrope text-base" href="#">Overview</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 font-manrope text-base transition-colors duration-150" href="#">Messages</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 font-manrope text-base transition-colors duration-150" href="#">Reports</a>
+</nav>
+<div class="flex items-center gap-4 flex-1 justify-end">
+<button class="material-symbols-outlined text-slate-600 hover:text-primary transition-colors" data-icon="notifications">notifications</button>
+<div class="flex items-center gap-2 cursor-pointer group">
+<span class="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">Profile Settings</span>
+<div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden ring-2 ring-transparent group-hover:ring-primary/20 transition-all">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="Close up portrait of a professional woman with a soft confident expression in a clean studio setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqv1jlswihl4yWMauuCkste6NlMPO1EOLe2HxzRedio1dwC6pQGpI_cfrm0ALja_pNVAkJteOUFzkepc-UjoRasYzYB22ZfuFo7LjFAZOizvLUKUwsvcHJCjYbx5nmttKjnd-C_uWHH4kWk-0BLqj3sXhE0eFxxXPz2WmbyAQ9eZ1g_T_QtWkRommVeQymA_AjdVtun_5-zO0jpRHyN-WobzHY8luxquEc6kuZVku8KVWpJfgU5bns9Q3Hgmx8ECPI8MkIFOWjjlQ"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-64 pt-16 min-h-screen">
+<div class="max-w-6xl mx-auto px-12 py-12">
+<!-- Hero / Greeting Section -->
+<section class="mb-12">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<span class="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">Welcome Back</span>
+<h2 class="text-4xl font-headline font-extrabold text-on-surface tracking-tight mb-2">Hello, Julian Moore</h2>
+<p class="text-on-surface-variant max-w-lg font-body leading-relaxed">
+                            You're making steady progress on your reentry journey. Your counselor has updated your action plan for this week.
+                        </p>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl w-full md:w-80 shadow-sm border border-outline-variant/10">
+<div class="flex justify-between items-center mb-3">
+<span class="text-sm font-bold text-on-surface">Overall Progress</span>
+<span class="text-lg font-headline font-bold text-primary">64%</span>
+</div>
+<div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
+<div class="bg-gradient-to-r from-primary to-primary-container h-full w-[64%]"></div>
+</div>
+<p class="text-[10px] text-on-surface-variant mt-3 text-right">9 of 14 milestones reached</p>
+</div>
+</div>
+</section>
+<!-- Counselor Notes (Sticky Note Component from DS) -->
+<div class="mb-12 bg-tertiary-fixed p-6 rounded-xl border-l-8 border-tertiary shadow-sm relative overflow-hidden">
+<div class="flex gap-4 items-start">
+<span class="material-symbols-outlined text-tertiary" data-icon="edit_note">edit_note</span>
+<div>
+<h3 class="text-on-tertiary-fixed font-bold text-sm mb-1">Notes from Marcus (Lead Counselor)</h3>
+<p class="text-on-tertiary-fixed-variant text-sm italic leading-snug">
+                            "Julian, great job securing your primary ID documents last week. Let's focus our energy on the 'Ready-to-Work' certification today. You're closer than you think."
+                        </p>
+</div>
+</div>
+<div class="absolute -bottom-4 -right-4 opacity-5 pointer-events-none">
+<span class="material-symbols-outlined text-8xl" data-icon="format_quote">format_quote</span>
+</div>
+</div>
+<!-- Bento Grid Checklist Section -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Main To-Do Stream (Span 2) -->
+<div class="md:col-span-2 space-y-6">
+<div class="flex items-center justify-between">
+<h3 class="text-xl font-headline font-bold">Action Plan: Step by Step</h3>
+<button class="text-sm text-primary font-bold flex items-center gap-1">
+<span>View All Tasks</span>
+<span class="material-symbols-outlined text-base" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+<!-- Step Cards -->
+<div class="group relative bg-surface-container-lowest p-6 rounded-xl transition-all duration-300 hover:bg-white border-b-2 border-transparent hover:border-primary">
+<div class="flex items-start gap-6">
+<div class="bg-surface-container-low p-4 rounded-xl text-primary">
+<span class="material-symbols-outlined text-3xl" data-icon="assignment_ind">assignment_ind</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h4 class="text-lg font-bold text-on-surface">Update Professional Resume</h4>
+<span class="px-3 py-1 bg-secondary-fixed text-on-secondary-fixed text-[10px] font-bold rounded-full uppercase tracking-wider">In Progress</span>
+</div>
+<p class="text-sm text-on-surface-variant leading-relaxed mb-4">Integrate your recent vocational training certifications into your standard employment profile.</p>
+<div class="flex items-center gap-4">
+<button class="text-xs font-bold text-primary flex items-center gap-1 uppercase tracking-tighter">
+<span class="material-symbols-outlined text-sm" data-icon="upload_file">upload_file</span>
+                                        Attach File
+                                    </button>
+<button class="text-xs font-bold text-on-surface-variant flex items-center gap-1 uppercase tracking-tighter">
+<span class="material-symbols-outlined text-sm" data-icon="chat">chat</span>
+                                        Add Comment
+                                    </button>
+</div>
+</div>
+</div>
+</div>
+<div class="group relative bg-surface-container-lowest p-6 rounded-xl transition-all duration-300 hover:bg-white border-b-2 border-transparent hover:border-primary">
+<div class="flex items-start gap-6">
+<div class="bg-surface-container-low p-4 rounded-xl text-on-surface-variant">
+<span class="material-symbols-outlined text-3xl" data-icon="medical_services">medical_services</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h4 class="text-lg font-bold text-on-surface">Health Insurance Application</h4>
+<span class="px-3 py-1 bg-surface-container-high text-on-surface-variant text-[10px] font-bold rounded-full uppercase tracking-wider">Pending</span>
+</div>
+<p class="text-sm text-on-surface-variant leading-relaxed mb-4">Complete the enrollment form for state-provided health benefits and schedule your physical.</p>
+<div class="flex items-center gap-4">
+<button class="text-xs font-bold text-primary flex items-center gap-1 uppercase tracking-tighter">
+<span class="material-symbols-outlined text-sm" data-icon="open_in_new">open_in_new</span>
+                                        Open Form
+                                    </button>
+</div>
+</div>
+</div>
+</div>
+<div class="group relative bg-surface-container-low/50 p-6 rounded-xl transition-all duration-300 opacity-70">
+<div class="flex items-start gap-6">
+<div class="bg-primary/10 p-4 rounded-xl text-primary">
+<span class="material-symbols-outlined text-3xl" data-icon="check_circle">check_circle</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h4 class="text-lg font-bold text-on-surface line-through">State ID Pickup</h4>
+<span class="px-3 py-1 bg-primary text-on-primary text-[10px] font-bold rounded-full uppercase tracking-wider">Done</span>
+</div>
+<p class="text-sm text-on-surface-variant leading-relaxed">Official identification card retrieved from the DMV office on Oct 12th.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Sidebar Content (Bento Side) -->
+<div class="space-y-8">
+<!-- Calendar / Upcoming -->
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border border-outline-variant/10">
+<h3 class="text-base font-headline font-bold mb-6">Upcoming Appointments</h3>
+<div class="space-y-6">
+<div class="flex gap-4">
+<div class="flex flex-col items-center justify-center min-w-[50px] h-[50px] bg-primary-container text-on-primary-container rounded-lg">
+<span class="text-xs font-bold uppercase">Oct</span>
+<span class="text-lg font-extrabold leading-none">24</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Career Workshop</p>
+<p class="text-xs text-on-surface-variant">10:00 AM • Community Center</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="flex flex-col items-center justify-center min-w-[50px] h-[50px] bg-surface-container-high text-on-surface-variant rounded-lg">
+<span class="text-xs font-bold uppercase">Oct</span>
+<span class="text-lg font-extrabold leading-none">27</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Counseling Review</p>
+<p class="text-xs text-on-surface-variant">02:30 PM • Virtual Call</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Progress Stepper (DS Component) -->
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border border-outline-variant/10 overflow-hidden relative">
+<h3 class="text-base font-headline font-bold mb-6">Milestone Path</h3>
+<div class="relative pl-6 space-y-10">
+<!-- Stepper Line -->
+<div class="absolute left-[7px] top-1 w-1 h-full bg-primary-fixed rounded-full">
+<div class="h-[60%] w-full bg-primary rounded-full"></div>
+</div>
+<!-- Steps -->
+<div class="relative">
+<div class="absolute -left-[23px] top-1 w-4 h-4 rounded-full bg-primary ring-4 ring-white"></div>
+<p class="text-xs font-bold text-primary uppercase">Completed</p>
+<p class="text-sm font-bold text-on-surface">Identity Docs</p>
+</div>
+<div class="relative">
+<div class="absolute -left-[23px] top-1 w-4 h-4 rounded-full bg-primary ring-4 ring-white"></div>
+<p class="text-xs font-bold text-primary uppercase">Completed</p>
+<p class="text-sm font-bold text-on-surface">Stabilization Housing</p>
+</div>
+<div class="relative">
+<div class="absolute -left-[23px] top-1 w-4 h-4 rounded-full bg-white border-4 border-primary ring-4 ring-white"></div>
+<p class="text-xs font-bold text-on-surface-variant uppercase">Next Phase</p>
+<p class="text-sm font-bold text-on-surface">Employment Search</p>
+</div>
+<div class="relative">
+<div class="absolute -left-[23px] top-1 w-4 h-4 rounded-full bg-surface-container-high ring-4 ring-white"></div>
+<p class="text-xs font-bold text-on-surface-variant opacity-40 uppercase">Pending</p>
+<p class="text-sm font-bold text-on-surface opacity-40">Financial Literacy</p>
+</div>
+</div>
+</div>
+<!-- Decorative/Contextual Image -->
+<div class="rounded-xl overflow-hidden h-40 relative group">
+<img alt="Modern Office" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="clean bright modern shared workspace with soft light through large windows and green plants" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDiwy-SwuUiHkQ6zOZ7VbpJvDAF8EuGbx6GUv3x2nHz_yEfUD7rQ8EnXNyR-ea0HS5F2TSPXQOhAdDYRGjPlahzFV4BAPbnUQ9HpAdsMQ7FfnjF5bS8xi8ROW4vygDGFomINnvJBYby-72Ry745YiSODPJ-U_pRH2R5jgMNOqMV62PTd9OUrMeur96JyW-37ouU0e9CEag5a7HodTTcGPCja1lfT8SQlFK4UtemI9jIv9Fi8g5dmamc9k75ULwYVn_CTWIfrxVcPKU"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent flex flex-col justify-end p-6">
+<span class="text-white font-bold text-sm">Need Help?</span>
+<p class="text-white/80 text-xs">Message your counselor directly for resources.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Contextual FAB (Suppressed on certain pages, shown here for Home/Dashboard context) -->
+<button class="fixed bottom-10 right-10 w-16 h-16 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-lg hover:bg-primary-container hover:scale-110 transition-all z-50">
+<span class="material-symbols-outlined text-3xl" data-icon="support_agent">support_agent</span>
+</button>
+</body></html>

@@ -9,7 +9,12 @@ from .benefits_lookup import (
 from .supervision_tracker import add_condition, get_upcoming_requirements, log_check_in
 from .document_lookup import check_expungement_eligibility, get_id_restoration_guide
 from .job_search import get_ban_the_box_status, log_job_application, search_jobs
-from .housing_search import log_housing_application, search_housing
+from .housing_search import (
+    get_fair_chance_housing_laws,
+    get_fair_market_rents,
+    log_housing_application,
+    search_housing,
+)
 
 __all__ = [
     "crisis_response",
@@ -30,4 +35,6 @@ __all__ = [
     "get_ban_the_box_status",
     "search_housing",
     "log_housing_application",
+    "get_fair_market_rents",
+    "get_fair_chance_housing_laws",
 ]

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Settings &amp; Security | Anchor Reentry</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "tertiary-fixed-dim": "#ffb692",
+              "on-tertiary-fixed": "#341100",
+              "primary": "#006565",
+              "outline": "#6e7979",
+              "on-secondary-container": "#1b218f",
+              "on-background": "#1a1c1c",
+              "error-container": "#ffdad6",
+              "surface-bright": "#f9f9f9",
+              "surface-variant": "#e2e2e2",
+              "surface-dim": "#dadada",
+              "on-secondary-fixed": "#00006e",
+              "error": "#ba1a1a",
+              "surface-container-high": "#e8e8e8",
+              "primary-fixed": "#93f2f2",
+              "on-tertiary-container": "#fff9f7",
+              "secondary": "#4b53bc",
+              "on-secondary-fixed-variant": "#3239a3",
+              "on-tertiary": "#ffffff",
+              "tertiary-fixed": "#ffdbcb",
+              "secondary-container": "#8991fe",
+              "surface": "#f9f9f9",
+              "inverse-primary": "#76d6d5",
+              "on-primary-fixed": "#002020",
+              "on-error-container": "#93000a",
+              "inverse-on-surface": "#f1f1f1",
+              "on-secondary": "#ffffff",
+              "secondary-fixed": "#e0e0ff",
+              "surface-container": "#eeeeee",
+              "tertiary-container": "#a96039",
+              "tertiary": "#8b4823",
+              "surface-container-lowest": "#ffffff",
+              "surface-container-low": "#f3f3f3",
+              "on-tertiary-fixed-variant": "#733512",
+              "background": "#f9f9f9",
+              "on-surface-variant": "#3e4949",
+              "on-primary-fixed-variant": "#004f4f",
+              "primary-fixed-dim": "#76d6d5",
+              "outline-variant": "#bdc9c8",
+              "primary-container": "#008080",
+              "on-primary-container": "#e3fffe",
+              "surface-tint": "#006a6a",
+              "on-primary": "#ffffff",
+              "inverse-surface": "#2f3131",
+              "on-error": "#ffffff",
+              "on-surface": "#1a1c1c",
+              "secondary-fixed-dim": "#bfc2ff",
+              "surface-container-highest": "#e2e2e2"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Manrope', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm dark:shadow-none font-['Manrope'] antialiased">
+<div class="flex justify-between items-center px-6 py-3 w-full">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold text-slate-900 dark:text-slate-50">Anchor Reentry</span>
+<div class="hidden md:flex items-center gap-6">
+<a class="text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors px-3 py-1 rounded-lg" href="#">Dashboard</a>
+<a class="text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors px-3 py-1 rounded-lg" href="#">Resources</a>
+<a class="text-teal-700 dark:text-teal-300 font-semibold px-3 py-1 rounded-lg" href="#">Settings</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-teal-600 dark:text-teal-400 hover:bg-slate-50 rounded-full transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="settings" style="font-variation-settings: 'FILL' 1;">settings</span>
+</button>
+<img alt="User profile avatar" class="w-8 h-8 rounded-full object-cover" data-alt="Close-up professional portrait of a man with a friendly expression, soft natural office lighting, blurred modern background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1p5J-19rC6ECfBdQQBnXCyqQ-saecBC5nUbImTadLlVYOjrSRHZjVQAtzSp7l_q3_DGYfyXzakKkh_N5zDzKvgznXCJXuS89aHmpO2d4F7NeDqVtn2WT1T9NOiDXy5kmOV-gk8F7aR6L9AtiSFGh-4PklZNvqB8w2JKzMLNsvZCtZWaSFex31m-p_wb2YbWsA46Ht5MTbYT41470uyeY2r5D33mHI-QvyJM_4ZswNwPCWH45Ox-d7OI_kdzziNDajsld5skb4-PY"/>
+</div>
+</div>
+<div class="bg-slate-100 dark:bg-slate-800 h-[1px] w-full"></div>
+</nav>
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col gap-2 p-4 h-screen w-64 fixed left-0 top-0 overflow-y-auto bg-slate-50 dark:bg-slate-950 z-40 pt-20 font-['Manrope'] text-sm font-medium">
+<div class="mb-6 px-2">
+<h2 class="text-lg font-extrabold text-slate-900 dark:text-slate-100">Anchor Reentry</h2>
+<p class="text-xs text-slate-500">The Guided Path</p>
+</div>
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="fact_check">fact_check</span>
+                Checklist
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="bolt">bolt</span>
+                Apps (Active)
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="work">work</span>
+                Employment
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+                Benefits
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="home_work">home_work</span>
+                Housing
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+                Documents
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="forum">forum</span>
+                Messages
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-sm rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="settings" style="font-variation-settings: 'FILL' 1;">settings</span>
+                Settings
+            </a>
+</nav>
+<div class="mt-auto pt-6 px-2">
+<button class="w-full bg-primary text-on-primary py-2.5 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-primary-container transition-colors active:scale-95">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                New Note
+            </button>
+<div class="mt-4 flex items-center gap-3 p-2 bg-surface-container-low rounded-xl">
+<img alt="Counselor Profile" class="w-10 h-10 rounded-full border-2 border-white" data-alt="Professional woman counselor in a brightly lit modern office, blurred bookshelf background, warm cinematic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCj0Y9JO1w9KpjEhAGLeMnTvIYIhFs0sKGYFhvrqRwLJ2rPyWUIBX8X5HUo69qLza6TItQye-OENgyk4dLu_wIM4onYWAAJAx7PysN9evkVf12je-OQ3Wr04GjpvsrR4m8r-qdJ9NpWTuehf_x608_PsIOnmwJsmtn8o3rZHVABIXais7MC3a3W6-jGRnSduH4m_Pk1cPneLssy4-qGGvhbZMbiTONaj8KnMIxWNSLKtXOJAMSJFk-VKu9VjhXTp6FtmRWWDi7ndDM"/>
+<div class="overflow-hidden">
+<p class="text-xs font-bold truncate">Sarah Jenkins</p>
+<p class="text-[10px] text-slate-500">Case Counselor</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="md:ml-64 pt-20 pb-12 px-6 md:px-12 lg:px-24">
+<div class="max-w-4xl mx-auto">
+<!-- Page Header -->
+<header class="mb-12">
+<h1 class="text-4xl font-extrabold tracking-tight text-on-surface mb-2">Settings</h1>
+<p class="text-on-surface-variant text-lg">Manage your personal information, security protocols, and platform preferences.</p>
+</header>
+<!-- Settings Sections -->
+<div class="space-y-12">
+<!-- Account Profile Section -->
+<section class="bg-surface-container-lowest rounded-xl p-8 transition-all" id="account-profile">
+<div class="flex flex-col md:flex-row gap-8">
+<div class="flex-shrink-0">
+<h2 class="text-xl font-bold mb-6">Account Profile</h2>
+<div class="relative group w-32 h-32">
+<img alt="User profile avatar" class="w-full h-full rounded-full object-cover ring-4 ring-surface-container-low" data-alt="Close-up professional portrait of a man with a friendly expression, soft natural office lighting, blurred modern background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDP9Tdl-rfJvuXiJAAD-RLhnoBQTvUw3aw42Gz2gdAasSsjQPVGj2ZrlmEcAiWi7AOQZ0Sc9n5f676pkf0Hm9HdtVHpHopI3e0RYyMZCl8pcTDjoYrPrjxey1_TIllAs7Dry7AYdmp6E6tQUgLwNBdf7vz0nJdsuG-PGKT6g-9hdkrssOsQsAzE8W-LsUuQDQTfiOJDpNyXNnQ_NOFkHQBuGtYUCR5-aYJzw8ezTFM3Q1pWJyB90uniyNimeZsSO3kY56V2Mer2cQ"/>
+<button class="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full shadow-lg hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-sm" data-icon="photo_camera">photo_camera</span>
+</button>
+</div>
+</div>
+<div class="flex-grow space-y-6">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-on-surface-variant px-1">Full Name</label>
+<input class="w-full bg-surface-container-lowest border-0 border-b-2 border-outline-variant/30 focus:border-primary focus:ring-0 px-1 py-2 text-on-surface font-medium transition-colors" type="text" value="Marcus Thompson"/>
+</div>
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-on-surface-variant px-1">Email Address</label>
+<input class="w-full bg-surface-container-lowest border-0 border-b-2 border-outline-variant/30 focus:border-primary focus:ring-0 px-1 py-2 text-on-surface font-medium transition-colors" type="email" value="m.thompson@example.com"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-on-surface-variant px-1">Bio / Personal Note</label>
+<textarea class="w-full bg-surface-container-lowest border-0 border-b-2 border-outline-variant/30 focus:border-primary focus:ring-0 px-1 py-2 text-on-surface font-medium transition-colors resize-none" rows="3">Focusing on logistics and warehousing opportunities in the Greater Tri-State area.</textarea>
+</div>
+<div class="flex justify-end pt-4">
+<button class="bg-primary hover:bg-primary-container text-on-primary px-8 py-2.5 rounded-lg font-bold transition-all shadow-sm active:scale-95">Save Changes</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Security & Privacy Section -->
+<section class="bg-surface-container-lowest rounded-xl p-8" id="security-privacy">
+<div class="flex items-center gap-3 mb-8">
+<span class="material-symbols-outlined text-primary" data-icon="security" style="font-variation-settings: 'FILL' 1;">security</span>
+<h2 class="text-xl font-bold">Security &amp; Privacy</h2>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<!-- Password Change -->
+<div class="bg-surface-container-low p-6 rounded-xl border border-outline-variant/10">
+<h3 class="font-bold text-secondary mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="lock">lock</span>
+                                Digital Vault Password
+                            </h3>
+<p class="text-sm text-on-surface-variant mb-6">Last changed 4 months ago. We recommend a change every 6 months.</p>
+<button class="w-full bg-white text-primary border border-primary/20 py-2.5 rounded-lg font-bold hover:bg-primary/5 transition-colors">Update Vault Password</button>
+</div>
+<!-- 2FA Setup -->
+<div class="bg-surface-container-low p-6 rounded-xl border border-outline-variant/10">
+<div class="flex justify-between items-start mb-4">
+<h3 class="font-bold text-secondary flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="verified_user">verified_user</span>
+                                    Two-Factor (2FA)
+                                </h3>
+<span class="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Enabled</span>
+</div>
+<p class="text-sm text-on-surface-variant mb-6">Added protection for your legal documents and private counselor notes.</p>
+<button class="w-full bg-white text-primary border border-primary/20 py-2.5 rounded-lg font-bold hover:bg-primary/5 transition-colors">Manage 2FA Settings</button>
+</div>
+</div>
+<div class="mt-8 pt-8 border-t border-outline-variant/10 flex flex-col md:flex-row items-center justify-between gap-4">
+<div class="flex items-center gap-4">
+<div class="bg-tertiary-fixed text-on-tertiary-fixed p-3 rounded-xl">
+<span class="material-symbols-outlined" data-icon="visibility_off">visibility_off</span>
+</div>
+<div>
+<h4 class="font-bold">Privacy Mode</h4>
+<p class="text-xs text-on-surface-variant">Hide sensitive data when screen is shared.</p>
+</div>
+</div>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</div>
+</div>
+</section>
+<!-- Notification Preferences Section -->
+<section class="bg-surface-container-lowest rounded-xl p-8" id="notification-preferences">
+<h2 class="text-xl font-bold mb-8">Notification Preferences</h2>
+<div class="space-y-6">
+<!-- Notification Row -->
+<div class="flex items-center justify-between py-4 border-b border-outline-variant/5">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-400" data-icon="mail">mail</span>
+<div>
+<p class="font-semibold">Email Notifications</p>
+<p class="text-xs text-on-surface-variant">Receive weekly progress reports and resource updates.</p>
+</div>
+</div>
+<div class="flex gap-4">
+<label class="flex items-center gap-2 cursor-pointer">
+<input checked="" class="w-4 h-4 text-primary bg-surface-container border-none rounded focus:ring-primary/20" type="checkbox"/>
+</label>
+</div>
+</div>
+<!-- Notification Row -->
+<div class="flex items-center justify-between py-4 border-b border-outline-variant/5">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-400" data-icon="phone_android">phone_android</span>
+<div>
+<p class="font-semibold">Push Notifications</p>
+<p class="text-xs text-on-surface-variant">Real-time alerts for messages and meeting reminders.</p>
+</div>
+</div>
+<div class="flex gap-4">
+<label class="flex items-center gap-2 cursor-pointer">
+<input checked="" class="w-4 h-4 text-primary bg-surface-container border-none rounded focus:ring-primary/20" type="checkbox"/>
+</label>
+</div>
+</div>
+<!-- Notification Row -->
+<div class="flex items-center justify-between py-4">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-400" data-icon="sms">sms</span>
+<div>
+<p class="font-semibold">SMS Alerts</p>
+<p class="text-xs text-on-surface-variant">Critical deadline reminders sent directly to your phone.</p>
+</div>
+</div>
+<div class="flex gap-4">
+<label class="flex items-center gap-2 cursor-pointer">
+<input class="w-4 h-4 text-primary bg-surface-container border-none rounded focus:ring-primary/20" type="checkbox"/>
+</label>
+</div>
+</div>
+</div>
+</section>
+<!-- Connected Services Section -->
+<section class="bg-surface-container-lowest rounded-xl p-8" id="connected-services">
+<h2 class="text-xl font-bold mb-8">Connected Services</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Service Card -->
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-xl">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-blue-600" data-icon="cloud">cloud</span>
+</div>
+<div>
+<p class="font-bold text-sm">Google Drive</p>
+<p class="text-[10px] text-on-surface-variant">Synced for document storage</p>
+</div>
+</div>
+<button class="text-error text-xs font-bold hover:underline">Disconnect</button>
+</div>
+<!-- Service Card -->
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-xl">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-secondary" data-icon="calendar_month">calendar_month</span>
+</div>
+<div>
+<p class="font-bold text-sm">Outlook Calendar</p>
+<p class="text-[10px] text-on-surface-variant">Counseling appointments</p>
+</div>
+</div>
+<button class="text-error text-xs font-bold hover:underline">Disconnect</button>
+</div>
+<!-- Connect New Service -->
+<div class="md:col-span-2 border-2 border-dashed border-outline-variant/30 rounded-xl p-4 flex items-center justify-center gap-3 cursor-pointer hover:bg-slate-50 transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="add_link">add_link</span>
+<span class="text-sm font-semibold text-on-surface-variant">Connect a new external service</span>
+</div>
+</div>
+</section>
+<!-- Danger Zone -->
+<section class="border-t border-outline-variant/10 pt-12 pb-24">
+<div class="bg-error-container/20 border border-error/10 rounded-xl p-6">
+<div class="flex items-start gap-4">
+<span class="material-symbols-outlined text-error" data-icon="warning">warning</span>
+<div>
+<h3 class="font-bold text-error">Danger Zone</h3>
+<p class="text-sm text-on-surface-variant mt-1 mb-4">Deleting your account is permanent and will remove all documents from the Digital Vault.</p>
+<button class="text-error border border-error/20 px-4 py-2 rounded-lg text-sm font-bold hover:bg-error/5 transition-colors">Delete Account and Data</button>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<div class="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md z-50 border-t border-slate-100">
+<div class="flex justify-around items-center py-3 px-2">
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined" data-icon="fact_check">fact_check</span>
+<span class="text-[10px] font-medium">Tasks</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined" data-icon="bolt">bolt</span>
+<span class="text-[10px] font-medium">Apps</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined" data-icon="forum">forum</span>
+<span class="text-[10px] font-medium">Chat</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-teal-600">
+<span class="material-symbols-outlined" data-icon="settings" style="font-variation-settings: 'FILL' 1;">settings</span>
+<span class="text-[10px] font-bold">Settings</span>
+</button>
+</div>
+</div>
+</body></html>

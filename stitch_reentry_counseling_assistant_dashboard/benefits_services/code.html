@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Benefits &amp; Social Services | The Guided Path</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb692",
+                        "on-background": "#1a1c1c",
+                        "on-tertiary-fixed": "#341100",
+                        "on-primary-fixed": "#002020",
+                        "primary-container": "#008080",
+                        "on-primary": "#ffffff",
+                        "surface-dim": "#dadada",
+                        "on-secondary-container": "#1b218f",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#f3f3f3",
+                        "surface-bright": "#f9f9f9",
+                        "primary": "#006565",
+                        "on-primary-fixed-variant": "#004f4f",
+                        "primary-fixed-dim": "#76d6d5",
+                        "surface-container-highest": "#e2e2e2",
+                        "outline-variant": "#bdc9c8",
+                        "tertiary-fixed": "#ffdbcb",
+                        "surface-container": "#eeeeee",
+                        "on-secondary-fixed-variant": "#3239a3",
+                        "on-tertiary-fixed-variant": "#733512",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-container": "#fff9f7",
+                        "primary-fixed": "#93f2f2",
+                        "secondary-container": "#8991fe",
+                        "inverse-on-surface": "#f1f1f1",
+                        "background": "#f9f9f9",
+                        "inverse-surface": "#2f3131",
+                        "on-surface": "#1a1c1c",
+                        "surface-container-high": "#e8e8e8",
+                        "secondary": "#4b53bc",
+                        "tertiary": "#8b4823",
+                        "inverse-primary": "#76d6d5",
+                        "outline": "#6e7979",
+                        "surface": "#f9f9f9",
+                        "surface-tint": "#006a6a",
+                        "secondary-fixed": "#e0e0ff",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "surface-variant": "#e2e2e2",
+                        "on-secondary-fixed": "#00006e",
+                        "on-error": "#ffffff",
+                        "tertiary-container": "#a96039",
+                        "secondary-fixed-dim": "#bfc2ff",
+                        "on-surface-variant": "#3e4949",
+                        "on-primary-container": "#e3fffe"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .shadow-soft {
+            box-shadow: 0 8px 32px rgba(26, 28, 28, 0.06);
+        }
+        .click-bounce-effect:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface">
+<!-- SideNavBar (Shared Component) -->
+<aside class="h-screen w-64 fixed left-0 top-0 rounded-r-3xl bg-slate-100 dark:bg-slate-900 flex flex-col h-full py-8 px-4 z-50">
+<div class="mb-10 px-4">
+<h1 class="text-lg font-black text-teal-800 dark:text-teal-200 font-headline">Assistant</h1>
+<p class="text-xs font-manrope font-medium text-slate-500">The Guided Path</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:text-teal-600 hover:translate-x-1 transition-transform duration-200 font-manrope text-sm font-medium" href="#">
+<span class="material-symbols-outlined">assignment_turned_in</span> Checklist
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:text-teal-600 hover:translate-x-1 transition-transform duration-200 font-manrope text-sm font-medium" href="#">
+<span class="material-symbols-outlined">apps</span> Apps (Active)
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:text-teal-600 hover:translate-x-1 transition-transform duration-200 font-manrope text-sm font-medium" href="#">
+<span class="material-symbols-outlined">work</span> Employment
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 text-teal-700 dark:text-teal-300 rounded-l-full shadow-soft font-manrope text-sm font-bold" href="#">
+<span class="material-symbols-outlined">payments</span> Benefits
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:text-teal-600 hover:translate-x-1 transition-transform duration-200 font-manrope text-sm font-medium" href="#">
+<span class="material-symbols-outlined">home_work</span> Housing
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:text-teal-600 hover:translate-x-1 transition-transform duration-200 font-manrope text-sm font-medium" href="#">
+<span class="material-symbols-outlined">description</span> Documents
+            </a>
+</nav>
+<div class="mt-auto px-4 pt-6">
+<button class="w-full bg-primary text-white py-3 rounded-xl font-headline font-bold text-sm click-bounce-effect shadow-soft mb-6">
+                New Application
+            </button>
+<a class="flex items-center gap-3 py-3 text-slate-600 font-manrope text-sm font-medium hover:text-error transition-colors" href="#">
+<span class="material-symbols-outlined">logout</span> Logout
+            </a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 min-h-screen">
+<!-- TopAppBar (Shared Component) -->
+<header class="w-full top-0 sticky bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl flex items-center justify-between px-6 py-3 w-full z-40 shadow-sm dark:shadow-none">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-950 border-none rounded-full text-sm focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search applications or documents..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-full transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border-2 border-white"></span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-full transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden ml-2 border border-outline-variant/15">
+<img alt="Counselor Profile" data-alt="professional portrait of a supportive counselor in a bright office setting with neutral colors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCX_q0ehzFHKzH0EGFlo0i9NygCM5qjTn8aiqhSfIlXTAEuxgBq60mnEAWYZRQPFDAZ1mX4CwL5cyWwxC4PX2yrn89BMbS8XbtyafQebhG0pMYPmJEmrO0825-xRnXrOsDMiu1souaPK9C9dET7j88q1WPsjTo3tkKZkVFDOifbXijeodNq2KG-7KQNsDVW7n9Rt_rFsG3Ft8ve8V0mszZR4wYKxoZmrJaluMZD-nvDwfdrQw4tzar46q9Fr5DvBBSmhkI9NfyR7L0"/>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="p-12 max-w-7xl mx-auto">
+<!-- Header Section -->
+<section class="mb-12">
+<h2 class="text-4xl font-headline font-extrabold text-on-surface tracking-tight mb-2">Benefits &amp; Assistance</h2>
+<p class="text-slate-500 max-w-2xl font-body">Tracking your progress toward essential social services. Your journey to stability is supported every step of the way.</p>
+</section>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Main Applications Track (Bento Large) -->
+<div class="col-span-12 lg:col-span-8 space-y-8">
+<!-- Application Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- SNAP Card -->
+<div class="bg-surface-container-lowest p-6 rounded-3xl shadow-soft group border border-transparent hover:border-primary/10 transition-all">
+<div class="flex justify-between items-start mb-6">
+<div class="bg-primary/10 p-3 rounded-2xl text-primary">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">restaurant</span>
+</div>
+<span class="px-3 py-1 bg-teal-50 text-primary text-xs font-bold rounded-full">ACTIVE</span>
+</div>
+<h3 class="text-xl font-headline font-bold mb-1">SNAP (Food Stamps)</h3>
+<p class="text-slate-500 text-sm mb-6">Monthly nutritional assistance for households.</p>
+<div class="space-y-4">
+<div class="flex justify-between text-xs font-bold">
+<span class="text-slate-400 uppercase tracking-wider">Verification Progress</span>
+<span class="text-primary">85%</span>
+</div>
+<div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full transition-all duration-1000" style="width: 85%"></div>
+</div>
+</div>
+</div>
+<!-- Medicaid Card -->
+<div class="bg-surface-container-lowest p-6 rounded-3xl shadow-soft group border border-transparent hover:border-primary/10 transition-all">
+<div class="flex justify-between items-start mb-6">
+<div class="bg-secondary/10 p-3 rounded-2xl text-secondary">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">medical_services</span>
+</div>
+<span class="px-3 py-1 bg-secondary-fixed text-secondary text-xs font-bold rounded-full">PENDING</span>
+</div>
+<h3 class="text-xl font-headline font-bold mb-1">Medicaid</h3>
+<p class="text-slate-500 text-sm mb-6">Health coverage for low-income individuals.</p>
+<div class="space-y-4">
+<div class="flex justify-between text-xs font-bold">
+<span class="text-slate-400 uppercase tracking-wider">Verification Progress</span>
+<span class="text-secondary">40%</span>
+</div>
+<div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-secondary rounded-full transition-all duration-1000" style="width: 40%"></div>
+</div>
+</div>
+</div>
+<!-- TANF Card -->
+<div class="bg-surface-container-lowest p-6 rounded-3xl shadow-soft group border border-transparent hover:border-primary/10 transition-all">
+<div class="flex justify-between items-start mb-6">
+<div class="bg-tertiary-fixed p-3 rounded-2xl text-tertiary">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">family_restroom</span>
+</div>
+<span class="px-3 py-1 bg-surface-container text-slate-400 text-xs font-bold rounded-full">RE-ENTRY PHASE</span>
+</div>
+<h3 class="text-xl font-headline font-bold mb-1">TANF Support</h3>
+<p class="text-slate-500 text-sm mb-6">Temporary assistance for needy families.</p>
+<button class="text-primary font-bold text-sm flex items-center gap-1 hover:gap-2 transition-all">
+                                Start Application <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+<!-- Energy Assistance -->
+<div class="bg-surface-container-lowest p-6 rounded-3xl shadow-soft group border border-transparent hover:border-primary/10 transition-all">
+<div class="flex justify-between items-start mb-6">
+<div class="bg-primary-fixed p-3 rounded-2xl text-primary">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<span class="px-3 py-1 bg-error-container text-error text-xs font-bold rounded-full">ACTION NEEDED</span>
+</div>
+<h3 class="text-xl font-headline font-bold mb-1">LIHEAP (Energy)</h3>
+<p class="text-slate-500 text-sm mb-6">Assistance with heating and cooling bills.</p>
+<button class="text-error font-bold text-sm flex items-center gap-1 hover:gap-2 transition-all">
+                                Update Income <span class="material-symbols-outlined text-sm">warning</span>
+</button>
+</div>
+</div>
+<!-- Actionable History / Insights (Asymmetric) -->
+<div class="bg-surface-container-low rounded-[2rem] p-8 flex flex-col md:flex-row gap-8">
+<div class="flex-1">
+<h4 class="text-lg font-headline font-bold mb-4">Benefit Impact Overview</h4>
+<div class="space-y-6">
+<div class="flex gap-4 items-start">
+<div class="w-1 bg-primary self-stretch rounded-full"></div>
+<div>
+<p class="text-sm font-bold text-on-surface">Estimated Monthly Support</p>
+<p class="text-3xl font-headline font-extrabold text-primary">$412.00</p>
+<p class="text-xs text-slate-400 mt-1">Based on active and pending SNAP/TANF</p>
+</div>
+</div>
+<div class="flex gap-4 items-start">
+<div class="w-1 bg-secondary self-stretch rounded-full"></div>
+<div>
+<p class="text-sm font-bold text-on-surface">Eligibility Timeline</p>
+<p class="text-xl font-headline font-bold text-on-surface">12 Days Remaining</p>
+<p class="text-xs text-slate-400 mt-1">Next interview: June 18th at 10:00 AM</p>
+</div>
+</div>
+</div>
+</div>
+<div class="w-full md:w-64 bg-surface-container-lowest rounded-2xl p-6 shadow-soft self-center">
+<img alt="Financial Stability" class="w-full h-32 object-cover rounded-xl mb-4 grayscale opacity-80" data-alt="close-up of a calculator and financial documents on a clean white desk with soft sunlight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGhLVBedKD5C3yVQV7bWpvx_dAUGK0ZCiVDUaMq8xnVDONRrrmHHjGSbwOAMzjtbumjZkJg8JDi3gto8EErXzto9NKQuON2qesNZJC0tIcG8DK6LxW4V6KZdOTk1me6LWxrlp3_gwslYWVMEYjrgy6YkAofjjZ9GhCuuqHe15QjiptOxxy3swGV5m2rHz6CTxFOmNUsTcuuxUWADazULAutFDMIB267w_E0v5xgikgKKAOlAnAZHTxx8EUcsecUwFQFwUWnLrf7jU"/>
+<p class="text-xs font-medium text-slate-500 leading-relaxed">Your application frequency is consistent. You are on track for full eligibility renewal.</p>
+</div>
+</div>
+</div>
+<!-- Side Panels (Bento Small) -->
+<div class="col-span-12 lg:col-span-4 space-y-8">
+<!-- Counselor's Insight (Sticky Note Component) -->
+<div class="bg-tertiary-fixed rounded-3xl p-8 shadow-soft relative overflow-hidden">
+<span class="material-symbols-outlined absolute -top-4 -right-4 text-8xl text-tertiary/10 rotate-12">lightbulb</span>
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-tertiary">psychology</span>
+<h4 class="text-lg font-headline font-bold text-on-tertiary-fixed">Counselor's Insight</h4>
+</div>
+<p class="text-on-tertiary-fixed-variant font-medium leading-relaxed mb-6 italic">
+                            "Remember, the documentation process can feel overwhelming, but we are tackling the hardest parts first. Focus on the residency verification today; it's the anchor for all your other benefits."
+                        </p>
+<div class="flex items-center gap-3">
+<img alt="Counselor Profile" class="w-8 h-8 rounded-full" data-alt="professional portrait of a supportive counselor in a bright office setting with neutral colors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCLLW18GtEtefYAO7CdKXqRTUQ3mivN6Jx6J77rj53IWDAc60S8Ia_PILNQ_4R3Ty_CaXOMlMU8QIijAOGncocS_jSX29Erd4ZO91N5VoADDLBrB3JVOoTCKjvvfblb8949Ni9_eQfgIY_ta_oAagZ1gX7BxlTaviRL0AUMfS7Yh0MieKUAaHAKwPNyxY6szaBKI7DwI9o7MrgFavAPkVWE0Wxj8a5HAZaK5UiKn-ljsgSHWLGGRFqkSGoEHoT3H0Sycqko5Wwi338"/>
+<div>
+<p class="text-sm font-bold text-on-tertiary-fixed">Marcus Thorne</p>
+<p class="text-xs text-on-tertiary-fixed-variant/70">Reentry Specialist</p>
+</div>
+</div>
+</div>
+<!-- Next Steps Panel (Tasks) -->
+<div class="bg-surface-container-lowest rounded-3xl p-8 shadow-soft">
+<h4 class="text-lg font-headline font-bold mb-6">Required Next Steps</h4>
+<div class="space-y-6">
+<div class="flex gap-4">
+<div class="w-6 h-6 rounded-full border-2 border-primary flex items-center justify-center shrink-0 mt-1">
+<div class="w-2.5 h-2.5 bg-primary rounded-full"></div>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Upload Residency Proof</p>
+<p class="text-xs text-slate-500 mt-1">Utility bill or lease agreement from the last 30 days.</p>
+<button class="mt-3 text-xs font-bold text-primary flex items-center gap-1 bg-teal-50 px-3 py-1.5 rounded-lg hover:bg-teal-100 transition-colors">
+<span class="material-symbols-outlined text-base">upload</span> Upload Now
+                                    </button>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="w-6 h-6 rounded-full border-2 border-outline-variant shrink-0 mt-1"></div>
+<div>
+<p class="text-sm font-bold text-on-surface">Income Verification</p>
+<p class="text-xs text-slate-500 mt-1">Pay stubs or an employer letter verifying hours.</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="w-6 h-6 rounded-full border-2 border-outline-variant shrink-0 mt-1"></div>
+<div>
+<p class="text-sm font-bold text-on-surface">Schedule Interview</p>
+<p class="text-xs text-slate-500 mt-1">Call the DHS office or use the online portal.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Support Resource (Glassmorphism) -->
+<div class="bg-slate-900 text-white rounded-3xl p-8 overflow-hidden relative group">
+<div class="absolute inset-0 bg-gradient-to-br from-primary/40 to-transparent opacity-50"></div>
+<div class="relative z-10">
+<h4 class="text-lg font-headline font-bold mb-2">Need Help?</h4>
+<p class="text-slate-300 text-sm mb-6 leading-relaxed">Our support lines are open 24/7 for technical assistance with applications.</p>
+<button class="w-full bg-white/10 backdrop-blur-md border border-white/20 py-3 rounded-xl font-headline font-bold text-sm flex items-center justify-center gap-2 hover:bg-white/20 transition-all">
+<span class="material-symbols-outlined text-lg">support_agent</span> Contact Support
+                            </button>
+</div>
+<!-- Abstract Background Decoration -->
+<div class="absolute -bottom-8 -right-8 w-32 h-32 bg-primary rounded-full blur-3xl opacity-20"></div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Contextual FAB (Shared Component Rule) -->
+<!-- FAB suppressed for Benefits Details screen per Shell Visibility Rule -->
+</body></html>
