@@ -40,5 +40,5 @@ employment_subagent = {
         log_job_application,
         get_ban_the_box_status,
     ],
-    "model": "claude-sonnet-4-5-20241022",
+    "model": "claude-sonnet-4-6",
 }

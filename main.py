@@ -58,7 +58,7 @@ def seed():
         personal={
             "name": "Marcus",
             "age_range": "30-35",
-            "home_state": "NY",
+            "home_state": "CT",
             "release_date": "2026-02-15",
             "time_served": "3 years",
             "offense_category": "non-violent",
@@ -96,7 +96,7 @@ def seed():
     save_profile(profile)
     console.print(Panel(
         "[bold green]Test profile created for Marcus.[/bold green]\n\n"
-        "30-35 y/o, released 2026-02-15 from NY.\n"
+        "30-35 y/o, released 2026-02-15 from CT.\n"
         "Currently in a shelter, on parole, looking for work and housing.\n"
         "Strengths: carpentry, forklift cert, GED.\n\n"
         "Run [bold]python main.py chat[/bold] to start talking to Threshold.",
@@ -164,7 +164,7 @@ def chat():
     from threshold.memory import get_checkpointer
 
     checkpointer = get_checkpointer()
-    agent = create_orchestrator()
+    agent = create_orchestrator(checkpointer=checkpointer)
     config = {"configurable": {"thread_id": "threshold-main"}}
 
     while True:

@@ -10,6 +10,7 @@ from langchain_anthropic import ChatAnthropic
 from .subagents.benefits import benefits_subagent
 from .subagents.employment import employment_subagent
 from .subagents.housing import housing_subagent
+from .subagents.form_filler import form_filler_subagent
 from .subagents.legal import legal_subagent
 from ..tools import (
     crisis_response,
@@ -51,6 +52,7 @@ Use the task() tool to delegate to these subagents:
 - "employment" — job search, job applications, resume, cover letter, ban-the-box research
 - "housing" — housing search, housing applications, tenant rights, shelter locations
 - "legal" — supervision conditions, check-ins, upcoming requirements, ID restoration, expungement
+- "form-filler" — fill out online government forms (DMV appointments, benefits applications, etc.)
 
 Use your tools directly for:
 - Memory — call read_user_memory(), update_profile_field(), log_event()
@@ -75,6 +77,10 @@ shelters, lease applications, housing restrictions, tenant rights.
 
 Route to "legal" subagent when: user asks about parole, probation, check-ins, supervision conditions,
 getting an ID, birth certificate, Social Security card, expungement, record sealing, clearing their record.
+
+Route to "form-filler" subagent when: user wants to fill out an online form, schedule a DMV appointment
+online, complete a benefits application online, or needs help with any government website form.
+Always include the full URL in the task description.
 
 Answer directly when: emotional check-ins, general re-entry questions, writing tasks, or anything
 not covered by a subagent.
@@ -157,6 +163,7 @@ def create_orchestrator(**kwargs):
             employment_subagent,
             housing_subagent,
             legal_subagent,
+            form_filler_subagent,
         ],
         backend=FilesystemBackend(root_dir=DATA_DIR),
         memory=["./AGENTS.md"],
