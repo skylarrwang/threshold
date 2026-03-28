@@ -19,7 +19,7 @@ from ..tools import (
 )
 
 DATA_DIR = os.getenv("THRESHOLD_DATA_DIR", "./data")
-MODEL = os.getenv("THRESHOLD_MODEL", "claude-3-5-haiku-20241022")
+MODEL = os.getenv("THRESHOLD_MODEL", "claude-haiku-4-5-20251001")
 
 
 SYSTEM_PROMPT_TEMPLATE = """\

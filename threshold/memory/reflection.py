@@ -77,7 +77,7 @@ def synthesize_reflections(
         from langchain_anthropic import ChatAnthropic
 
         model = ChatAnthropic(
-            model=os.getenv("THRESHOLD_MODEL", "claude-3-5-haiku-20241022")
+            model=os.getenv("THRESHOLD_MODEL", "claude-haiku-4-5-20251001")
         )
         obs_text = "\n".join(
             f"- [{o.event_type}] {o.content}" for o in recent_obs
