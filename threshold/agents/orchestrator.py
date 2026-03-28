@@ -7,19 +7,12 @@ from deepagents import create_deep_agent
 from deepagents.backends import FilesystemBackend
 from langchain_anthropic import ChatAnthropic
 
+from .subagents.benefits import benefits_subagent
 from .subagents.employment import employment_subagent
 from .subagents.housing import housing_subagent
+from .subagents.legal import legal_subagent
 from ..tools import (
-    add_condition,
-    check_expungement_eligibility,
-    check_medicaid_eligibility,
-    check_snap_eligibility,
-    check_ssi_eligibility,
     crisis_response,
-    get_benefits_links,
-    get_id_restoration_guide,
-    get_upcoming_requirements,
-    log_check_in,
     log_event,
     read_user_memory,
     update_profile_field,
@@ -54,13 +47,12 @@ If the user expresses suicidal ideation, self-harm, or acute emotional crisis in
 
 ## What You Can Do
 Use the task() tool to delegate to these subagents:
+- "benefits" — SNAP, Medicaid, SSI eligibility, benefits applications
 - "employment" — job search, job applications, resume, cover letter, ban-the-box research
 - "housing" — housing search, housing applications, tenant rights, shelter locations
+- "legal" — supervision conditions, check-ins, upcoming requirements, ID restoration, expungement
 
 Use your tools directly for:
-- Benefits eligibility (SNAP, Medicaid, SSI) — call check_*_eligibility()
-- Supervision tracking — call add_condition(), log_check_in(), get_upcoming_requirements()
-- Document guides — call get_id_restoration_guide(), check_expungement_eligibility()
 - Memory — call read_user_memory(), update_profile_field(), log_event()
 
 For writing tasks (cover letters, legal letters, housing letters, resume), read the relevant
@@ -72,14 +64,20 @@ workflow file and follow it. Workflow files are in workflows/:
 - workflows/community_resource_search.md
 
 ## Routing Rules
+Route to "benefits" subagent when: user asks about food stamps, SNAP, Medicaid, health insurance,
+SSI, disability income, government benefits, or benefits applications.
+
 Route to "employment" subagent when: user asks about jobs, resumes, cover letters, job applications,
 job interviews, finding work, ban-the-box employers, work history.
 
 Route to "housing" subagent when: user asks about apartments, housing programs, transitional housing,
 shelters, lease applications, housing restrictions, tenant rights.
 
-Answer directly or use tools when: benefits questions, supervision questions, document/ID questions,
-emotional check-ins, general re-entry questions, writing tasks.
+Route to "legal" subagent when: user asks about parole, probation, check-ins, supervision conditions,
+getting an ID, birth certificate, Social Security card, expungement, record sealing, clearing their record.
+
+Answer directly when: emotional check-ins, general re-entry questions, writing tasks, or anything
+not covered by a subagent.
 
 ## Scope Disclaimer
 Always accompany legal or eligibility information with: "This is general information, not legal
@@ -153,19 +151,12 @@ def create_orchestrator(**kwargs):
             read_user_memory,
             update_profile_field,
             log_event,
-            check_snap_eligibility,
-            check_medicaid_eligibility,
-            check_ssi_eligibility,
-            get_benefits_links,
-            add_condition,
-            log_check_in,
-            get_upcoming_requirements,
-            get_id_restoration_guide,
-            check_expungement_eligibility,
         ],
         subagents=[
+            benefits_subagent,
             employment_subagent,
             housing_subagent,
+            legal_subagent,
         ],
         backend=FilesystemBackend(root_dir=DATA_DIR),
         memory=["./AGENTS.md"],
