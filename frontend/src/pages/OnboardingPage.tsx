@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { InfoForm } from '@/components/infoCollection/InfoForm';
 
 const steps = [
   {
@@ -86,6 +87,10 @@ export function OnboardingPage() {
                 2,400+ people have used Threshold to rebuild their lives
               </p>
             </div>
+          </div>
+
+          <div className="mb-10">
+            <InfoForm />
           </div>
 
           {/* Support footer */}
