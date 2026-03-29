@@ -45,9 +45,8 @@ Run these searches (use offense_category from profile to auto-filter):
 
 1. `find_reentry_housing(state, city, offense_category=...)` — curated reentry programs
 2. `search_housing(location, offense_category=...)` — HUD counseling + 211
-3. `get_pha_guide(state, city)` — Section 8 / public housing options
-4. `check_pha_waitlist_status(city, state)` — current waitlist status + portal links
-5. `get_fair_chance_housing_laws(state)` — their rights with a record
+3. `get_pha_guide(state, city)` — Section 8 / public housing options + waitlist status
+4. `get_fair_chance_housing_laws(state)` — their rights with a record
 
 Present results organized by:
 - **Immediate options** (shelters, transitional with short waits)

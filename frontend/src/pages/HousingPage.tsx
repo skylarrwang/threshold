@@ -10,7 +10,6 @@ import { LogApplicationModal } from '@/components/housing/LogApplicationModal';
 import { EditApplicationModal } from '@/components/housing/EditApplicationModal';
 import { QuickActionsGrid } from '@/components/housing/QuickActionsGrid';
 import { FairChanceLawsPanel } from '@/components/housing/FairChanceLawsPanel';
-import { ReadinessChecklist } from '@/components/housing/ReadinessChecklist';
 import { AlertsBanner } from '@/components/housing/AlertsBanner';
 
 const HOUSING_STATUS_LABELS: Record<string, string> = {
@@ -63,34 +62,6 @@ export function HousingPage() {
   const nextFollowUp = pipeline?.next_follow_up;
   const housingStatus = profile.situation.housing_status || 'unknown';
 
-  // Build readiness checklist from profile data
-  const checklistItems = [
-    {
-      id: 'id',
-      label: 'Government photo ID obtained',
-      done: false, // Would check documents store
-    },
-    {
-      id: 'ssn',
-      label: 'Social Security card obtained',
-      done: false,
-    },
-    {
-      id: 'income',
-      label: 'Income source established (job or benefits)',
-      done: profile.situation.employment_status !== 'unemployed',
-    },
-    {
-      id: 'applications',
-      label: 'At least 3 housing applications submitted',
-      done: applications.filter((a) => ['applied', 'screening', 'waitlisted', 'voucher_issued', 'unit_search', 'interview_scheduled', 'approved', 'lease_review', 'moved_in'].includes(a.status)).length >= 3,
-    },
-    {
-      id: 'rights',
-      label: 'Reviewed fair chance housing rights',
-      done: fairChanceLaw !== null,
-    },
-  ];
 
   return (
     <div className="px-6 md:px-12 py-8 space-y-8 max-w-7xl mx-auto">
@@ -217,10 +188,6 @@ export function HousingPage() {
         <FairChanceLawsPanel law={fairChanceLaw} loading={fairChanceLawLoading} />
       </section>
 
-      {/* ─── Section 5: Move-In Readiness ─── */}
-      <section>
-        <ReadinessChecklist items={checklistItems} />
-      </section>
     </div>
   );
 }
