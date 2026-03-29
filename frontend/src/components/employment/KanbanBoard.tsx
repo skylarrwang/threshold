@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
 import { useJobStore } from '@/store/jobStore';
 import { KanbanCard } from './KanbanCard';
+import { Button } from '@/components/shared/Button';
 import type { JobPipelineStage } from '@/types';
 
 interface Column {
@@ -46,11 +46,8 @@ export function KanbanBoard() {
   const pipelineLoading = useJobStore((s) => s.pipelineLoading);
   const pipelineError = useJobStore((s) => s.pipelineError);
   const fetchPipeline = useJobStore((s) => s.fetchPipeline);
-
-  // Fetch pipeline data on mount
-  useEffect(() => {
-    fetchPipeline();
-  }, [fetchPipeline]);
+  const setEditModalOpen = useJobStore((s) => s.setEditModalOpen);
+  const setLogModalOpen = useJobStore((s) => s.setLogModalOpen);
 
   if (pipelineLoading && jobs.length === 0) {
     return (
@@ -102,15 +99,26 @@ export function KanbanBoard() {
 
             {/* Cards */}
             {colJobs.length > 0 ? (
-              colJobs.map((job) => <KanbanCard key={job.id} job={job} />)
+              colJobs.map((job) => (
+                <KanbanCard
+                  key={job.id}
+                  job={job}
+                  onEdit={(j) => setEditModalOpen(true, j)}
+                />
+              ))
             ) : (
               <div className="border-2 border-dashed border-outline-variant rounded-xl p-8 flex flex-col items-center justify-center text-center opacity-50">
                 <span className="material-symbols-outlined text-3xl mb-2 text-on-surface-variant">
                   celebration
                 </span>
-                <p className="text-xs font-medium text-on-surface-variant italic">
+                <p className="text-xs font-medium text-on-surface-variant italic mb-3">
                   Persistence pays off. Keep pushing.
                 </p>
+                {col.id === 'applied' && (
+                  <Button variant="ghost" size="sm" onClick={() => setLogModalOpen(true)}>
+                    Log your first application
+                  </Button>
+                )}
               </div>
             )}
           </div>

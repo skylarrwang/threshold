@@ -16,6 +16,7 @@ import asyncio
 import json
 import logging
 import os
+import re as _re
 import traceback
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -66,6 +67,61 @@ logging.getLogger("httpcore").setLevel(logging.WARNING)
 DATA_DIR = Path(os.getenv("THRESHOLD_DATA_DIR", "./data"))
 DEFAULT_USER_ID = os.getenv("THRESHOLD_USER_ID", "default-user")
 DEBUG_WS_STREAM = os.getenv("DEBUG_WS_STREAM") == "1"
+
+# ── Workflow update: tool → (stage, label) for each domain ────────────────
+_HOUSING_TOOL_STAGES: dict[str, tuple[int, str]] = {
+    "read_user_memory": (2, "Understanding your situation"),
+    "search_housing": (3, "Searching HUD counseling agencies"),
+    "find_reentry_housing": (3, "Searching reentry housing programs"),
+    "find_emergency_shelter": (3, "Finding emergency shelters"),
+    "get_pha_guide": (3, "Looking up public housing authorities"),
+    "get_fair_chance_housing_laws": (3, "Checking fair chance housing laws"),
+    "get_fair_market_rents": (3, "Looking up fair market rents"),
+    "prepare_housing_application": (4, "Preparing application checklist"),
+    "log_housing_application": (5, "Tracking housing application"),
+    "get_housing_pipeline_status": (0, "Checking pipeline status"),
+}
+
+_DOMAIN_TOOL_STAGES: dict[str, dict[str, tuple[int, str]]] = {
+    "housing": _HOUSING_TOOL_STAGES,
+}
+
+
+def _parse_tool_output(tool_name: str, output_str: str) -> dict:
+    """Extract structured data from tool markdown output for workflow updates."""
+    payload: dict = {}
+
+    # Count programs/agencies found in search results
+    if tool_name in ("search_housing", "find_reentry_housing", "find_emergency_shelter", "get_pha_guide"):
+        # Look for markdown headers (## Program Name) or numbered items
+        headers = _re.findall(r"^#{1,3}\s+(.+)$", output_str, _re.MULTILINE)
+        numbered = _re.findall(r"^\d+\.\s+\*\*(.+?)\*\*", output_str, _re.MULTILINE)
+        programs = headers or numbered
+        # Also try to find a count statement like "Found 4 agencies"
+        count_match = _re.search(r"[Ff]ound\s+(\d+)", output_str)
+        count = int(count_match.group(1)) if count_match else len(programs)
+        payload["count"] = count
+        if programs:
+            payload["programs"] = programs[:10]  # cap at 10
+
+    elif tool_name == "log_housing_application":
+        # Extract program name and status
+        prog_match = _re.search(r"\*\*(.+?)\*\*", output_str)
+        status_match = _re.search(r"Status:\s*(\w+)", output_str) or _re.search(r"→\s*(\w+)", output_str)
+        if prog_match:
+            payload["program"] = prog_match.group(1)
+        if status_match:
+            payload["status"] = status_match.group(1)
+        payload["action"] = "updated" if "updated" in output_str.lower() else "created"
+
+    elif tool_name == "prepare_housing_application":
+        # Count checklist items
+        items = _re.findall(r"^[-*]\s+\[[ x]\]", output_str, _re.MULTILINE)
+        if items:
+            payload["checklist_count"] = len(items)
+
+    return payload
+
 
 # ---------------------------------------------------------------------------
 # App lifecycle
@@ -264,7 +320,7 @@ async def list_generated_documents():
     }
 
     results = []
-    for fp in sorted(docs_dir.iterdir(), key=lambda f: f.stat().st_mtime, reverse=True):
+    for fp in sorted(docs_dir.rglob("*"), key=lambda f: f.stat().st_mtime, reverse=True):
         if fp.is_dir() or fp.suffix not in (".md", ".txt"):
             continue
 
@@ -806,6 +862,7 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
 
     orchestrator_tool: str | None = None
     in_subagent = False
+    active_domain: str | None = None  # tracks which domain subagent is active for workflow_update
     subagent_completed = False  # True after task() returns - don't reclassify post-subagent text
     seen_nodes: set[str] = set()
     subagent_step_id: str | None = None
@@ -933,6 +990,12 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                                 elif tc_name == "crisis_response":
                                     logger.info("[orchestrator] !!! crisis_response")
                                     await ws.send_json({"type": "crisis_response"})
+                                    await ws.send_json({
+                                        "type": "workflow_update",
+                                        "domain": "crisis",
+                                        "workflow_event": "crisis",
+                                        "label": "Crisis protocol activated",
+                                    })
                                     await ws.send_json({"type": "tool_start", "tool_name": tc_name})
                                 else:
                                     logger.info("[orchestrator] calling tool: %s", tc_name)
@@ -960,6 +1023,16 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                     if isinstance(task_input, dict):
                         task_desc = task_input.get("description", "") or task_input.get("task", "")
                         subagent_type = task_input.get("subagent_type", "")
+                    # Track domain for workflow_update events
+                    if subagent_type and subagent_type in _DOMAIN_TOOL_STAGES:
+                        active_domain = subagent_type
+                        await ws.send_json({
+                            "type": "workflow_update",
+                            "domain": active_domain,
+                            "workflow_event": "start",
+                            "workflow_stage": 0,
+                            "label": f"Starting {active_domain} specialist...",
+                        })
                     if task_desc and subagent_step_id:
                         await _send_step(
                             "subagent", "started",
@@ -992,6 +1065,26 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                         )
                     else:
                         logger.warning("[subagent] tool_end without matching start for: %s (known: %s)", name, list(active_tool_step_ids.keys()))
+                    # Emit workflow_update if inside a tracked domain
+                    if active_domain and active_domain in _DOMAIN_TOOL_STAGES:
+                        stage_map = _DOMAIN_TOOL_STAGES[active_domain]
+                        if name in stage_map:
+                            stage_num, stage_label = stage_map[name]
+                            payload = _parse_tool_output(name, output_str)
+                            label = stage_label
+                            if payload.get("count"):
+                                label = f"{stage_label} — found {payload['count']}"
+                            elif payload.get("program"):
+                                label = f"{stage_label}: {payload['program']}"
+                            await ws.send_json({
+                                "type": "workflow_update",
+                                "domain": active_domain,
+                                "workflow_event": "tool_result",
+                                "tool": name,
+                                "workflow_stage": stage_num,
+                                "label": label,
+                                "payload": payload,
+                            })
                 elif name == "task":
                     # Complete any active reasoning step before ending subagent
                     if active_reasoning_step_id:
@@ -1014,6 +1107,15 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                             step_id=subagent_step_id, icon="smart_toy",
                         )
                     subagent_step_id = None
+                    # Emit workflow_update end for domain dashboards
+                    if active_domain:
+                        await ws.send_json({
+                            "type": "workflow_update",
+                            "domain": active_domain,
+                            "workflow_event": "end",
+                            "label": f"{active_domain.title()} specialist finished",
+                        })
+                        active_domain = None
                     await ws.send_json({"type": "subagent_end"})
                 else:
                     logger.info("[orchestrator] tool_end: %s -> %s", name, output_str[:300])

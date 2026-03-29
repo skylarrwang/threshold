@@ -103,9 +103,7 @@ export function RightPanel({
           )}
         >
           <div className={cn('flex items-center min-w-0', isCollapsed ? 'justify-center' : 'gap-3')}>
-            <div className="w-9 h-9 rounded-full bg-primary-fixed flex items-center justify-center shrink-0 overflow-hidden">
-              <img src="/threshold.png" alt="Threshold" className="w-12 h-12 object-contain" />
-            </div>
+            <img src="/threshold.png" alt="Threshold" className="w-8 h-8 object-contain shrink-0" />
             {!isCollapsed && (
               <div>
                 <h1 className="text-xl font-headline font-bold text-on-surface mb-0.5">Threshold</h1>

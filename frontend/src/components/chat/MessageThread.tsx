@@ -150,8 +150,10 @@ export function MessageThread() {
         })}
       </div>
 
-      {/* Agent trace — live step feed */}
-      <AgentTrace />
+      {/* Agent trace — only shown inline on mobile; on desktop it's in ContextPanel */}
+      <div className="lg:hidden">
+        <AgentTrace />
+      </div>
 
       {/* Tool call indicator (inline, above any streaming response) */}
       <ToolCard activeToolCall={activeToolCall} />

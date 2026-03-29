@@ -19,6 +19,7 @@ from .housing_search import (
     get_fair_market_rents,
     get_housing_pipeline_status,
     log_housing_application,
+    remove_housing_application,
     search_housing,
 )
 from .shelter_finder import find_emergency_shelter
@@ -49,6 +50,7 @@ __all__ = [
     "get_fair_market_rents",
     "get_fair_chance_housing_laws",
     "get_housing_pipeline_status",
+    "remove_housing_application",
     "find_emergency_shelter",
     "find_reentry_housing",
     "prepare_housing_application",

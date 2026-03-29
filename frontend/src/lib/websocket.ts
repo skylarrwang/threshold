@@ -9,6 +9,7 @@
  */
 import { useEffect, useCallback } from 'react';
 import { useChatStore } from '@/store/chatStore';
+import { useContextPanelStore } from '@/store/contextPanelStore';
 import type { WsMessage } from './api';
 
 // ── Singleton state (module-level, not per-hook) ────────────────────────────
@@ -95,6 +96,10 @@ function handleMessage(msg: WsMessage) {
 
     case 'crisis_response':
       store.setCrisisMode(true);
+      break;
+
+    case 'workflow_update':
+      useContextPanelStore.getState().handleWorkflowUpdate(msg);
       break;
 
     case 'error':

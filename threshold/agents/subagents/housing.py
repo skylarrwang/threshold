@@ -14,6 +14,7 @@ from ...tools import (
     log_housing_application,
     prepare_housing_application,
     read_user_memory,
+    remove_housing_application,
     search_housing,
 )
 
@@ -140,6 +141,7 @@ housing_subagent = {
         find_emergency_shelter,
         find_reentry_housing,
         prepare_housing_application,
+        remove_housing_application,
         get_pha_guide,
     ],
     "model": ChatOpenAI(model="grok-3-fast", base_url="https://api.x.ai/v1", api_key=os.getenv("XAI_API_KEY", "")),

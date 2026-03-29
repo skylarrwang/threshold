@@ -39,6 +39,7 @@ interface JobState {
     contact_name?: string;
     contact_email?: string;
     contact_phone?: string;
+    source?: string;
   }) => Promise<JobApplication | null>;
   updateApplication: (id: string, data: Record<string, string>) => Promise<JobApplication | null>;
   deleteApplication: (id: string) => Promise<boolean>;

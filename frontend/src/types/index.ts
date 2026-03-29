@@ -88,6 +88,7 @@ export interface JobApplication {
   offer_details?: string;
   rejection_reason?: string;
   source?: string;
+  fair_chance_employer?: boolean;
   created_at: string;
   updated_at: string;
   next_action?: string;
@@ -255,6 +256,31 @@ export interface GeneratedDocument {
   content: string;
   createdAt: string;
   wordCount: number;
+}
+
+// ── Live Context Panel ──────────────────────────────────────────────────────
+
+export type WorkflowDomain = 'housing' | 'employment' | 'benefits' | 'legal' | 'crisis';
+export type WorkflowEventType = 'start' | 'end' | 'tool_result' | 'crisis';
+
+export interface WorkflowUpdate {
+  id: string;
+  timestamp: number;
+  domain: WorkflowDomain;
+  event: WorkflowEventType;
+  tool?: string;
+  label: string;
+  workflowStage?: number;
+  payload?: Record<string, unknown>;
+}
+
+export interface DomainCardState {
+  domain: WorkflowDomain;
+  isActive: boolean;
+  startedAt: number;
+  completedAt?: number;
+  workflowStage: number;
+  events: WorkflowUpdate[];
 }
 
 export interface Milestone {

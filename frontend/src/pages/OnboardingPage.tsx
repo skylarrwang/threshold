@@ -85,9 +85,7 @@ export function OnboardingPage() {
       {/* Top bar */}
       <div className="flex items-center justify-between px-6 pt-8 pb-4 flex-shrink-0">
         <div className="flex items-center gap-2 text-primary">
-          <div className="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center shrink-0 overflow-hidden">
-            <img src="/threshold.png" alt="Threshold" className="w-11 h-11 object-contain" />
-          </div>
+          <img src="/threshold.png" alt="Threshold" className="w-8 h-8 object-contain shrink-0" />
           <span className="font-headline font-extrabold text-lg tracking-tight">Threshold</span>
         </div>
         <button

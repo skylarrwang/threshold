@@ -210,6 +210,7 @@ export async function logJobApplication(data: {
   contact_name?: string;
   contact_email?: string;
   contact_phone?: string;
+  source?: string;
 }) {
   return post<import('@/types').JobApplication>('/employment/applications', data);
 }
@@ -237,6 +238,7 @@ export type WsMessageType =
   | 'subagent_end'
   | 'agent_step'
   | 'clear_stream'
+  | 'workflow_update'
   | 'error'
   | 'pong';
 
@@ -253,6 +255,12 @@ export interface WsMessage {
   label?: string;
   detail?: string;
   icon?: string;
+  // workflow_update fields
+  domain?: string;
+  workflow_event?: string;
+  workflow_stage?: number;
+  tool?: string;
+  payload?: Record<string, unknown>;
   [key: string]: unknown;
 }
 

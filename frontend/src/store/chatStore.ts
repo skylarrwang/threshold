@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { AgentStep, Conversation, Message } from '@/types';
 
 export type WsStatus = 'connecting' | 'connected' | 'disconnected';
@@ -58,7 +59,9 @@ interface ChatState {
   clearSteps: () => void;
 }
 
-export const useChatStore = create<ChatState>()((set) => ({
+export const useChatStore = create<ChatState>()(
+  persist(
+  (set) => ({
   conversations: [firstConversation],
   activeConversationId: firstConversation.id,
   messages: [makeWelcomeMessage(firstConversation.id)],
@@ -173,4 +176,13 @@ export const useChatStore = create<ChatState>()((set) => ({
     }),
 
   clearSteps: () => set({ agentSteps: [] }),
-}));
+}),
+  {
+    name: 'threshold-chat',
+    partialize: (state) => ({
+      conversations: state.conversations,
+      activeConversationId: state.activeConversationId,
+      messages: state.messages,
+    }),
+  },
+));

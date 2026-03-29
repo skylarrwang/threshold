@@ -2,6 +2,7 @@ import type { JobApplication } from '@/types';
 
 interface KanbanCardProps {
   job: JobApplication;
+  onEdit?: (job: JobApplication) => void;
 }
 
 const logoColors = [
@@ -16,12 +17,15 @@ function getLogoColor(initial: string): string {
   return logoColors[idx];
 }
 
-export function KanbanCard({ job }: KanbanCardProps) {
+export function KanbanCard({ job, onEdit }: KanbanCardProps) {
   // Derive logo initial from company name
   const logoInitial = job.company.charAt(0).toUpperCase();
 
   return (
-    <div className="bg-surface-container-lowest p-5 rounded-xl shadow-[0_4px_16px_rgba(26,28,28,0.06)] hover:shadow-[0_8px_24px_rgba(26,28,28,0.10)] transition-shadow cursor-pointer">
+    <div
+      className="bg-surface-container-lowest p-5 rounded-xl shadow-[0_4px_16px_rgba(26,28,28,0.06)] hover:shadow-[0_8px_24px_rgba(26,28,28,0.10)] transition-shadow cursor-pointer"
+      onClick={() => onEdit?.(job)}
+    >
       <div className="flex items-start gap-3 mb-3">
         <div
           className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold font-headline flex-shrink-0 ${getLogoColor(logoInitial)}`}
@@ -36,14 +40,24 @@ export function KanbanCard({ job }: KanbanCardProps) {
         </div>
       </div>
 
-      {/* Stage label badge */}
-      {job.stage_label && (
-        <div className="flex items-center gap-1 text-on-surface-variant mb-2">
-          <span className="text-[10px] font-medium bg-surface-container-high px-2 py-0.5 rounded-full">
+      {/* Badges row */}
+      <div className="flex flex-wrap items-center gap-1 mb-2">
+        {job.stage_label && (
+          <span className="text-[10px] font-medium bg-surface-container-high px-2 py-0.5 rounded-full text-on-surface-variant">
             {job.stage_label}
           </span>
-        </div>
-      )}
+        )}
+        {job.fair_chance_employer && (
+          <span className="text-[10px] font-bold bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+            Fair Chance
+          </span>
+        )}
+        {job.source && (
+          <span className="text-[10px] font-medium bg-surface-container-high px-2 py-0.5 rounded-full text-on-surface-variant">
+            via {job.source}
+          </span>
+        )}
+      </div>
 
       {/* Interview info if scheduled */}
       {job.interview_date && (

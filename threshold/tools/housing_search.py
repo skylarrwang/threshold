@@ -837,3 +837,45 @@ def get_pending_follow_ups() -> dict:
         "interviews_upcoming": sorted(interviews_upcoming, key=lambda x: x.get("interview_date", "")),
         "deadlines_soon": sorted(deadlines_soon, key=lambda x: x.get("days_left", 0)),
     }
+
+
+@tool
+def remove_housing_application(program: str) -> str:
+    """Remove a housing application from the pipeline tracker.
+
+    Use this when the user wants to stop tracking a program — e.g. they're no
+    longer interested, the program closed, or it was logged by mistake.
+
+    Args:
+        program: Name of the housing program to remove (fuzzy-matched, case-insensitive).
+    """
+    from ..db.database import get_db
+    from ..db.models import HousingApplication
+
+    db = get_db()
+    try:
+        row = (
+            db.query(HousingApplication)
+            .filter(
+                HousingApplication.user_id == DEFAULT_USER_ID,
+                HousingApplication.program.ilike(program),
+            )
+            .first()
+        )
+        if not row:
+            return f"No application found matching \"{program}\". Call get_housing_pipeline_status() to see current applications."
+        name = row.program
+        db.delete(row)
+        db.commit()
+    finally:
+        db.close()
+
+    from ..memory.observation_stream import log_observation
+
+    log_observation(
+        agent="housing",
+        event_type="milestone",
+        content=f"Housing application removed: {name}",
+        tags=["housing", "application"],
+    )
+    return f"Removed **{name}** from the housing pipeline."
