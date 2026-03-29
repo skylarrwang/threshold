@@ -601,3 +601,38 @@ def get_housing_application_by_id(db: Session, app_id: str) -> dict | None:
     """Get a single housing application by its ID."""
     row = db.query(HousingApplication).filter_by(id=app_id).first()
     return row.to_dict() if row else None
+
+
+def update_housing_application(db: Session, app_id: str, fields: dict[str, Any]) -> dict | None:
+    """Update a housing application by ID with partial fields.
+
+    Returns the updated application as a dict, or None if not found.
+    """
+    row = db.query(HousingApplication).filter_by(id=app_id).first()
+    if not row:
+        return None
+
+    # Track status change in history
+    new_status = fields.get("status")
+    if new_status and new_status != row.status:
+        row.append_history(row.status, new_status, fields.get("notes", ""))
+
+    for key, val in fields.items():
+        if key in _HOUSING_DATE_FIELDS:
+            setattr(row, key, _parse_date_optional(val))
+        else:
+            setattr(row, key, val)
+
+    row.updated_at = datetime.now()
+    db.commit()
+    return row.to_dict()
+
+
+def delete_housing_application(db: Session, app_id: str) -> bool:
+    """Delete a housing application by ID. Returns True if deleted, False if not found."""
+    row = db.query(HousingApplication).filter_by(id=app_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True

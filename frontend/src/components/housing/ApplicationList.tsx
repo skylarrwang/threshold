@@ -38,9 +38,11 @@ const STAGE_LABELS: Record<string, string> = {
 interface ApplicationListProps {
   applications: HousingApplication[];
   onUpdateStatus?: (id: string) => void;
+  onEdit?: (app: HousingApplication) => void;
+  onDelete?: (id: string) => void;
 }
 
-export function ApplicationList({ applications, onUpdateStatus }: ApplicationListProps) {
+export function ApplicationList({ applications, onUpdateStatus, onEdit, onDelete }: ApplicationListProps) {
   // Group by stage
   const grouped: Record<string, HousingApplication[]> = {};
   for (const app of applications) {
@@ -69,6 +71,8 @@ export function ApplicationList({ applications, onUpdateStatus }: ApplicationLis
                   key={app.id}
                   application={app}
                   onUpdateStatus={onUpdateStatus}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
                 />
               ))}
             </div>

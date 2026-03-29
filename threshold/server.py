@@ -24,7 +24,7 @@ from typing import Any
 from uuid import uuid4
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -231,7 +231,12 @@ from threshold.tools.housing_search import (
     _FAIR_CHANCE_LAWS, _PIPELINE_STAGES, _STAGE_LABELS, _NEXT_ACTIONS,
     _TERMINAL_STATUSES, get_pending_follow_ups,
 )
-from threshold.db.crud import get_housing_applications, upsert_housing_application
+from threshold.db.crud import (
+    delete_housing_application,
+    get_housing_applications,
+    update_housing_application,
+    upsert_housing_application,
+)
 
 
 @app.get("/api/housing/pipeline")
@@ -296,6 +301,23 @@ class HousingApplicationCreate(BaseModel):
     housing_type: str = ""
 
 
+class HousingApplicationUpdate(BaseModel):
+    program: str | None = None
+    status: str | None = None
+    notes: str | None = None
+    follow_up_date: str | None = None
+    contact_name: str | None = None
+    contact_phone: str | None = None
+    application_url: str | None = None
+    deadline: str | None = None
+    interview_date: str | None = None
+    interview_time: str | None = None
+    interview_location: str | None = None
+    denial_reason: str | None = None
+    documents_submitted: str | None = None
+    housing_type: str | None = None
+
+
 @app.post("/api/housing/applications")
 async def create_housing_application(body: HousingApplicationCreate):
     """Log or update a housing application."""
@@ -313,6 +335,32 @@ async def create_housing_application(body: HousingApplicationCreate):
     finally:
         db.close()
     return result
+
+
+@app.patch("/api/housing/applications/{app_id}")
+async def edit_housing_application(app_id: str, body: HousingApplicationUpdate):
+    """Update a housing application by ID (partial update)."""
+    db = get_db()
+    try:
+        result = update_housing_application(db, app_id, body.model_dump(exclude_none=True))
+    finally:
+        db.close()
+    if result is None:
+        raise HTTPException(status_code=404, detail="Application not found")
+    return result
+
+
+@app.delete("/api/housing/applications/{app_id}")
+async def remove_housing_application(app_id: str):
+    """Delete a housing application by ID."""
+    db = get_db()
+    try:
+        deleted = delete_housing_application(db, app_id)
+    finally:
+        db.close()
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Application not found")
+    return {"ok": True}
 
 
 @app.get("/api/housing/fair-chance-laws/{state}")

@@ -7,6 +7,7 @@ import { Button } from '@/components/shared/Button';
 import { PipelineStepper } from '@/components/housing/PipelineStepper';
 import { ApplicationList } from '@/components/housing/ApplicationList';
 import { LogApplicationModal } from '@/components/housing/LogApplicationModal';
+import { EditApplicationModal } from '@/components/housing/EditApplicationModal';
 import { QuickActionsGrid } from '@/components/housing/QuickActionsGrid';
 import { FairChanceLawsPanel } from '@/components/housing/FairChanceLawsPanel';
 import { ReadinessChecklist } from '@/components/housing/ReadinessChecklist';
@@ -41,6 +42,8 @@ export function HousingPage() {
     fetchAlerts,
     fetchFairChanceLaw,
     setLogModalOpen,
+    setEditModalOpen,
+    deleteApplication,
   } = useHousingStore();
 
   // Fetch data on mount
@@ -91,8 +94,9 @@ export function HousingPage() {
 
   return (
     <div className="px-6 md:px-12 py-8 space-y-8 max-w-7xl mx-auto">
-      {/* Log Application Modal */}
+      {/* Modals */}
       <LogApplicationModal />
+      <EditApplicationModal />
 
       {/* ─── Section 1: Header + Summary ─── */}
       <section className="space-y-2">
@@ -160,7 +164,11 @@ export function HousingPage() {
             <div className="bg-surface-container-lowest rounded-xl p-5 shadow-[0_2px_8px_rgba(26,28,28,0.04)]">
               <PipelineStepper applications={applications} />
             </div>
-            <ApplicationList applications={applications} />
+            <ApplicationList
+              applications={applications}
+              onEdit={(app) => setEditModalOpen(true, app)}
+              onDelete={(id) => deleteApplication(id)}
+            />
           </div>
         ) : (
           <div className="bg-surface-container-lowest rounded-xl p-8 text-center shadow-[0_2px_8px_rgba(26,28,28,0.04)]">

@@ -21,9 +21,11 @@ const STATUS_BADGE_VARIANT: Record<string, 'active' | 'pending' | 'action' | 'er
 interface ApplicationCardProps {
   application: HousingApplication;
   onUpdateStatus?: (id: string) => void;
+  onEdit?: (app: HousingApplication) => void;
+  onDelete?: (id: string) => void;
 }
 
-export function ApplicationCard({ application: app, onUpdateStatus }: ApplicationCardProps) {
+export function ApplicationCard({ application: app, onUpdateStatus, onEdit, onDelete }: ApplicationCardProps) {
   const badgeVariant = STATUS_BADGE_VARIANT[app.status] || 'default';
 
   return (
@@ -69,14 +71,36 @@ export function ApplicationCard({ application: app, onUpdateStatus }: Applicatio
         <span className="text-[10px] text-on-surface-variant/60">
           Updated {new Date(app.updated_at).toLocaleDateString()}
         </span>
-        {onUpdateStatus && (
-          <button
-            onClick={() => onUpdateStatus(app.id)}
-            className="text-[10px] font-bold text-primary uppercase tracking-wide hover:underline"
-          >
-            Update
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {onUpdateStatus && (
+            <button
+              onClick={() => onUpdateStatus(app.id)}
+              className="text-[10px] font-bold text-primary uppercase tracking-wide hover:underline"
+            >
+              Update
+            </button>
+          )}
+          {onEdit && (
+            <button
+              onClick={() => onEdit(app)}
+              className="p-1 hover:bg-surface-container-high rounded-lg transition-colors"
+              title="Edit application"
+            >
+              <span className="material-symbols-outlined text-sm text-on-surface-variant">edit</span>
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={() => {
+                if (window.confirm(`Delete "${app.program}"?`)) onDelete(app.id);
+              }}
+              className="p-1 hover:bg-error/10 rounded-lg transition-colors"
+              title="Delete application"
+            >
+              <span className="material-symbols-outlined text-sm text-error">delete</span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -37,6 +37,12 @@ export async function post<T = unknown>(path: string, body?: unknown): Promise<T
   return res.json();
 }
 
+async function del<T = unknown>(path: string): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error(`DELETE ${path} failed: ${res.status}`);
+  return res.json();
+}
+
 // ---------------------------------------------------------------------------
 // Profile
 // ---------------------------------------------------------------------------
@@ -123,6 +129,14 @@ export async function logHousingApplication(data: {
   contact_phone?: string;
 }) {
   return post<import('@/types').HousingApplication>('/housing/applications', data);
+}
+
+export async function updateHousingApplication(id: string, data: Record<string, string>) {
+  return patch<import('@/types').HousingApplication>(`/housing/applications/${id}`, data);
+}
+
+export async function deleteHousingApplication(id: string) {
+  return del<{ ok: boolean }>(`/housing/applications/${id}`);
 }
 
 export async function fetchFairChanceLaws(state: string) {
