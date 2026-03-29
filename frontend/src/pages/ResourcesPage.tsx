@@ -1,5 +1,4 @@
 // STUB: placeholder page — not yet implemented. All data below is mock/demo only.
-import { useNavigate } from 'react-router-dom';
 import { useProfileStore } from '@/store/profileStore';
 import { StickyNote } from '@/components/shared/StickyNote';
 import { Button } from '@/components/shared/Button';
@@ -36,7 +35,6 @@ const ROADMAP_PHASES = [
 ];
 
 export function ResourcesPage() {
-  const navigate = useNavigate();
   const { profile } = useProfileStore();
   const counselorName = profile.support.case_worker_name ?? 'Sarah Jenkins';
 
@@ -89,14 +87,17 @@ export function ResourcesPage() {
 
               {/* Actions */}
               <div className="w-full space-y-2 pt-2">
-                <Button variant="primary" size="md" className="w-full">
+                <Button variant="primary" size="md" className="w-full" disabled>
                   <span className="material-symbols-outlined text-sm">event</span>
                   Schedule Appointment
                 </Button>
-                <Button variant="secondary" size="md" className="w-full" onClick={() => navigate('/chat')}>
+                <Button variant="secondary" size="md" className="w-full" disabled>
                   <span className="material-symbols-outlined text-sm">chat</span>
                   Send Message
                 </Button>
+                <p className="text-[10px] text-center text-on-surface-variant opacity-60">
+                  Counselor messaging coming soon
+                </p>
               </div>
             </div>
           </div>
