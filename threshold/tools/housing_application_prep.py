@@ -164,7 +164,7 @@ def prepare_housing_application(
     if not has_income:
         missing.append(
             "**No income yet?** Apply for benefits first: SNAP, Medicaid, GA (General Assistance). "
-            "Use `check_snap_eligibility()` to start. Benefits letters count as proof of income."
+            "Use `ct_snap_eligibility_check()` to start. Benefits letters count as proof of income."
         )
 
     if missing:

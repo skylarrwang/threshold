@@ -69,7 +69,7 @@ For each program the user wants to pursue:
 3. Review the document checklist with the user
 4. Identify missing documents and help get them:
    - No ID → `get_id_restoration_guide(state)`
-   - No income → `check_snap_eligibility()`, `check_medicaid_eligibility()`
+   - No income → `ct_snap_eligibility_check()`, `ct_medicaid_eligibility_check()`
    - No SSN card → provide SSA instructions
 5. Update tracker: `log_housing_application(program, "documents_gathering")`
 6. When docs are ready, move to Stage 5

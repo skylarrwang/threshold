@@ -3,13 +3,9 @@ import os
 from langchain_openai import ChatOpenAI
 
 from ...tools import (
-    check_medicaid_eligibility,
-    check_snap_eligibility,
-    check_ssi_eligibility,
     ct_medicaid_eligibility_check,
     ct_msp_eligibility_check,
     ct_snap_eligibility_check,
-    get_benefits_links,
     read_user_memory,
 )
 
@@ -22,7 +18,7 @@ Key knowledge:
 
 ### SNAP Eligibility & Re-Entry
 - The 1996 federal drug felony ban still applies in ~26 states, but many have opted out.
-  Always check state-specific status with check_snap_eligibility().
+  CT has fully opted out — drug felonies do NOT disqualify from SNAP in Connecticut.
 - **Sentence compliance:** Individuals convicted as an adult of certain severe offenses
   (murder, aggravated sexual abuse, sexual assault) are ineligible if NOT in compliance
   with the terms of their sentence. Applicants must attest to this when applying.
@@ -88,14 +84,12 @@ tiers. CT has no asset limit for MSP. Enrollment auto-qualifies for Extra Help.
 
 ## Workflow
 
-1. Always load the user's memory first with read_user_memory() to get their state,
+1. Always load the user's memory first with read_user_memory() to get their
    offense category, and any financial data already collected.
-2. If the user is in CT, use the detailed CT tools. Ask for missing info conversationally.
+2. Use the detailed CT tools for eligibility checks. Ask for missing info conversationally.
 3. When the user provides partial information, calculate with what you have and note
    what additional info would improve accuracy.
 4. Always present the estimated benefit amount when doing a SNAP check.
-5. For non-CT states, use the generic check_snap_eligibility(), check_medicaid_eligibility(),
-   and check_ssi_eligibility() tools.
 
 When the user asks about benefits generally, check all relevant programs and summarize
 which they likely qualify for.
@@ -106,14 +100,13 @@ Be direct about eligibility, but also make sure to suggest that you can also che
 benefits_subagent = {
     "name": "benefits",
     "description": (
-        "Benefits eligibility specialist for re-entry. "
+        "CT benefits eligibility specialist for re-entry. "
         "CAN: run detailed CT SNAP eligibility screening with income calculation, "
         "deductions, and estimated monthly benefit amount; check CT Medicaid/HUSKY "
         "program eligibility; check CT Medicare Savings Program (QMB/SLMB/ALMB) "
-        "eligibility; check SNAP/Medicaid/SSI eligibility by state for non-CT users; "
-        "provide links to benefits application portals. "
+        "eligibility. "
         "CANNOT: actually submit benefits applications; check eligibility for programs "
-        "beyond SNAP/Medicaid/SSI/MSP (no WIC, TANF, LIHEAP, Section 8 vouchers, etc.); "
+        "beyond SNAP/Medicaid/MSP (no WIC, TANF, LIHEAP, Section 8 vouchers, etc.); "
         "check status of existing applications; check benefit balances; handle "
         "recertifications or appeals. "
         "Use for: 'am I eligible for SNAP', 'check my Medicaid eligibility', "
@@ -124,10 +117,6 @@ benefits_subagent = {
     "system_prompt": BENEFITS_SYSTEM_PROMPT,
     "tools": [
         read_user_memory,
-        check_snap_eligibility,
-        check_medicaid_eligibility,
-        check_ssi_eligibility,
-        get_benefits_links,
         ct_snap_eligibility_check,
         ct_medicaid_eligibility_check,
         ct_msp_eligibility_check,
