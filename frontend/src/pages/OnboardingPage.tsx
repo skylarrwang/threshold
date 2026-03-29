@@ -48,7 +48,9 @@ export function OnboardingPage() {
   async function handleNameContinue() {
     setSaving(true);
     try {
-      await updateProfile('identity', { legal_name: name.trim(), state_of_release: location.trim() });
+      const trimmed = name.trim();
+      const firstName = trimmed.split(/\s+/)[0];
+      await updateProfile('identity', { legal_name: trimmed, first_name: firstName, state_of_release: location.trim() });
     } catch {
       // Backend may not be ready — proceed anyway
     } finally {
@@ -73,11 +75,11 @@ export function OnboardingPage() {
   }
 
   function handleFinish() {
-    navigate('/documents');
+    navigate('/interview');
   }
 
   function handleSkipToChat() {
-    navigate('/chat?interview=true');
+    navigate('/interview');
   }
 
   return (
@@ -261,14 +263,14 @@ export function OnboardingPage() {
                 onClick={handleFinish}
                 className="w-full py-4 rounded-xl font-headline font-bold text-sm bg-primary text-on-primary hover:bg-primary-container active:scale-[0.98] shadow-md shadow-primary/20 transition-all duration-200"
               >
-                {uploadResult ? 'Continue to Documents' : 'Skip — I\'ll upload later'}
+                {uploadResult ? 'Continue to Interview' : 'Skip — I\'ll upload later'}
                 <span className="material-symbols-outlined text-sm ml-1.5 align-middle">arrow_forward</span>
               </button>
               <button
-                onClick={handleSkipToChat}
+                onClick={() => navigate('/review')}
                 className="w-full py-3 rounded-xl font-headline font-bold text-xs text-outline hover:text-on-surface hover:bg-surface-container-low transition-all duration-200"
               >
-                Go straight to chat instead
+                Skip interview — go to profile review
               </button>
             </div>
           </div>

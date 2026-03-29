@@ -55,6 +55,7 @@ def seed():
     import json
     from threshold.db.database import get_db, init_db
     from threshold.db.crud import create_user, upsert_fields, user_exists
+    from threshold.memory.observation_stream import log_observation
 
     DEFAULT_USER_ID = os.getenv("THRESHOLD_USER_ID", "default-user")
 
@@ -72,23 +73,30 @@ def seed():
             "current_address": "261 Park St",
             "city": "New Haven",
             "zip_code": "06511",
-            "height": "5'10",
-            "eye_color": "Brown",
             "gender": "Male",
             "phone_number": "203-555-0142",
             "email": "tyler.chen@email.com",
             "age_range": "30-35",
             "gender_identity": "male",
             "state_of_release": "CT",
+            "preferred_language": "en",
             "release_date": "2026-02-15",
             "time_served": "3 years",
             "offense_category": "non-violent",
+        })
+        upsert_fields(db, DEFAULT_USER_ID, "documents", {
+            "documents_in_hand": json.dumps(["discharge_papers"]),
+            "documents_needed": json.dumps(["state_id", "birth_cert", "ss_card"]),
         })
         upsert_fields(db, DEFAULT_USER_ID, "housing", {
             "housing_status": "shelter",
         })
         upsert_fields(db, DEFAULT_USER_ID, "employment", {
-            "employment_status": "unemployed",
+            "employment_status": "actively_looking",
+            "has_ged_or_diploma": True,
+            "felony_category": "non_violent",
+            "trade_skills": json.dumps(["carpentry"]),
+            "certifications": json.dumps(["forklift"]),
         })
         upsert_fields(db, DEFAULT_USER_ID, "supervision", {
             "supervision_type": "parole",
@@ -118,11 +126,43 @@ def seed():
     finally:
         db.close()
 
+    # Memory-layer observations for texture beyond the schema
+    log_observation(
+        agent="seed",
+        event_type="reflection",
+        content="[goals] Short-term: find stable housing, get a job, restore ID documents. "
+                "Long-term: career in construction, own apartment, reconnect with family.",
+        tags=["seed", "goals"],
+    )
+    log_observation(
+        agent="seed",
+        event_type="reflection",
+        content="[strengths] Carpentry skills, reliability, GED completed, forklift certification. "
+                "Values independence, stability, family.",
+        tags=["seed", "strengths"],
+    )
+    log_observation(
+        agent="seed",
+        event_type="reflection",
+        content="[family] Has a case worker named Diana. Mom and brother are trusted support. "
+                "Reconnecting with family is a long-term goal.",
+        tags=["seed", "family"],
+    )
+    log_observation(
+        agent="seed",
+        event_type="reflection",
+        content="[attitude] Released 2026-02-15 after 3 years served (non-violent). "
+                "Concerned about background check barriers and affordable housing in Hartford.",
+        tags=["seed", "attitude"],
+    )
+
     console.print(Panel(
         "[bold green]Test profile created for Tyler Chen.[/bold green]\n\n"
-        "30-35 y/o, released 2026-02-15 from CT (Hartford area).\n"
-        "Currently in a shelter, on parole, looking for work and housing.\n"
-        "Strengths: carpentry, forklift cert, GED.\n\n"
+        "30 y/o, released 2026-02-15 from CT (New Haven area).\n"
+        "Currently in a shelter, on parole until 2028-02-15.\n"
+        "Actively looking for work. Strengths: carpentry, forklift cert, GED.\n\n"
+        "Data written to both SQLite DB and legacy encrypted profile.\n"
+        "Memory-layer observations logged for goals, strengths, and support.\n\n"
         "Run [bold]python main.py chat[/bold] to start talking to Threshold.",
         title="Seed Profile",
     ))

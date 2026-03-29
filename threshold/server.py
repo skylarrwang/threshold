@@ -685,7 +685,6 @@ async def employment_pipeline():
     active = [a for a in apps if a.get("status") not in JOB_TERMINAL_STATUSES]
     successful = [a for a in apps if a.get("status") in ("accepted", "started")]
 
-    # Find next follow-up
     follow_ups = sorted(
         [a for a in apps if a.get("follow_up_date") and a.get("status") not in JOB_TERMINAL_STATUSES],
         key=lambda a: a.get("follow_up_date", ""),
@@ -698,7 +697,6 @@ async def employment_pipeline():
             "date": follow_ups[0]["follow_up_date"],
         }
 
-    # Add next_action and stage_label to each application
     for app_item in apps:
         app_item["next_action"] = JOB_NEXT_ACTIONS.get(app_item.get("status", ""), "")
         app_item["stage_label"] = JOB_STAGE_LABELS.get(app_item.get("status", ""), app_item.get("status", ""))
@@ -805,6 +803,125 @@ async def remove_job_application(job_id: str):
     if not deleted:
         raise HTTPException(status_code=404, detail="Application not found")
     return {"ok": True}
+
+
+# ---------------------------------------------------------------------------
+# Voice interview sessions
+# ---------------------------------------------------------------------------
+
+from threshold.voice.session_manager import (
+    broadcast_event,
+    end_session,
+    get_active_session,
+    get_session,
+    register_ws,
+    unregister_ws,
+)
+
+
+VOICE_BOT_URL = os.getenv("VOICE_BOT_URL", "http://localhost:7860")
+
+
+@app.get("/api/voice/config")
+async def voice_config():
+    """Return the voice bot URL for the frontend to connect to."""
+    return {"ok": True, "bot_url": VOICE_BOT_URL}
+
+
+@app.get("/api/voice/session/active")
+async def active_voice_session():
+    """Get the current active interview session.
+
+    Reads phase from the shared state file (written by the bot process)
+    so it works cross-process without shared memory.
+    """
+    from threshold.voice.shared_state import get_phase, is_active
+
+    phase = get_phase()
+    active = is_active()
+
+    if not active or not phase:
+        session = get_active_session()
+        if not session:
+            return {"ok": False, "error": "No active session"}
+        return {
+            "ok": True,
+            "session_id": session.session_id,
+            "status": session.status,
+            "current_phase": session.current_phase,
+            "completion_pct": session.completion_pct,
+            "engagement_score": session.engagement_score,
+        }
+
+    return {
+        "ok": True,
+        "current_phase": phase,
+        "status": "active",
+    }
+
+
+@app.get("/api/voice/session/{session_id}/status")
+async def voice_session_status(session_id: str):
+    """Get current interview progress."""
+    session = get_session(session_id)
+    if not session:
+        return {"ok": False, "error": "Session not found"}
+    return {
+        "ok": True,
+        "status": session.status,
+        "current_phase": session.current_phase,
+        "completion_pct": session.completion_pct,
+        "engagement_score": session.engagement_score,
+    }
+
+
+@app.post("/api/voice/session/{session_id}/end")
+async def end_voice_session(session_id: str):
+    """End the voice session and get the post-interview synthesis."""
+    session = get_session(session_id)
+    if not session:
+        return {"ok": False, "error": "Session not found"}
+
+    if session.post_interview_result:
+        return {"ok": True, **session.post_interview_result}
+
+    return {"ok": True, "message": "Session ended", "status": session.status}
+
+
+@app.get("/api/voice/session/{session_id}/summary")
+async def voice_session_summary(session_id: str):
+    """Get the post-interview synthesis results."""
+    session = get_session(session_id)
+    if not session:
+        return {"ok": False, "error": "Session not found"}
+
+    if not session.post_interview_result:
+        return {"ok": False, "error": "Interview not yet completed"}
+
+    return {"ok": True, **session.post_interview_result}
+
+
+@app.websocket("/ws/voice/{session_id}/events")
+async def voice_session_events(ws: WebSocket, session_id: str):
+    """WebSocket for real-time interview events (field saves, observations, etc.)."""
+    session = get_session(session_id)
+    if not session:
+        await ws.close(code=4004, reason="Session not found")
+        return
+
+    await ws.accept()
+    register_ws(session_id, ws)
+
+    try:
+        while True:
+            raw = await ws.receive_text()
+            msg = json.loads(raw)
+            if msg.get("type") == "ping":
+                await ws.send_json({"type": "pong"})
+    except WebSocketDisconnect:
+        pass
+    finally:
+        unregister_ws(session_id, ws)
 
 
 # ---------------------------------------------------------------------------

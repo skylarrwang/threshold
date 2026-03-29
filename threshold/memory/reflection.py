@@ -13,7 +13,11 @@ REFLECTIONS_PATH = DATA_DIR / "memory" / "reflections.json"
 
 
 def build_memory_context(profile: UserProfile) -> str:
-    """Build a formatted string of profile + reflections + observations for prompt injection."""
+    """Build a formatted string of profile + reflections + observations for prompt injection.
+
+    The profile is expected to come from profile_bridge.load_profile_from_db(),
+    which already reads all fixed-schema fields from the DB.
+    """
     lines = []
 
     p = profile.personal

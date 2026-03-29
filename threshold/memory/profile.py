@@ -88,15 +88,15 @@ class PersonalContext(BaseModel):
     home_state: str = ""
     release_date: str = ""
     time_served: str = ""
-    offense_category: Literal["non-violent", "violent", "drug", "financial", "other"] = "other"
+    offense_category: str = "Unknown"
     comfort_with_technology: str = "moderate"
 
 
 class SituationContext(BaseModel):
-    housing_status: Literal["housed", "shelter", "couch_surfing", "unhoused", "unknown"] = "unknown"
-    employment_status: str = "unemployed"
+    housing_status: str = "Unknown"
+    employment_status: str = "Unknown"
     benefits_enrolled: list[str] = Field(default_factory=list)
-    supervision_type: Literal["none", "probation", "parole", "supervised_release"] = "none"
+    supervision_type: str = "Unknown"
     supervision_end_date: Optional[str] = None
     immediate_needs: list[str] = Field(default_factory=list)
 

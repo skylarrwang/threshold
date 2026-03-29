@@ -186,6 +186,29 @@ export function RightPanel({
             </span>
             {!isCollapsed && <span>Talk to Threshold</span>}
           </NavLink>
+
+          <NavLink
+            to="/interview"
+            onClick={() => onClose?.()}
+            title={isCollapsed ? 'Voice Interview' : undefined}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center rounded-xl transition-all duration-200 font-label text-sm mt-2',
+                isCollapsed ? 'justify-center px-0 py-3' : 'gap-3 px-4 py-3',
+                isActive
+                  ? 'bg-tertiary text-on-tertiary font-bold shadow-md'
+                  : 'bg-tertiary-container text-on-tertiary-container font-semibold hover:bg-tertiary hover:text-on-tertiary'
+              )
+            }
+          >
+            <span
+              className="material-symbols-outlined text-xl shrink-0"
+              style={{ fontVariationSettings: "'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24" }}
+            >
+              mic
+            </span>
+            {!isCollapsed && <span>Voice Interview</span>}
+          </NavLink>
         </div>
 
         {!isCollapsed && <div className="mx-6 border-t border-outline-variant/15" />}
