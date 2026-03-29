@@ -8,7 +8,7 @@ interface ChatInputProps {
 }
 
 export function ChatInput({ onSend }: ChatInputProps) {
-  const { activeConversationId, addMessage, wsStatus, isTyping, streamingMessageId } = useChatStore();
+  const { activeConversationId, addMessage, isTyping, streamingMessageId } = useChatStore();
   const profile = useProfileStore((s) => s.profile);
   const [text, setText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -51,41 +51,15 @@ export function ChatInput({ onSend }: ChatInputProps) {
     onSend(trimmed);
   }
 
-  // Connection status dot
-  const dotColor =
-    wsStatus === 'connected'
-      ? 'bg-green-500'
-      : wsStatus === 'connecting'
-        ? 'bg-amber-400'
-        : 'bg-outline/40';
-
-  const dotTitle =
-    wsStatus === 'connected'
-      ? 'Connected'
-      : wsStatus === 'connecting'
-        ? 'Connecting...'
-        : 'Disconnected';
-
   return (
     <div className="p-4 bg-surface-container-lowest flex-shrink-0">
       <div className="max-w-4xl mx-auto">
         <div
           className={cn(
-            'flex items-end gap-2 p-2 pl-3 bg-surface-container-low rounded-2xl',
+            'flex items-end gap-2 p-2 pl-4 bg-surface-container-low rounded-2xl',
             'focus-within:ring-2 focus-within:ring-primary/20 transition-all'
           )}
         >
-          {/* Connection status dot */}
-          <div className="flex items-center flex-shrink-0 mb-2 ml-0.5" title={dotTitle}>
-            <span
-              className={cn(
-                'w-2 h-2 rounded-full transition-colors duration-500',
-                dotColor,
-                wsStatus === 'connecting' && 'animate-pulse'
-              )}
-            />
-          </div>
-
           {/* Textarea */}
           <textarea
             ref={textareaRef}

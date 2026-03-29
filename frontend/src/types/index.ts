@@ -168,13 +168,10 @@ export interface Message {
 
 export interface Conversation {
   id: string;
-  participantName: string;
-  participantType: 'counselor' | 'ai' | 'resource';
+  title: string;
   lastMessage: string;
   lastTimestamp: string;
   unreadCount: number;
-  isOnline: boolean;
-  avatar?: string;
 }
 
 export type AgentStatus = 'running' | 'waiting' | 'completed' | 'failed';

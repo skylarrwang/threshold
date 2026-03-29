@@ -412,11 +412,6 @@ async def fair_chance_laws(state: str):
 async def websocket_chat(ws: WebSocket):
     await ws.accept()
 
-    config = {
-        "configurable": {"thread_id": f"threshold-ws-{DEFAULT_USER_ID}"},
-        "recursion_limit": 75,
-    }
-
     # Pre-warm the agent immediately on connect (don't wait for first message)
     import time
     t0 = time.monotonic()
@@ -440,6 +435,11 @@ async def websocket_chat(ws: WebSocket):
                 if not content:
                     continue
 
+                conv_id = msg.get("conversation_id", "default")
+                config = {
+                    "configurable": {"thread_id": f"threshold-{DEFAULT_USER_ID}-{conv_id}"},
+                    "recursion_limit": 75,
+                }
                 await _handle_chat_message(ws, agent, config, content)
 
             elif msg_type == "ping":
@@ -461,11 +461,27 @@ async def websocket_chat(ws: WebSocket):
             pass
 
 
+_checkpointer = None
+
+async def _get_checkpointer():
+    global _checkpointer
+    if _checkpointer is None:
+        import aiosqlite
+        db_path = os.path.join(os.getenv("THRESHOLD_DATA_DIR", "./data"), "checkpoints.db")
+        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+        conn = await aiosqlite.connect(db_path)
+        from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+        _checkpointer = AsyncSqliteSaver(conn)
+        await _checkpointer.setup()
+    return _checkpointer
+
+
 async def _create_agent():
     """Create the orchestrator agent. Runs in a thread because it loads
     models and reads the profile synchronously."""
     from threshold.agents.orchestrator import create_orchestrator
-    return await asyncio.to_thread(create_orchestrator)
+    checkpointer = await _get_checkpointer()
+    return await asyncio.to_thread(create_orchestrator, checkpointer=checkpointer)
 
 
 async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content: str):
@@ -515,6 +531,7 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
 
     emitted_tokens = False
     token_count = 0
+    total_token_count = 0
     t_start = time.monotonic()
     t_first_token: float | None = None
 
@@ -524,6 +541,12 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
     subagent_step_id: str | None = None
     active_tool_step_ids: dict[str, str] = {}
     pre_tool_buffer: list[str] = []  # accumulates text sent before any tool call
+    sub_buf = ""  # accumulates subagent reasoning text (local, not shared across connections)
+    active_reasoning_step_id: str | None = None  # tracks subagent reasoning step to complete later
+
+    def _pop_tool_step(tool_name: str) -> str | None:
+        """Pop a tool step ID by exact match only."""
+        return active_tool_step_ids.pop(tool_name, None)
 
     try:
         async for event in agent.astream_events(
@@ -574,17 +597,23 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                     pre_tool_buffer.append(text)
                     emitted_tokens = True
                     token_count += len(text)
+                    total_token_count += len(text)
 
                 if text and in_subagent:
-                    if not hasattr(_handle_chat_message, "_sub_buf"):
-                        _handle_chat_message._sub_buf = ""
-                    _handle_chat_message._sub_buf += text
+                    sub_buf += text
 
                 if hasattr(chunk, "tool_call_chunks") and chunk.tool_call_chunks:
                     for tc_chunk in chunk.tool_call_chunks:
                         tc_name = tc_chunk.get("name", "")
                         if tc_name:
                             if in_subagent:
+                                # Complete any active reasoning step — LLM is done thinking
+                                if active_reasoning_step_id:
+                                    await _send_step(
+                                        "reasoning", "completed", "Finished thinking",
+                                        step_id=active_reasoning_step_id, icon="neurology",
+                                    )
+                                    active_reasoning_step_id = None
                                 logger.info("[%s] calling tool: %s", node, tc_name)
                                 sid = _step_id()
                                 active_tool_step_ids[tc_name] = sid
@@ -620,7 +649,7 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                                 if tc_name == "task":
                                     logger.info("[orchestrator] delegating to subagent...")
                                     in_subagent = True
-                                    _handle_chat_message._sub_buf = ""
+                                    sub_buf = ""
                                     subagent_step_id = _step_id()
                                     await _send_step(
                                         "subagent", "started",
@@ -667,7 +696,7 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                             icon="smart_toy",
                         )
                     if not emitted_tokens:
-                        ack = _subagent_acknowledgment(subagent_type, task_desc)
+                        ack = _subagent_acknowledgment(subagent_type)
                         await ws.send_json({"type": "token", "content": ack})
                         emitted_tokens = True
                 elif in_subagent:
@@ -681,7 +710,7 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                 output_str = str(output.content) if hasattr(output, "content") else str(output)
                 if in_subagent and name != "task":
                     logger.info("[subagent] tool_end: %s -> %s", name, output_str[:300])
-                    sid = active_tool_step_ids.pop(name, None)
+                    sid = _pop_tool_step(name)
                     if sid:
                         await _send_step(
                             "tool", "completed",
@@ -689,10 +718,20 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                             step_id=sid,
                             icon=_tool_icon(name),
                         )
+                    else:
+                        logger.warning("[subagent] tool_end without matching start for: %s (known: %s)", name, list(active_tool_step_ids.keys()))
                 elif name == "task":
-                    sub_buf = getattr(_handle_chat_message, "_sub_buf", "")
-                    if sub_buf:
-                        logger.info("[subagent] reasoning: %s", sub_buf[:500])
+                    # Complete any active reasoning step before ending subagent
+                    if active_reasoning_step_id:
+                        await _send_step(
+                            "reasoning", "completed", "Finished thinking",
+                            step_id=active_reasoning_step_id, icon="neurology",
+                        )
+                        active_reasoning_step_id = None
+                    sub_buf_snapshot = sub_buf
+                    if sub_buf_snapshot:
+                        logger.info("[subagent] reasoning: %s", sub_buf_snapshot[:500])
+                    sub_buf = ""
                     logger.info("[subagent] <<< returned (%d chars): %s", len(output_str), output_str[:300])
                     in_subagent = False
                     orchestrator_tool = None
@@ -706,7 +745,7 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                 else:
                     logger.info("[orchestrator] tool_end: %s -> %s", name, output_str[:300])
                     orchestrator_tool = None
-                    sid = active_tool_step_ids.pop(name, None)
+                    sid = _pop_tool_step(name)
                     if sid:
                         await _send_step(
                             "tool", "completed",
@@ -714,6 +753,8 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                             step_id=sid,
                             icon=_tool_icon(name),
                         )
+                    else:
+                        logger.warning("[orchestrator] tool_end without matching start for: %s (known: %s)", name, list(active_tool_step_ids.keys()))
                     await ws.send_json({"type": "tool_end"})
 
             # ── LLM start (log which model is being called) ──────────
@@ -721,9 +762,16 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                 model_name = name or "unknown"
                 if in_subagent:
                     logger.info("[subagent] llm_start: %s (node=%s)", model_name, node)
+                    # Complete previous reasoning step if still active
+                    if active_reasoning_step_id:
+                        await _send_step(
+                            "reasoning", "completed", "Finished thinking",
+                            step_id=active_reasoning_step_id, icon="neurology",
+                        )
+                    active_reasoning_step_id = _step_id()
                     await _send_step(
-                        "reasoning", "started", "Specialist is thinking...",
-                        icon="neurology",
+                        "reasoning", "started", "Threshold is thinking...",
+                        step_id=active_reasoning_step_id, icon="neurology",
                     )
                 elif DEBUG_WS_STREAM:
                     logger.info("[orchestrator] llm_start: %s (node=%s)", model_name, node)
@@ -737,7 +785,7 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
         t_end = time.monotonic()
         logger.info(
             "[done] streamed %d chars in %.1fs (TTFT: %.2fs)",
-            token_count, t_end - t_start, (t_first_token or t_end) - t_start,
+            total_token_count, t_end - t_start, (t_first_token or t_end) - t_start,
         )
         logger.info("=" * 70)
         await _send_step("thinking", "completed", "Done", icon="check_circle")
@@ -749,6 +797,8 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
             "type": "error",
             "message": f"Something went wrong: {str(e)}",
         })
+        # Signal completion so the frontend cleans up any stuck steps
+        await ws.send_json({"type": "message_complete"})
 
 
 def _tool_display_label(name: str, *, done: bool = False) -> str:
@@ -793,7 +843,7 @@ def _subagent_label(description: str) -> str:
     return f"Specialist working: {description[:60]}..."
 
 
-def _subagent_acknowledgment(subagent_type: str, description: str) -> str:
+def _subagent_acknowledgment(subagent_type: str) -> str:
     messages: dict[str, str] = {
         "housing": "Let me look into housing options for you.\n\n",
         "benefits": "Let me check on benefits eligibility for you.\n\n",
