@@ -7,5 +7,6 @@ from .models import (
     EmploymentProfile,
     HealthProfile,
     BenefitsProfile,
+    DocumentUpload,
     UserPreferences,
 )

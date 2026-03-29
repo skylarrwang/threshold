@@ -36,6 +36,7 @@ from threshold.db.crud import (
     get_full_profile,
     get_intake_status,
     get_populated_fields,
+    get_uploaded_documents,
     upsert_fields,
     user_exists,
 )
@@ -220,6 +221,16 @@ async def upload_document(file: UploadFile = File(...)):
     except Exception as e:
         logger.error("OCR processing failed: %s", e)
         return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/documents/uploads")
+async def list_uploaded_documents():
+    """List all previously uploaded documents (OCR results, no image data)."""
+    db = get_db()
+    try:
+        return get_uploaded_documents(db, DEFAULT_USER_ID)
+    finally:
+        db.close()
 
 
 # ---------------------------------------------------------------------------

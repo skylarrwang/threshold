@@ -241,6 +241,27 @@ class HousingApplication(Base):
         }
 
 
+class DocumentUpload(Base):
+    """Logs each OCR document upload — no image bytes stored."""
+    __tablename__ = "document_upload"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str] = mapped_column(String, nullable=False)
+    document_type: Mapped[str] = mapped_column(String, nullable=False)
+    sections_updated: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="[]")
+    fields_written: Mapped[int] = mapped_column(default=0)
+    uploaded_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "document_type": self.document_type,
+            "sections_updated": json.loads(self.sections_updated or "[]"),
+            "fields_written": self.fields_written,
+            "uploaded_at": self.uploaded_at.isoformat() if self.uploaded_at else "",
+        }
+
+
 class UserPreferences(Base):
     __tablename__ = "user_preferences"
 

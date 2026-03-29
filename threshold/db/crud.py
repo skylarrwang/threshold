@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from .models import (
     BenefitsProfile,
+    DocumentUpload,
     EmploymentProfile,
     HealthProfile,
     HousingApplication,
