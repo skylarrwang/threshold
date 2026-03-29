@@ -14,6 +14,62 @@ DATA_DIR = Path(os.getenv("THRESHOLD_DATA_DIR", "./data"))
 PROFILE_PATH = DATA_DIR / "profile" / "structured_profile.json.enc"
 
 
+class HouseholdMember(BaseModel):
+    relationship: str = ""  # "self", "child", "spouse", "parent", etc.
+    age: Optional[int] = None
+    is_permanently_disabled: bool = False
+    is_temporarily_disabled: bool = False
+    is_blind: bool = False
+    is_highschool_student: bool = False
+
+
+class IncomeDetail(BaseModel):
+    job_income_monthly: float = 0.0
+    ssi: float = 0.0
+    social_security: float = 0.0
+    child_support_received: float = 0.0
+    unemployment: float = 0.0
+    interest_dividends: float = 0.0
+    rental_income: float = 0.0
+    alimony: float = 0.0
+    veterans_benefits: float = 0.0
+    workers_comp: float = 0.0
+    pensions: float = 0.0
+    other_income: float = 0.0
+
+
+class HousingExpenses(BaseModel):
+    rent_or_mortgage: float = 0.0
+    separate_heating: bool = False
+    separate_cooling: bool = False
+    separate_telephone: bool = False
+
+
+class AssetDetail(BaseModel):
+    savings: float = 0.0
+    checking: float = 0.0
+    cash_on_hand: float = 0.0
+    stocks_bonds_cds: float = 0.0
+    retirement_accounts: float = 0.0
+    other_assets: float = 0.0
+
+
+class FinancialContext(BaseModel):
+    household_size: int = 1
+    household_members: list[HouseholdMember] = Field(default_factory=list)
+    num_dependents_under_19: int = 0
+    is_employed: bool = False
+    has_worked_in_past_5_years: bool = False
+    is_caregiver: bool = False
+    income: IncomeDetail = Field(default_factory=IncomeDetail)
+    child_support_paid: float = 0.0
+    dependent_care_costs: float = 0.0
+    medical_expenses_elderly_disabled: float = 0.0
+    housing: HousingExpenses = Field(default_factory=HousingExpenses)
+    assets: AssetDetail = Field(default_factory=AssetDetail)
+    has_received_cash_assistance: bool = False
+
+
 class PersonalContext(BaseModel):
     name: Optional[str] = None
     first_name: Optional[str] = None
@@ -76,6 +132,7 @@ class UserProfile(BaseModel):
     goals: GoalsContext = Field(default_factory=GoalsContext)
     support: SupportContext = Field(default_factory=SupportContext)
     preferences: PreferenceContext = Field(default_factory=PreferenceContext)
+    financial: FinancialContext = Field(default_factory=FinancialContext)
 
 
 def save_profile(profile: UserProfile) -> None:

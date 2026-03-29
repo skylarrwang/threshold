@@ -1,6 +1,13 @@
 import { create } from 'zustand';
 import type { HousingPipelineSummary, HousingApplication, HousingAlerts, FairChanceLaw } from '@/types';
-import { fetchHousingPipeline, logHousingApplication, fetchHousingAlerts, fetchFairChanceLaws } from '@/lib/api';
+import {
+  fetchHousingPipeline,
+  logHousingApplication,
+  updateHousingApplication,
+  deleteHousingApplication,
+  fetchHousingAlerts,
+  fetchFairChanceLaws,
+} from '@/lib/api';
 
 interface HousingState {
   pipeline: HousingPipelineSummary | null;
@@ -15,6 +22,8 @@ interface HousingState {
 
   // Modal state
   logModalOpen: boolean;
+  editModalOpen: boolean;
+  editingApplication: HousingApplication | null;
 
   // Actions
   fetchPipeline: () => Promise<void>;
@@ -27,8 +36,11 @@ interface HousingState {
     contact_name?: string;
     contact_phone?: string;
   }) => Promise<HousingApplication | null>;
+  updateApplication: (id: string, data: Record<string, string>) => Promise<HousingApplication | null>;
+  deleteApplication: (id: string) => Promise<boolean>;
   fetchFairChanceLaw: (state: string) => Promise<void>;
   setLogModalOpen: (open: boolean) => void;
+  setEditModalOpen: (open: boolean, app?: HousingApplication) => void;
 }
 
 export const useHousingStore = create<HousingState>()((set, get) => ({
@@ -43,6 +55,8 @@ export const useHousingStore = create<HousingState>()((set, get) => ({
   fairChanceLawLoading: false,
 
   logModalOpen: false,
+  editModalOpen: false,
+  editingApplication: null,
 
   async fetchPipeline() {
     set({ pipelineLoading: true, pipelineError: null });
@@ -75,6 +89,26 @@ export const useHousingStore = create<HousingState>()((set, get) => ({
     }
   },
 
+  async updateApplication(id, data) {
+    try {
+      const result = await updateHousingApplication(id, data);
+      await get().fetchPipeline();
+      return result;
+    } catch {
+      return null;
+    }
+  },
+
+  async deleteApplication(id) {
+    try {
+      await deleteHousingApplication(id);
+      await get().fetchPipeline();
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
   async fetchFairChanceLaw(state: string) {
     set({ fairChanceLawLoading: true });
     try {
@@ -87,5 +121,9 @@ export const useHousingStore = create<HousingState>()((set, get) => ({
 
   setLogModalOpen(open: boolean) {
     set({ logModalOpen: open });
+  },
+
+  setEditModalOpen(open: boolean, app?: HousingApplication) {
+    set({ editModalOpen: open, editingApplication: app ?? null });
   },
 }));
