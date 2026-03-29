@@ -13,7 +13,10 @@ export interface ProgressSummary {
 }
 
 export function useProgressSummary(): ProgressSummary {
-  const housing = useHousingStore((s) => s.voucher.progressPercent);
+  const pipeline = useHousingStore((s) => s.pipeline);
+  const housing = pipeline
+    ? Math.round((pipeline.approved_count / Math.max(pipeline.total_count, 1)) * 100)
+    : 0;
   const jobs = useJobStore((s) => s.jobs);
   const benefits = useBenefitsStore((s) => s.benefits);
   const documents = useDocumentsStore((s) => s.completionPercent);
