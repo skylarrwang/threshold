@@ -155,18 +155,6 @@ export interface BenefitApplication {
   icon: string;
 }
 
-export type DocumentStatus = 'verified' | 'in_progress' | 'missing' | 'expired';
-
-export interface Document {
-  id: string;
-  name: string;
-  category: 'identity' | 'legal' | 'employment' | 'financial' | 'health';
-  status: DocumentStatus;
-  uploadedDate?: string;
-  expiryDate?: string;
-  notes?: string;
-}
-
 export interface Message {
   id: string;
   conversationId: string;

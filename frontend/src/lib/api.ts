@@ -74,6 +74,18 @@ export async function fetchPostOcrSummary() {
   return get('/intake/post-ocr-summary');
 }
 
+export interface UploadedDocument {
+  id: string;
+  document_type: string;
+  sections_updated: string[];
+  fields_written: number;
+  uploaded_at: string;
+}
+
+export async function fetchUploadedDocuments() {
+  return get<UploadedDocument[]>('/documents/uploads');
+}
+
 export async function uploadDocument(file: File) {
   const form = new FormData();
   form.append('file', file);

@@ -23,7 +23,7 @@ from typing import Any
 from google import genai
 from google.genai import types
 
-from threshold.db.crud import upsert_from_extraction
+from threshold.db.crud import save_document_upload, upsert_from_extraction
 from threshold.db.database import get_db
 
 logger = logging.getLogger(__name__)
@@ -292,10 +292,14 @@ def process_document(
     mapped = map_to_schema(raw)
     fields_count = sum(len(fields) for fields in mapped.values())
 
+    sections = list(mapped.keys())
+
     if mapped:
         db = get_db()
         try:
             upsert_from_extraction(db, user_id, mapped)
+            save_document_upload(db, user_id, raw.get("document_type", "unknown"),
+                                sections, fields_count)
         finally:
             db.close()
 
@@ -304,7 +308,7 @@ def process_document(
         "raw_extraction": raw,
         "mapped_fields": mapped,
         "fields_written": fields_count,
-        "sections_updated": list(mapped.keys()),
+        "sections_updated": sections,
     }
 
 

@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from .models import (
     BenefitsProfile,
+    DocumentUpload,
     EmploymentProfile,
     HealthProfile,
     HousingApplication,
@@ -601,3 +602,37 @@ def get_housing_application_by_id(db: Session, app_id: str) -> dict | None:
     """Get a single housing application by its ID."""
     row = db.query(HousingApplication).filter_by(id=app_id).first()
     return row.to_dict() if row else None
+
+
+# ---------------------------------------------------------------------------
+# Document upload tracking
+# ---------------------------------------------------------------------------
+
+def save_document_upload(
+    db: Session,
+    user_id: str,
+    document_type: str,
+    sections_updated: list[str],
+    fields_written: int,
+) -> dict:
+    """Log a document upload after OCR processing."""
+    upload = DocumentUpload(
+        user_id=user_id,
+        document_type=document_type,
+        sections_updated=json.dumps(sections_updated),
+        fields_written=fields_written,
+    )
+    db.add(upload)
+    db.commit()
+    return upload.to_dict()
+
+
+def get_uploaded_documents(db: Session, user_id: str) -> list[dict]:
+    """Get all document uploads for a user, most recent first."""
+    rows = (
+        db.query(DocumentUpload)
+        .filter_by(user_id=user_id)
+        .order_by(DocumentUpload.uploaded_at.desc())
+        .all()
+    )
+    return [r.to_dict() for r in rows]
