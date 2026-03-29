@@ -26,6 +26,8 @@ from .shelter_finder import find_emergency_shelter
 from .reentry_housing_db import find_reentry_housing
 from .housing_application_prep import prepare_housing_application
 from .pha_guide import get_pha_guide
+from .document_writer import save_document
+from .resume_generator import generate_resume
 
 __all__ = [
     "crisis_response",
@@ -55,4 +57,6 @@ __all__ = [
     "find_reentry_housing",
     "prepare_housing_application",
     "get_pha_guide",
+    "save_document",
+    "generate_resume",
 ]

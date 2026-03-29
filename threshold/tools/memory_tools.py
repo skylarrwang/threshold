@@ -10,9 +10,16 @@ DEFAULT_USER_ID = os.getenv("THRESHOLD_USER_ID", "default-user")
 
 @tool
 def read_user_memory() -> str:
-    """Read the user's profile, recent reflections, and recent observations.
+    """Read the user's full profile from the database.
     Call this before any task that requires understanding the user's situation.
-    Returns a formatted string summary.
+    Returns a formatted string summary including:
+    - Identity (name, DOB, contact info)
+    - Employment (skills, certifications, education)
+    - Housing situation
+    - Supervision details
+    - Health info
+    - Financial situation
+    - Goals and strengths
     """
     from ..db.database import get_db
     from ..db.profile_bridge import load_profile_from_db
@@ -70,26 +77,33 @@ def _build_applications_supplement() -> str:
 
 
 @tool
-def update_profile_field(field_path: str, value: str) -> str:
+def update_profile_field(section: str, field: str, value: str) -> str:
     """Update a specific field in the user's profile.
-    Use dot notation: e.g. "situation.housing_status" or "preferences.check_in_frequency".
 
     Args:
-        field_path: Dot-separated path to the field (e.g. "situation.housing_status")
-        value: New value as a string
+        section: The profile section (identity, employment, housing, supervision, health, benefits, financial, goals, documents)
+        field: The field name within that section
+        value: New value as a string (use "true"/"false" for booleans, JSON for arrays)
     """
     from ..db.database import get_db
-    from ..db.profile_bridge import update_field_in_db
+    from ..db.crud import upsert_fields
 
     db = get_db()
     try:
-        result = update_field_in_db(db, field_path, value)
-        return result
-    except Exception as e:
-        logger.error("Failed to update %s: %s", field_path, e)
-        return f"Error updating {field_path}: {e}"
+        # Handle JSON arrays and booleans
+        if value.lower() in ("true", "false"):
+            parsed_value = value.lower() == "true"
+        elif value.startswith("[") and value.endswith("]"):
+            import json
+            parsed_value = json.loads(value)
+        else:
+            parsed_value = value
+
+        upsert_fields(db, DEFAULT_USER_ID, section, {field: parsed_value})
     finally:
         db.close()
+
+    return f"Updated {section}.{field} to: {value}"
 
 
 @tool

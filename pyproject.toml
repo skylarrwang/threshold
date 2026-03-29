@@ -23,4 +23,6 @@ dependencies = [
     "typer>=0.24.1",
     "uvicorn>=0.34",
     "aiosqlite>=0.22.1",
+    "markdown>=3.10.2",
+    "xhtml2pdf>=0.2.17",
 ]

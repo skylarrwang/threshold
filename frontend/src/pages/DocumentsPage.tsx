@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDocumentsStore } from '@/store/documentsStore';
 import type { GeneratedDocument } from '@/types';
 import { Button } from '@/components/shared/Button';
-import { uploadDocument, type UploadedDocument } from '@/lib/api';
+import { uploadDocument, getGeneratedDocumentDownloadUrl, type UploadedDocument } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { titleCase, formatFieldValue } from '@/lib/format';
 
@@ -622,7 +622,23 @@ function GeneratedSection() {
             {doc.content.slice(0, 120)}...
           </p>
 
-          <div className="flex gap-2 mt-auto">
+          <div className="flex gap-2 mt-auto flex-wrap">
+            <a
+              href={`${getGeneratedDocumentDownloadUrl(doc.id)}?format=pdf`}
+              download
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-primary text-on-primary hover:bg-primary/90 transition-colors"
+            >
+              <span className="material-symbols-outlined text-sm">picture_as_pdf</span>
+              PDF
+            </a>
+            <a
+              href={`${getGeneratedDocumentDownloadUrl(doc.id)}?format=md`}
+              download
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors"
+            >
+              <span className="material-symbols-outlined text-sm">code</span>
+              Markdown
+            </a>
             <button
               onClick={() => handleCopy(doc)}
               className={cn(
@@ -642,7 +658,7 @@ function GeneratedSection() {
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors"
             >
               <span className="material-symbols-outlined text-sm">chat</span>
-              Edit in Chat
+              Edit
             </button>
           </div>
         </div>
