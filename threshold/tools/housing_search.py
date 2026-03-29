@@ -1,17 +1,13 @@
 from __future__ import annotations
 
-import json
 import os
 import re
 from datetime import datetime, timedelta
-from pathlib import Path
-from uuid import uuid4
 
 import httpx
 from langchain_core.tools import tool
 
-DATA_DIR = Path(os.getenv("THRESHOLD_DATA_DIR", "./data"))
-HOUSING_APPS_LOG = DATA_DIR / "tracking" / "housing_applications.json"
+DEFAULT_USER_ID = os.getenv("THRESHOLD_USER_ID", "default-user")
 
 HUD_API_KEY = os.getenv("HUD_API_KEY", "")
 API_211_KEY = os.getenv("API_211_KEY", "")
@@ -529,45 +525,6 @@ _NEXT_ACTIONS: dict[str, str] = {
 _TERMINAL_STATUSES = {"moved_in", "denied", "appeal_filed"}
 
 
-def _fuzzy_match_program(apps: list[dict], program: str) -> dict | None:
-    """Find an existing application by program name using fuzzy matching.
-
-    Matches on: exact name, one contains the other, or shared significant words.
-    """
-    name_lower = program.lower().strip()
-    name_words = set(name_lower.split()) - {"the", "a", "an", "of", "for", "in", "and", "-", "program"}
-
-    best: dict | None = None
-    best_score = 0
-
-    for app in apps:
-        existing_lower = app["program"].lower().strip()
-
-        # Exact match
-        if existing_lower == name_lower:
-            return app
-
-        # One contains the other
-        if name_lower in existing_lower or existing_lower in name_lower:
-            score = min(len(name_lower), len(existing_lower))
-            if score > best_score:
-                best = app
-                best_score = score
-                continue
-
-        # Shared significant words (at least 2 matching words of 4+ chars)
-        existing_words = set(existing_lower.split()) - {"the", "a", "an", "of", "for", "in", "and", "-", "program"}
-        overlap = name_words & existing_words
-        long_overlap = [w for w in overlap if len(w) >= 4]
-        if len(long_overlap) >= 2:
-            score = len(long_overlap)
-            if score > best_score:
-                best = app
-                best_score = score
-
-    return best
-
-
 @tool
 def log_housing_application(
     program: str,
@@ -607,74 +564,24 @@ def log_housing_application(
         documents_submitted: Comma-separated list of documents submitted (e.g. "photo_id, ssn_card, income_proof")
         housing_type: Type of housing: section_8, transitional, private_rental, recovery, rapid_rehousing
     """
-    HOUSING_APPS_LOG.parent.mkdir(parents=True, exist_ok=True)
-    apps: list[dict] = []
-    if HOUSING_APPS_LOG.exists():
-        try:
-            apps = json.loads(HOUSING_APPS_LOG.read_text())
-        except (json.JSONDecodeError, OSError):
-            pass
+    from ..db.crud import upsert_housing_application
+    from ..db.database import get_db
 
-    existing = _fuzzy_match_program(apps, program)
+    db = get_db()
+    try:
+        result_dict = upsert_housing_application(
+            db, DEFAULT_USER_ID, program, status,
+            notes=notes, follow_up_date=follow_up_date, contact_name=contact_name,
+            contact_phone=contact_phone, application_url=application_url, deadline=deadline,
+            interview_date=interview_date, interview_time=interview_time,
+            interview_location=interview_location, denial_reason=denial_reason,
+            documents_submitted=documents_submitted, housing_type=housing_type,
+        )
+    finally:
+        db.close()
 
-    now = datetime.now().isoformat()
-    action = "updated"
-
-    # Fields that get set/updated when provided
-    _optional_fields = {
-        "follow_up_date": follow_up_date,
-        "contact_name": contact_name,
-        "contact_phone": contact_phone,
-        "application_url": application_url,
-        "deadline": deadline,
-        "interview_date": interview_date,
-        "interview_time": interview_time,
-        "interview_location": interview_location,
-        "denial_reason": denial_reason,
-        "documents_submitted": documents_submitted,
-        "housing_type": housing_type,
-    }
-
-    if existing:
-        old_status = existing.get("status", "")
-        old_notes = existing.get("notes", "")
-
-        # Record status change in history
-        history = existing.get("history", [])
-        history.append({
-            "from_status": old_status,
-            "to_status": status,
-            "notes": notes or f"Status changed from {old_status} to {status}",
-            "date": now,
-        })
-        existing["history"] = history
-        existing["status"] = status
-        existing["updated_at"] = now
-        if notes:
-            existing["notes"] = notes
-        if follow_up_date:
-            existing["follow_up_date"] = follow_up_date
-        if contact_name:
-            existing["contact_name"] = contact_name
-        if contact_phone:
-            existing["contact_phone"] = contact_phone
-    else:
-        action = "created"
-        entry: dict = {
-            "id": str(uuid4()),
-            "program": program,
-            "status": status,
-            "notes": notes,
-            "created_at": now,
-            "updated_at": now,
-            "history": [],
-        }
-        for key, value in _optional_fields.items():
-            if value:
-                entry[key] = value
-        apps.append(entry)
-
-    HOUSING_APPS_LOG.write_text(json.dumps(apps, indent=2))
+    history = result_dict.get("history", [])
+    action = "updated" if history else "created"
 
     from ..memory.observation_stream import log_observation
 
@@ -687,10 +594,9 @@ def log_housing_application(
 
     next_action = _NEXT_ACTIONS.get(status, "")
     label = _STAGE_LABELS.get(status, status)
-    matched_name = existing["program"] if existing else program
-    result = f"**{matched_name}** — {label} ({action})"
-    if existing and action == "updated":
-        result += f"\n*Updated existing entry (was: {existing['history'][-1]['from_status']})*"
+    result = f"**{result_dict['program']}** — {label} ({action})"
+    if action == "updated" and history:
+        result += f"\n*Updated existing entry (was: {history[-1].get('from_status', '')})*"
     if next_action:
         result += f"\n**Next step:** {next_action}"
     if follow_up_date:
@@ -716,12 +622,14 @@ def get_housing_pipeline_status() -> str:
     Returns a summary of every program the user has tracked, organized by
     pipeline stage, with next actions for each.
     """
-    apps: list[dict] = []
-    if HOUSING_APPS_LOG.exists():
-        try:
-            apps = json.loads(HOUSING_APPS_LOG.read_text())
-        except (json.JSONDecodeError, OSError):
-            pass
+    from ..db.crud import get_housing_applications
+    from ..db.database import get_db
+
+    db = get_db()
+    try:
+        apps = get_housing_applications(db, DEFAULT_USER_ID)
+    finally:
+        db.close()
 
     if not apps:
         return (
@@ -843,12 +751,14 @@ def get_housing_pipeline_status() -> str:
 
 def get_pending_follow_ups() -> dict:
     """Check for overdue and upcoming follow-ups. Called at session start, not by user."""
-    apps: list[dict] = []
-    if HOUSING_APPS_LOG.exists():
-        try:
-            apps = json.loads(HOUSING_APPS_LOG.read_text())
-        except (json.JSONDecodeError, OSError):
-            pass
+    from ..db.crud import get_housing_applications
+    from ..db.database import get_db
+
+    db = get_db()
+    try:
+        apps = get_housing_applications(db, DEFAULT_USER_ID)
+    finally:
+        db.close()
 
     if not apps:
         return {"overdue": [], "upcoming_7_days": [], "interviews_upcoming": [], "deadlines_soon": []}

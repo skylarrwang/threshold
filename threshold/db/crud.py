@@ -16,6 +16,7 @@ from .models import (
     BenefitsProfile,
     EmploymentProfile,
     HealthProfile,
+    HousingApplication,
     HousingProfile,
     SupervisionProfile,
     UserDocuments,
@@ -505,3 +506,98 @@ def get_intake_status(db: Session, user_id: str) -> dict[str, Any]:
         "critical_count": sum(len(v) for v in missing_critical.values()),
         "important_count": sum(len(v) for v in missing_important.values()),
     }
+
+
+# ---------------------------------------------------------------------------
+# Housing application tracking
+# ---------------------------------------------------------------------------
+
+_HOUSING_DATE_FIELDS = {"follow_up_date", "deadline", "interview_date"}
+
+
+def _parse_date_optional(val: str | None) -> date | None:
+    if not val:
+        return None
+    try:
+        return date.fromisoformat(val)
+    except (ValueError, TypeError):
+        return None
+
+
+def upsert_housing_application(
+    db: Session,
+    user_id: str,
+    program: str,
+    status: str,
+    notes: str = "",
+    **kwargs: Any,
+) -> dict:
+    """Create or update a housing application (fuzzy-match by program name).
+
+    Returns the application as a plain dict.
+    """
+    # Fuzzy match: case-insensitive program name
+    existing = (
+        db.query(HousingApplication)
+        .filter(
+            HousingApplication.user_id == user_id,
+            HousingApplication.program.ilike(program),
+        )
+        .first()
+    )
+
+    if existing:
+        old_status = existing.status
+        existing.append_history(old_status, status, notes)
+        existing.status = status
+        existing.updated_at = datetime.now()
+        if notes:
+            existing.notes = notes
+        # Update optional fields if provided
+        for key in (
+            "follow_up_date", "contact_name", "contact_phone", "application_url",
+            "deadline", "interview_date", "interview_time", "interview_location",
+            "denial_reason", "documents_submitted", "housing_type",
+        ):
+            val = kwargs.get(key)
+            if val:
+                if key in _HOUSING_DATE_FIELDS:
+                    setattr(existing, key, _parse_date_optional(val))
+                else:
+                    setattr(existing, key, val)
+        db.commit()
+        return existing.to_dict()
+
+    # Create new
+    app = HousingApplication(user_id=user_id, program=program, status=status, notes=notes)
+    for key in (
+        "follow_up_date", "contact_name", "contact_phone", "application_url",
+        "deadline", "interview_date", "interview_time", "interview_location",
+        "denial_reason", "documents_submitted", "housing_type",
+    ):
+        val = kwargs.get(key)
+        if val:
+            if key in _HOUSING_DATE_FIELDS:
+                setattr(app, key, _parse_date_optional(val))
+            else:
+                setattr(app, key, val)
+    db.add(app)
+    db.commit()
+    return app.to_dict()
+
+
+def get_housing_applications(db: Session, user_id: str) -> list[dict]:
+    """Get all housing applications for a user, ordered by updated_at desc."""
+    rows = (
+        db.query(HousingApplication)
+        .filter_by(user_id=user_id)
+        .order_by(HousingApplication.updated_at.desc())
+        .all()
+    )
+    return [r.to_dict() for r in rows]
+
+
+def get_housing_application_by_id(db: Session, app_id: str) -> dict | None:
+    """Get a single housing application by its ID."""
+    row = db.query(HousingApplication).filter_by(id=app_id).first()
+    return row.to_dict() if row else None

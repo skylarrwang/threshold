@@ -180,6 +180,67 @@ class BenefitsProfile(Base):
     veteran_status: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
 
 
+class HousingApplication(Base):
+    __tablename__ = "housing_application"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    program: Mapped[str] = mapped_column(String, nullable=False)
+    status: Mapped[str] = mapped_column(String, nullable=False, default="discovered")
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    follow_up_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    contact_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    contact_phone: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    application_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    deadline: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    interview_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    interview_time: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    interview_location: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    denial_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    documents_submitted: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    housing_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    # JSON array of {from_status, to_status, notes, date}
+    history: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="[]")
+
+    def get_history(self) -> list[dict]:
+        return json.loads(self.history or "[]")
+
+    def append_history(self, from_status: str, to_status: str, notes: str = "") -> None:
+        h = self.get_history()
+        h.append({
+            "from_status": from_status,
+            "to_status": to_status,
+            "notes": notes or f"Status changed from {from_status} to {to_status}",
+            "date": datetime.now().isoformat(),
+        })
+        self.history = json.dumps(h)
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "program": self.program,
+            "status": self.status,
+            "notes": self.notes or "",
+            "created_at": self.created_at.isoformat() if self.created_at else "",
+            "updated_at": self.updated_at.isoformat() if self.updated_at else "",
+            "follow_up_date": self.follow_up_date.isoformat() if self.follow_up_date else "",
+            "contact_name": self.contact_name or "",
+            "contact_phone": self.contact_phone or "",
+            "application_url": self.application_url or "",
+            "deadline": self.deadline.isoformat() if self.deadline else "",
+            "interview_date": self.interview_date.isoformat() if self.interview_date else "",
+            "interview_time": self.interview_time or "",
+            "interview_location": self.interview_location or "",
+            "denial_reason": self.denial_reason or "",
+            "documents_submitted": self.documents_submitted or "",
+            "housing_type": self.housing_type or "",
+            "history": self.get_history(),
+        }
+
+
 class UserPreferences(Base):
     __tablename__ = "user_preferences"
 

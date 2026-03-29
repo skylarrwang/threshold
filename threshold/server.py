@@ -226,29 +226,23 @@ async def upload_document(file: UploadFile = File(...)):
 # Housing pipeline
 # ---------------------------------------------------------------------------
 
-HOUSING_APPS_LOG = DATA_DIR / "tracking" / "housing_applications.json"
-
-# Import fair chance laws data from the housing tools
+# Import constants from housing tools (not file I/O)
 from threshold.tools.housing_search import (
     _FAIR_CHANCE_LAWS, _PIPELINE_STAGES, _STAGE_LABELS, _NEXT_ACTIONS,
     _TERMINAL_STATUSES, get_pending_follow_ups,
 )
-
-
-def _read_housing_apps() -> list[dict]:
-    """Read housing applications from the tracking file."""
-    if not HOUSING_APPS_LOG.exists():
-        return []
-    try:
-        return json.loads(HOUSING_APPS_LOG.read_text())
-    except (json.JSONDecodeError, OSError):
-        return []
+from threshold.db.crud import get_housing_applications, upsert_housing_application
 
 
 @app.get("/api/housing/pipeline")
 async def housing_pipeline():
     """Return the full housing application pipeline as structured JSON."""
-    apps = _read_housing_apps()
+    db = get_db()
+    try:
+        apps = get_housing_applications(db, DEFAULT_USER_ID)
+    finally:
+        db.close()
+
     active = [a for a in apps if a.get("status") not in _TERMINAL_STATUSES]
     approved = [a for a in apps if a.get("status") in ("approved", "moved_in")]
 
@@ -305,62 +299,19 @@ class HousingApplicationCreate(BaseModel):
 @app.post("/api/housing/applications")
 async def create_housing_application(body: HousingApplicationCreate):
     """Log or update a housing application."""
-    HOUSING_APPS_LOG.parent.mkdir(parents=True, exist_ok=True)
-    apps = _read_housing_apps()
-
-    # Check for existing program (update instead of duplicate)
-    existing = None
-    for a in apps:
-        if a["program"].lower() == body.program.lower():
-            existing = a
-            break
-
-    now = datetime.now().isoformat()
-
-    # Fields that get set/updated when provided
-    _optional_fields = {
-        "follow_up_date": body.follow_up_date,
-        "contact_name": body.contact_name,
-        "contact_phone": body.contact_phone,
-        "application_url": body.application_url,
-        "deadline": body.deadline,
-        "interview_date": body.interview_date,
-        "interview_time": body.interview_time,
-        "interview_location": body.interview_location,
-        "denial_reason": body.denial_reason,
-        "documents_submitted": body.documents_submitted,
-        "housing_type": body.housing_type,
-    }
-
-    if existing:
-        old_status = existing.get("status", "")
-        existing["status"] = body.status
-        existing["updated_at"] = now
-        if body.notes:
-            history = existing.get("history", [])
-            history.append({"status": old_status, "notes": body.notes, "date": now})
-            existing["history"] = history
-        for key, value in _optional_fields.items():
-            if value:
-                existing[key] = value
-        result = existing
-    else:
-        entry = {
-            "id": str(uuid4()),
-            "program": body.program,
-            "status": body.status,
-            "notes": body.notes,
-            "created_at": now,
-            "updated_at": now,
-            "history": [],
-        }
-        for key, value in _optional_fields.items():
-            if value:
-                entry[key] = value
-        apps.append(entry)
-        result = entry
-
-    HOUSING_APPS_LOG.write_text(json.dumps(apps, indent=2))
+    db = get_db()
+    try:
+        result = upsert_housing_application(
+            db, DEFAULT_USER_ID, body.program, body.status,
+            notes=body.notes, follow_up_date=body.follow_up_date,
+            contact_name=body.contact_name, contact_phone=body.contact_phone,
+            application_url=body.application_url, deadline=body.deadline,
+            interview_date=body.interview_date, interview_time=body.interview_time,
+            interview_location=body.interview_location, denial_reason=body.denial_reason,
+            documents_submitted=body.documents_submitted, housing_type=body.housing_type,
+        )
+    finally:
+        db.close()
     return result
 
 
