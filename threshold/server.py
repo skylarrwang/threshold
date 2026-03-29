@@ -612,6 +612,7 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
 
     orchestrator_tool: str | None = None
     in_subagent = False
+    subagent_completed = False  # True after task() returns - don't reclassify post-subagent text
     seen_nodes: set[str] = set()
     subagent_step_id: str | None = None
     active_tool_step_ids: dict[str, str] = {}
@@ -703,8 +704,10 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                                 # intermediate tools (read_user_memory, etc.).
                                 # Text before task() is the user-facing
                                 # acknowledgment ("Let me look into that") — keep it.
+                                # Also don't reclassify text AFTER a subagent returns —
+                                # that's the orchestrator's summary of the subagent's work.
                                 is_subagent_call = tc_name == "task"
-                                if emitted_tokens and pre_tool_buffer and not is_subagent_call:
+                                if emitted_tokens and pre_tool_buffer and not is_subagent_call and not subagent_completed:
                                     reasoning_text = "".join(pre_tool_buffer).strip()
                                     if reasoning_text:
                                         logger.info("[orchestrator] reclassifying %d chars as reasoning", len(reasoning_text))
@@ -809,6 +812,7 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                     sub_buf = ""
                     logger.info("[subagent] <<< returned (%d chars): %s", len(output_str), output_str[:300])
                     in_subagent = False
+                    subagent_completed = True  # Don't reclassify post-subagent text as reasoning
                     orchestrator_tool = None
                     if subagent_step_id:
                         await _send_step(

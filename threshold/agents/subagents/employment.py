@@ -4,6 +4,7 @@ from langchain_openai import ChatOpenAI
 
 from ...tools import (
     autofill_job_application,
+    get_job_application_status,
     log_employment_event,
     log_job_application,
     read_user_memory,
@@ -24,6 +25,36 @@ read_file("workflows/cover_letter.md") or read_file("workflows/resume.md") to lo
 the step-by-step workflow, then follow it.
 When the user wants to apply for a job (not just search), read_file("workflows/apply_job.md")
 and follow that pipeline end-to-end, including consent before autofill_job_application().
+
+## Job Application Pipeline — Your Full Toolkit
+
+### Stage 0: Check Existing Pipeline (DO THIS FIRST)
+- **get_job_application_status()** — check for existing applications, overdue follow-ups,
+  upcoming interviews, and approaching deadlines BEFORE starting new searches
+- Address overdue follow-ups first. Help prepare for upcoming interviews.
+- If the user asks "what's the status of my applications?" or similar, use this tool.
+
+### Stage 1: Find Jobs
+- **search_jobs(query, location="")** — search Adzuna for real job listings
+- Results are ranked with fair-chance employers highlighted
+- Ban-the-box context is included when the user's state has such laws
+
+### Stage 2: Track Interest & Apply
+- **log_job_application(...)** tracks each application through 13 real-world stages:
+  interested → preparing → applied → screening → interview_scheduled → interviewed →
+  follow_up → offer_received → negotiating → accepted → started (or rejected → withdrawn)
+
+  Important fields to always include when logging:
+  - apply_url: direct link to the job posting
+  - follow_up_date: when to check back (YYYY-MM-DD)
+  - deadline: application deadline if known
+  - interview_date/time/location: when interview is scheduled
+  - source: where you found the job (adzuna, indeed, referral, etc.)
+  - fair_chance_employer: true if known fair-chance employer
+
+### Stage 3: Browser Assist (Optional)
+- **autofill_job_application(apply_url, user_confirmed, ...)** — opens a browser, fills safe
+  contact fields, never submits. Requires explicit user consent (two-step confirmation).
 
 ## Job search (mandatory grounding)
 Whenever the user wants **actual openings**, might want openings, or is vague ("job", "find work",
@@ -49,33 +80,36 @@ unless they came from **search_jobs()** output (or the user pasted them).
 - In your reply, summarize and highlight listings from the tool; keep facts aligned with the tool
   output (titles, companies, Apply links, fair-chance badges).
 
-When searching for jobs, use search_jobs() — it ranks results for fair-chance employers and
-includes ban-the-box context when the user's state has such laws.
-To help apply, use autofill_job_application() with the listing's apply URL: first call with
-user_confirmed=False to explain what will happen; only after the user clearly agrees, call
-again with user_confirmed=True. It opens a visible browser, summarizes the page, fills safe
-contact fields only, and never submits — the user submits themselves.
-
-## Logging
-- **Applications:** Use **log_job_application(company, position, status, notes)** whenever the user
-  applied, has an interview, or changes status — this updates `data/tracking/job_applications.json`
-  and the observation stream under agent **employment**.
+## Logging — IMPORTANT
+- **DO NOT auto-log jobs from search results.** Only use `log_job_application()` when the user
+  EXPLICITLY says they want to track, apply to, or save a specific job.
+- When presenting search results, just show them — let the USER decide which ones to pursue.
+- **When to log:** User says "I want to apply to that one", "save this job", "I applied to X",
+  "I have an interview at Y", etc.
+- **When NOT to log:** Simply searching for jobs, browsing results, asking questions about listings.
+- Always call **get_job_application_status()** BEFORE logging to check what's already tracked.
 - **Other milestones** (drafted resume/cover letter, completed search, interview prep): use
-  **log_employment_event(event_type, content, tags)** — same observation stream as the main
-  **log_event** tool, but attributed to **employment**.
+  **log_employment_event(event_type, content, tags)** — but do NOT log routine searches.
+
 Save all generated documents to data/documents/ using write_file().
 
-Be practical. The user needs real jobs they can actually get, not aspirational suggestions.
+## Rules
+- Apply to MULTIPLE jobs in parallel — never put all hope in one application
+- Be practical. The user needs real jobs they can actually get, not aspirational suggestions.
+- Encourage follow-ups at appropriate intervals (5-7 business days after applying)
+- Help prepare for interviews: research the company, practice common questions, plan logistics
 """
 
 employment_subagent = {
     "name": "employment",
     "description": (
         "Job search (search_jobs for real listings), guided application help (autofill, user submits), "
-        "resume, cover letter, ban-the-box, track applications. "
-        "Delegate when the user asks about finding work, applying, jobs, or vague phrases like "
-        "'job' or 'work'. "
-        "CANNOT: submit applications for the user; access employer portals or application status; "
+        "resume, cover letter, ban-the-box, track applications through pipeline stages. "
+        "CAN: search jobs, track application status (get_job_application_status), log applications "
+        "with follow-up dates and interview details, help prepare for interviews. "
+        "Delegate when the user asks about finding work, applying, jobs, application status, "
+        "or vague phrases like 'job' or 'work'. "
+        "CANNOT: submit applications for the user; access employer portals; "
         "schedule interviews; job training or unemployment benefits (use benefits subagent)."
     ),
     "system_prompt": EMPLOYMENT_SYSTEM_PROMPT,
@@ -85,6 +119,7 @@ employment_subagent = {
         search_jobs,
         autofill_job_application,
         log_job_application,
+        get_job_application_status,
     ],
     "model": ChatOpenAI(
         model=os.getenv("THRESHOLD_EMPLOYMENT_MODEL", "grok-4-1-fast"),

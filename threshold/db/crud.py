@@ -19,6 +19,7 @@ from .models import (
     HealthProfile,
     HousingApplication,
     HousingProfile,
+    JobApplication,
     SupervisionProfile,
     UserDocuments,
     UserIdentity,
@@ -868,6 +869,134 @@ def get_uploaded_document_by_id(db: Session, doc_id: str) -> dict | None:
 def delete_housing_application(db: Session, app_id: str) -> bool:
     """Delete a housing application by ID. Returns True if deleted, False if not found."""
     row = db.query(HousingApplication).filter_by(id=app_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+# ---------------------------------------------------------------------------
+# Job application tracking
+# ---------------------------------------------------------------------------
+
+_JOB_DATE_FIELDS = {"follow_up_date", "deadline", "interview_date"}
+
+
+def upsert_job_application(
+    db: Session,
+    user_id: str,
+    company: str,
+    position: str,
+    status: str,
+    notes: str = "",
+    **kwargs: Any,
+) -> dict:
+    """Create or update a job application (fuzzy-match by company + position).
+
+    Returns the application as a plain dict.
+    """
+    # Fuzzy match: case-insensitive company and position
+    existing = (
+        db.query(JobApplication)
+        .filter(
+            JobApplication.user_id == user_id,
+            JobApplication.company.ilike(company),
+            JobApplication.position.ilike(position),
+        )
+        .first()
+    )
+
+    if existing:
+        old_status = existing.status
+        if old_status != status:
+            existing.append_history(old_status, status, notes)
+        existing.status = status
+        existing.updated_at = datetime.now()
+        if notes:
+            existing.notes = notes
+        # Update optional fields if provided
+        for key in (
+            "follow_up_date", "deadline", "apply_url", "contact_name", "contact_email",
+            "contact_phone", "interview_date", "interview_time", "interview_location",
+            "interview_type", "salary_offered", "rejection_reason", "source",
+            "fair_chance_employer",
+        ):
+            val = kwargs.get(key)
+            if val is not None:
+                if key in _JOB_DATE_FIELDS:
+                    setattr(existing, key, _parse_date_optional(val))
+                else:
+                    setattr(existing, key, val)
+        db.commit()
+        return existing.to_dict()
+
+    # Create new
+    app = JobApplication(
+        user_id=user_id, company=company, position=position, status=status, notes=notes
+    )
+    for key in (
+        "follow_up_date", "deadline", "apply_url", "contact_name", "contact_email",
+        "contact_phone", "interview_date", "interview_time", "interview_location",
+        "interview_type", "salary_offered", "rejection_reason", "source",
+        "fair_chance_employer",
+    ):
+        val = kwargs.get(key)
+        if val is not None:
+            if key in _JOB_DATE_FIELDS:
+                setattr(app, key, _parse_date_optional(val))
+            else:
+                setattr(app, key, val)
+    db.add(app)
+    db.commit()
+    return app.to_dict()
+
+
+def get_job_applications(db: Session, user_id: str) -> list[dict]:
+    """Get all job applications for a user, ordered by updated_at desc."""
+    rows = (
+        db.query(JobApplication)
+        .filter_by(user_id=user_id)
+        .order_by(JobApplication.updated_at.desc())
+        .all()
+    )
+    return [r.to_dict() for r in rows]
+
+
+def get_job_application_by_id(db: Session, app_id: str) -> dict | None:
+    """Get a single job application by its ID."""
+    row = db.query(JobApplication).filter_by(id=app_id).first()
+    return row.to_dict() if row else None
+
+
+def update_job_application(db: Session, app_id: str, fields: dict[str, Any]) -> dict | None:
+    """Update a job application by ID with partial fields.
+
+    Returns the updated application as a dict, or None if not found.
+    """
+    row = db.query(JobApplication).filter_by(id=app_id).first()
+    if not row:
+        return None
+
+    # Track status change in history
+    new_status = fields.get("status")
+    if new_status and new_status != row.status:
+        row.append_history(row.status, new_status, fields.get("notes", ""))
+
+    for key, val in fields.items():
+        if key in _JOB_DATE_FIELDS:
+            setattr(row, key, _parse_date_optional(val))
+        else:
+            setattr(row, key, val)
+
+    row.updated_at = datetime.now()
+    db.commit()
+    return row.to_dict()
+
+
+def delete_job_application(db: Session, app_id: str) -> bool:
+    """Delete a job application by ID. Returns True if deleted, False if not found."""
+    row = db.query(JobApplication).filter_by(id=app_id).first()
     if not row:
         return False
     db.delete(row)

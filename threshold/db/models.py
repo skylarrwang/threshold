@@ -241,6 +241,76 @@ class HousingApplication(Base):
         }
 
 
+class JobApplication(Base):
+    """Tracks job applications through the employment pipeline."""
+    __tablename__ = "job_application"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    company: Mapped[str] = mapped_column(String, nullable=False)
+    position: Mapped[str] = mapped_column(String, nullable=False)
+    status: Mapped[str] = mapped_column(String, nullable=False, default="interested")
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    apply_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    follow_up_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    deadline: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    contact_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    contact_email: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    contact_phone: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    interview_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    interview_time: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    interview_location: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    interview_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # phone, video, in_person
+    salary_offered: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    rejection_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    source: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # adzuna, indeed, referral, etc.
+    fair_chance_employer: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
+    # JSON array of {from_status, to_status, notes, date}
+    history: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="[]")
+
+    def get_history(self) -> list[dict]:
+        return json.loads(self.history or "[]")
+
+    def append_history(self, from_status: str, to_status: str, notes: str = "") -> None:
+        h = self.get_history()
+        h.append({
+            "from_status": from_status,
+            "to_status": to_status,
+            "notes": notes or f"Status changed from {from_status} to {to_status}",
+            "date": datetime.now().isoformat(),
+        })
+        self.history = json.dumps(h)
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "company": self.company,
+            "position": self.position,
+            "status": self.status,
+            "notes": self.notes or "",
+            "apply_url": self.apply_url or "",
+            "created_at": self.created_at.isoformat() if self.created_at else "",
+            "updated_at": self.updated_at.isoformat() if self.updated_at else "",
+            "follow_up_date": self.follow_up_date.isoformat() if self.follow_up_date else "",
+            "deadline": self.deadline.isoformat() if self.deadline else "",
+            "contact_name": self.contact_name or "",
+            "contact_email": self.contact_email or "",
+            "contact_phone": self.contact_phone or "",
+            "interview_date": self.interview_date.isoformat() if self.interview_date else "",
+            "interview_time": self.interview_time or "",
+            "interview_location": self.interview_location or "",
+            "interview_type": self.interview_type or "",
+            "salary_offered": self.salary_offered or "",
+            "rejection_reason": self.rejection_reason or "",
+            "source": self.source or "",
+            "fair_chance_employer": self.fair_chance_employer,
+            "history": self.get_history(),
+        }
+
+
 class DocumentUpload(Base):
     """Logs each OCR document upload. File saved to data/documents/."""
     __tablename__ = "document_upload"

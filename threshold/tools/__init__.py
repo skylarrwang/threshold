@@ -8,7 +8,12 @@ from .benefits_lookup import (
 from .supervision_tracker import add_condition, get_upcoming_requirements, log_check_in
 from .document_lookup import check_expungement_eligibility, get_id_restoration_guide
 from .autofill_job_application import autofill_job_application
-from .job_search import log_employment_event, log_job_application, search_jobs
+from .job_search import (
+    get_job_application_status,
+    log_employment_event,
+    log_job_application,
+    search_jobs,
+)
 from .housing_search import (
     get_fair_chance_housing_laws,
     get_fair_market_rents,
@@ -37,6 +42,7 @@ __all__ = [
     "search_jobs",
     "log_employment_event",
     "log_job_application",
+    "get_job_application_status",
     "autofill_job_application",
     "search_housing",
     "log_housing_application",
