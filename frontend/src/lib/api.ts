@@ -103,6 +103,29 @@ export async function fetchGeneratedDocuments() {
 }
 
 // ---------------------------------------------------------------------------
+// Housing pipeline
+// ---------------------------------------------------------------------------
+
+export async function fetchHousingPipeline() {
+  return get<import('@/types').HousingPipelineSummary>('/housing/pipeline');
+}
+
+export async function logHousingApplication(data: {
+  program: string;
+  status: string;
+  notes?: string;
+  follow_up_date?: string;
+  contact_name?: string;
+  contact_phone?: string;
+}) {
+  return post<import('@/types').HousingApplication>('/housing/applications', data);
+}
+
+export async function fetchFairChanceLaws(state: string) {
+  return get<import('@/types').FairChanceLaw>(`/housing/fair-chance-laws/${state}`);
+}
+
+// ---------------------------------------------------------------------------
 // WebSocket
 // ---------------------------------------------------------------------------
 

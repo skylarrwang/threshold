@@ -65,26 +65,46 @@ export interface JobApplication {
   logoInitial: string;
 }
 
-export type HousingStatus = 'active' | 'pending' | 'expired';
+export type HousingPipelineStage =
+  | 'discovered'
+  | 'documents_ready'
+  | 'applied'
+  | 'waitlisted'
+  | 'interview_scheduled'
+  | 'approved'
+  | 'denied'
+  | 'moved_in';
 
-export interface HousingVoucher {
+export interface HousingApplication {
   id: string;
-  type: string;
-  status: HousingStatus;
-  issuedDate: string;
-  expiryDate: string;
-  waitlistRank?: number;
-  estimatedDate?: string;
-  progressPercent: number;
+  program: string;
+  status: HousingPipelineStage;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+  follow_up_date?: string;
+  contact_name?: string;
+  contact_phone?: string;
+  next_action?: string;
+  stage_label?: string;
+  history: { status: string; notes: string; date: string }[];
 }
 
-export interface ShelterInfo {
-  name: string;
-  address: string;
-  phone: string;
-  checkInDate: string;
-  checkOutDate?: string;
-  notes: string;
+export interface HousingPipelineSummary {
+  applications: HousingApplication[];
+  active_count: number;
+  total_count: number;
+  approved_count: number;
+  next_follow_up?: { program: string; date: string };
+  stages: { key: HousingPipelineStage; label: string }[];
+}
+
+export interface FairChanceLaw {
+  state: string;
+  summary: string;
+  scope: string;
+  resource: string;
+  has_law: boolean;
 }
 
 export type BenefitStatus = 'active' | 'pending' | 'action_needed' | 'expired';

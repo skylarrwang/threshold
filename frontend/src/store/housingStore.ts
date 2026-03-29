@@ -1,35 +1,74 @@
 import { create } from 'zustand';
-import type { HousingVoucher, ShelterInfo } from '@/types';
+import type { HousingPipelineSummary, HousingApplication, FairChanceLaw } from '@/types';
+import { fetchHousingPipeline, logHousingApplication, fetchFairChanceLaws } from '@/lib/api';
 
 interface HousingState {
-  voucher: HousingVoucher;
-  shelter: ShelterInfo;
-  moveInChecklist: { id: string; item: string; done: boolean }[];
+  pipeline: HousingPipelineSummary | null;
+  pipelineLoading: boolean;
+  pipelineError: string | null;
+
+  fairChanceLaw: FairChanceLaw | null;
+  fairChanceLawLoading: boolean;
+
+  // Modal state
+  logModalOpen: boolean;
+
+  // Actions
+  fetchPipeline: () => Promise<void>;
+  logApplication: (data: {
+    program: string;
+    status: string;
+    notes?: string;
+    follow_up_date?: string;
+    contact_name?: string;
+    contact_phone?: string;
+  }) => Promise<HousingApplication | null>;
+  fetchFairChanceLaw: (state: string) => Promise<void>;
+  setLogModalOpen: (open: boolean) => void;
 }
 
-export const useHousingStore = create<HousingState>()(() => ({
-  voucher: {
-    id: 'voucher-001',
-    type: 'Section 8 Housing Choice',
-    status: 'active',
-    issuedDate: '2024-09-01',
-    expiryDate: '2024-12-01',
-    waitlistRank: 47,
-    estimatedDate: 'November 2024',
-    progressPercent: 68,
+export const useHousingStore = create<HousingState>()((set, get) => ({
+  pipeline: null,
+  pipelineLoading: false,
+  pipelineError: null,
+
+  fairChanceLaw: null,
+  fairChanceLawLoading: false,
+
+  logModalOpen: false,
+
+  async fetchPipeline() {
+    set({ pipelineLoading: true, pipelineError: null });
+    try {
+      const data = await fetchHousingPipeline();
+      set({ pipeline: data, pipelineLoading: false });
+    } catch (e) {
+      set({ pipelineError: (e as Error).message, pipelineLoading: false });
+    }
   },
-  shelter: {
-    name: 'Capitol Region Transitional House',
-    address: '85 Wethersfield Ave, Hartford, CT 06114',
-    phone: '(860) 555-0187',
-    checkInDate: '2024-08-05',
-    notes: 'Single room, curfew 10pm. Case manager: David Rodriguez',
+
+  async logApplication(data) {
+    try {
+      const result = await logHousingApplication(data);
+      // Re-fetch pipeline to get updated state
+      await get().fetchPipeline();
+      return result;
+    } catch {
+      return null;
+    }
   },
-  moveInChecklist: [
-    { id: 'mc-1', item: 'Section 8 voucher active', done: true },
-    { id: 'mc-2', item: 'Income verification docs', done: true },
-    { id: 'mc-3', item: 'Reference letter from counselor', done: false },
-    { id: 'mc-4', item: 'First/last month deposit saved', done: false },
-    { id: 'mc-5', item: 'Utility account setup', done: false },
-  ],
+
+  async fetchFairChanceLaw(state: string) {
+    set({ fairChanceLawLoading: true });
+    try {
+      const data = await fetchFairChanceLaws(state);
+      set({ fairChanceLaw: data, fairChanceLawLoading: false });
+    } catch {
+      set({ fairChanceLawLoading: false });
+    }
+  },
+
+  setLogModalOpen(open: boolean) {
+    set({ logModalOpen: open });
+  },
 }));

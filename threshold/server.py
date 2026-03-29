@@ -212,6 +212,152 @@ async def upload_document(file: UploadFile = File(...)):
 
 
 # ---------------------------------------------------------------------------
+# Housing pipeline
+# ---------------------------------------------------------------------------
+
+HOUSING_APPS_LOG = DATA_DIR / "tracking" / "housing_applications.json"
+
+# Import fair chance laws data from the housing tools
+from threshold.tools.housing_search import _FAIR_CHANCE_LAWS, _PIPELINE_STAGES, _STAGE_LABELS, _NEXT_ACTIONS
+
+
+def _read_housing_apps() -> list[dict]:
+    """Read housing applications from the tracking file."""
+    if not HOUSING_APPS_LOG.exists():
+        return []
+    try:
+        return json.loads(HOUSING_APPS_LOG.read_text())
+    except (json.JSONDecodeError, OSError):
+        return []
+
+
+@app.get("/api/housing/pipeline")
+async def housing_pipeline():
+    """Return the full housing application pipeline as structured JSON."""
+    apps = _read_housing_apps()
+    active = [a for a in apps if a.get("status") not in ("denied", "moved_in")]
+    approved = [a for a in apps if a.get("status") in ("approved", "moved_in")]
+
+    # Find next follow-up
+    follow_ups = sorted(
+        [a for a in apps if a.get("follow_up_date") and a.get("status") not in ("denied", "moved_in")],
+        key=lambda a: a.get("follow_up_date", ""),
+    )
+    next_follow_up = None
+    if follow_ups:
+        next_follow_up = {
+            "program": follow_ups[0]["program"],
+            "date": follow_ups[0]["follow_up_date"],
+        }
+
+    # Add next_action to each application
+    for app_item in apps:
+        app_item["next_action"] = _NEXT_ACTIONS.get(app_item.get("status", ""), "")
+        app_item["stage_label"] = _STAGE_LABELS.get(app_item.get("status", ""), app_item.get("status", ""))
+
+    return {
+        "applications": apps,
+        "active_count": len(active),
+        "total_count": len(apps),
+        "approved_count": len(approved),
+        "next_follow_up": next_follow_up,
+        "stages": [{"key": s, "label": _STAGE_LABELS.get(s, s)} for s in _PIPELINE_STAGES],
+    }
+
+
+class HousingApplicationCreate(BaseModel):
+    program: str
+    status: str
+    notes: str = ""
+    follow_up_date: str = ""
+    contact_name: str = ""
+    contact_phone: str = ""
+
+
+@app.post("/api/housing/applications")
+async def create_housing_application(body: HousingApplicationCreate):
+    """Log or update a housing application."""
+    HOUSING_APPS_LOG.parent.mkdir(parents=True, exist_ok=True)
+    apps = _read_housing_apps()
+
+    # Check for existing program (update instead of duplicate)
+    existing = None
+    for a in apps:
+        if a["program"].lower() == body.program.lower():
+            existing = a
+            break
+
+    now = datetime.now().isoformat()
+
+    if existing:
+        old_status = existing.get("status", "")
+        existing["status"] = body.status
+        existing["updated_at"] = now
+        if body.notes:
+            history = existing.get("history", [])
+            history.append({"status": old_status, "notes": body.notes, "date": now})
+            existing["history"] = history
+        if body.follow_up_date:
+            existing["follow_up_date"] = body.follow_up_date
+        if body.contact_name:
+            existing["contact_name"] = body.contact_name
+        if body.contact_phone:
+            existing["contact_phone"] = body.contact_phone
+        result = existing
+    else:
+        entry = {
+            "id": str(uuid4()),
+            "program": body.program,
+            "status": body.status,
+            "notes": body.notes,
+            "created_at": now,
+            "updated_at": now,
+            "history": [],
+        }
+        if body.follow_up_date:
+            entry["follow_up_date"] = body.follow_up_date
+        if body.contact_name:
+            entry["contact_name"] = body.contact_name
+        if body.contact_phone:
+            entry["contact_phone"] = body.contact_phone
+        apps.append(entry)
+        result = entry
+
+    HOUSING_APPS_LOG.write_text(json.dumps(apps, indent=2))
+    return result
+
+
+@app.get("/api/housing/fair-chance-laws/{state}")
+async def fair_chance_laws(state: str):
+    """Return fair chance housing law data for a state."""
+    state_upper = state.upper().strip()
+    info = _FAIR_CHANCE_LAWS.get(state_upper)
+
+    if info:
+        return {
+            "state": state_upper,
+            "summary": info["summary"],
+            "scope": info["scope"],
+            "resource": info["resource"],
+            "has_law": True,
+        }
+
+    return {
+        "state": state_upper,
+        "summary": (
+            "No specific statewide fair chance housing law on record. "
+            "Federal protections apply: HUD guidance (2016) says blanket criminal history "
+            "bans may violate the Fair Housing Act if they have a disparate racial impact. "
+            "Only lifetime sex offender registrants and meth production on federal premises "
+            "are automatic federal bars."
+        ),
+        "scope": "Federal baseline",
+        "resource": "https://www.lawhelp.org",
+        "has_law": False,
+    }
+
+
+# ---------------------------------------------------------------------------
 # WebSocket — chat with the orchestrator
 # ---------------------------------------------------------------------------
 
