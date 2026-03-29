@@ -45,6 +45,28 @@ def filter_profile_for_form(profile: UserProfile) -> dict[str, str]:
     p = profile.personal
     if p.name:
         safe["name"] = p.name
+    if p.first_name:
+        safe["first_name"] = p.first_name
+    if p.last_name:
+        safe["last_name"] = p.last_name
+    if p.date_of_birth:
+        safe["date_of_birth"] = p.date_of_birth
+    if p.address:
+        safe["address"] = p.address
+    if p.city:
+        safe["city"] = p.city
+    if p.zip_code:
+        safe["zip_code"] = p.zip_code
+    if p.height:
+        safe["height"] = p.height
+    if p.eye_color:
+        safe["eye_color"] = p.eye_color
+    if p.gender:
+        safe["gender"] = p.gender
+    if p.phone:
+        safe["phone"] = p.phone
+    if p.email:
+        safe["email"] = p.email
     if p.home_state:
         safe["state"] = p.home_state
     if p.age_range:

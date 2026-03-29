@@ -5,6 +5,7 @@ import logging
 
 import os
 
+from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
@@ -40,6 +41,10 @@ You are a form-filling assistant. You are looking at a web browser showing a for
 - When you are done filling all available fields, respond with a text summary of what
   you filled in and what (if anything) is missing.
 - If you encounter a CAPTCHA, login wall, or error, stop and report the issue.
+- For dropdown/combobox fields, click the dropdown first, wait for options to appear, then click the correct option.
+- For address fields with autocomplete, type slowly (use the "type" action), wait 2-3 seconds for suggestions to appear, then click the matching suggestion.
+- Wait 1-2 seconds between actions to let the page update, especially after clicking buttons or navigating between form steps.
+- For multi-step forms, follow any step-by-step workflow instructions provided in your task description exactly.
 """
 
 MAX_CONTEXT_SCREENSHOTS = 5
@@ -93,10 +98,9 @@ def run_form_fill(request: FormFillRequest, max_steps: int = 50) -> FormFillResu
     Opens a visible browser, navigates to the URL, and uses Claude's computer use
     to fill form fields. Never clicks submit. Returns a summary of what was filled.
     """
-    model = ChatOpenAI(
-        model=os.getenv("THRESHOLD_FORM_FILLER_MODEL", "grok-4-1-fast"),
-        base_url="https://api.x.ai/v1",
-        api_key=os.getenv("XAI_API_KEY", "not-set"),
+    # Computer use (computer_20251124 tool) requires Anthropic Claude
+    model = ChatAnthropic(
+        model="claude-sonnet-4-6",
     ).bind_tools([COMPUTER_TOOL_DEF])
 
     session = BrowserSession(
@@ -110,8 +114,14 @@ def run_form_fill(request: FormFillRequest, max_steps: int = 50) -> FormFillResu
         return FormFillResult(
             status="failed",
             summary=f"Failed to open the page: {e}",
+            live_view_url=session.live_view_url,
             fields_filled={},
         )
+
+    # Print live view URL immediately so the user can watch while the form fill runs
+    if session.live_view_url:
+        print(f"\n🔴 LIVE VIEW: Watch the form being filled at:\n   {session.live_view_url}\n")
+        logger.info(f"Live view URL: {session.live_view_url}")
 
     # Format the form data for the prompt
     form_data_lines = "\n".join(f"- {k}: {v}" for k, v in request.form_data.items())
@@ -130,6 +140,7 @@ def run_form_fill(request: FormFillRequest, max_steps: int = 50) -> FormFillResu
 
     final_screenshot = initial_screenshot
     summary = ""
+    status = "completed"
 
     for step in range(max_steps):
         logger.info(f"Form filler step {step + 1}/{max_steps}")
@@ -139,6 +150,7 @@ def run_form_fill(request: FormFillRequest, max_steps: int = 50) -> FormFillResu
         except Exception as e:
             logger.error(f"Model invocation failed: {e}")
             summary = f"Model error at step {step + 1}: {e}"
+            status = "failed"
             break
 
         messages.append(response)
@@ -186,15 +198,17 @@ def run_form_fill(request: FormFillRequest, max_steps: int = 50) -> FormFillResu
     else:
         summary = "Reached maximum steps without completing the form."
 
-    # Don't close the browser -- leave it open for the user to review and submit
-    # session.close() is intentionally a no-op
+    # Disconnect Playwright but keep the Browserbase session alive for user review
+    live_view_url = session.live_view_url
+    session.close()
 
     if not summary:
         summary = "Form filling completed but no summary was provided by the model."
 
     return FormFillResult(
-        status="completed",
+        status=status,
         summary=summary,
         screenshot_base64=_b64(final_screenshot),
+        live_view_url=live_view_url,
         fields_filled=request.form_data,
     )

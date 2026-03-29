@@ -16,6 +16,17 @@ PROFILE_PATH = DATA_DIR / "profile" / "structured_profile.json.enc"
 
 class PersonalContext(BaseModel):
     name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    date_of_birth: Optional[str] = None  # MM/DD/YYYY
+    address: Optional[str] = None
+    city: Optional[str] = None
+    zip_code: Optional[str] = None
+    height: Optional[str] = None  # e.g., "5'10"
+    eye_color: Optional[str] = None  # e.g., "Brown"
+    gender: Optional[str] = None  # e.g., "Male"
+    phone: Optional[str] = None
+    email: Optional[str] = None
     age_range: str = ""
     gender_identity: Optional[str] = None
     home_state: str = ""

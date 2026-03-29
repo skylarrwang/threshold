@@ -19,4 +19,5 @@ class FormFillResult(BaseModel):
     status: Literal["completed", "failed", "blocked"]
     summary: str
     screenshot_base64: str | None = None
+    live_view_url: str | None = None
     fields_filled: dict[str, str]

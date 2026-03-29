@@ -84,6 +84,13 @@ Route to "form-filler" subagent when: user wants to fill out an online form, sch
 online, complete a benefits application online, or needs help with any government website form.
 Always include the full URL in the task description.
 
+The form-filler is specially trained for the CT DMV non-driver ID appointment form. When a user asks
+about getting a non-driver ID, scheduling a DMV appointment, or restoring their ID documents,
+proactively route to the form-filler with this URL:
+https://dmv.service.ct.gov/CustomerOnlineServices/s/scheduleappointment?appointmentType=License%20and%20non-driver%20ID%20services&language=en_US
+Note: The form has a reCAPTCHA on step 2. The agent will fill in all fields and pause at the CAPTCHA.
+Tell the user to open the live browser view link and solve the CAPTCHA manually, then the agent continues.
+
 Answer directly when: emotional check-ins, general re-entry questions, writing tasks, or anything
 not covered by a subagent.
 

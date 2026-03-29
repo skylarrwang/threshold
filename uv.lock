@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.12"
 
 [[package]]
@@ -68,6 +68,23 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/63/9a/fec38644694abfaaeca2798b58e276a8e61de49e2e37494ace423395febc/bracex-2.6.tar.gz", hash = "sha256:98f1347cd77e22ee8d967a30ad4e310b233f7754dbf31ff3fceb76145ba47dc7", size = 26642, upload-time = "2025-06-22T19:12:31.254Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/9d/2a/9186535ce58db529927f6cf5990a849aa9e052eea3e2cfefe20b9e1802da/bracex-2.6-py3-none-any.whl", hash = "sha256:0b0049264e7340b3ec782b5cb99beb325f36c3782a32e36e876452fd49a09952", size = 11508, upload-time = "2025-06-22T19:12:29.781Z" },
+]
+
+[[package]]
+name = "browserbase"
+version = "1.7.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anyio" },
+    { name = "distro" },
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "sniffio" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d8/72/27d4ca6fec8d107f3ee905675ce7a48b47fcf7918a5ce17fdbe40846beef/browserbase-1.7.0.tar.gz", hash = "sha256:e5b7acd33fad07666c1b9c7a33acea14d46a1693adaf5620c52839a746a342b8", size = 143680, upload-time = "2026-03-16T21:01:26.837Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/93/59/ae53543ca44b232f64f18413eaf5c3eb968d690ae6960ffb4b4d1a9449d9/browserbase-1.7.0-py3-none-any.whl", hash = "sha256:6ff0ad602f18a7b2034e9e564fbaee05f02954456f1709fc36061f53755356ce", size = 107840, upload-time = "2026-03-16T21:01:25.698Z" },
 ]
 
 [[package]]
@@ -1317,6 +1334,7 @@ name = "threshold"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "browserbase" },
     { name = "cryptography" },
     { name = "deepagents" },
     { name = "fastapi" },
@@ -1337,6 +1355,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "browserbase", specifier = ">=1.0.0" },
     { name = "cryptography", specifier = ">=46.0.6" },
     { name = "deepagents", specifier = ">=0.4.12" },
     { name = "fastapi", specifier = ">=0.115" },

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+from pathlib import Path
 from typing import TypedDict
 
 from langchain_core.messages import AIMessage, HumanMessage
@@ -54,6 +55,26 @@ def fill_node(state: FormFillerState) -> dict:
     if profile:
         form_data = filter_profile_for_form(profile)
 
+    # Detect CT DMV forms and inject step-by-step workflow
+    workflow_file = None
+    if "dmv.service.ct.gov" in url and "scheduleappointment" in url:
+        workflow_file = "ct_dmv_nondriver_id.md"
+    elif "ct.gov" in url and ("B-230" in url.upper() or "B230" in url.upper()):
+        workflow_file = "ct_dmv_b230_id_application.md"
+
+    if workflow_file:
+        workflow_path = Path(__file__).parent.parent.parent / ".." / "workflows" / workflow_file
+        workflow_path = workflow_path.resolve()
+        if workflow_path.exists():
+            workflow = workflow_path.read_text()
+            task_text = f"""Fill out this CT DMV form following these exact step-by-step instructions:
+
+{workflow}
+
+Use the user data provided below to fill in the form fields.
+Original request: {task_text}"""
+            logger.info(f"Injected workflow: {workflow_file}")
+
     request = FormFillRequest(
         url=url,
         instructions=task_text,
@@ -71,7 +92,13 @@ def fill_node(state: FormFillerState) -> dict:
         )]}
 
     # Build the response message
-    parts = [result.summary]
+    parts = []
+
+    if result.live_view_url:
+        parts.append(f"**Watch the browser here:** {result.live_view_url}\n")
+
+    parts.append(result.summary)
+
     if result.fields_filled:
         parts.append("\n**Fields provided:**")
         for k, v in result.fields_filled.items():
@@ -79,8 +106,8 @@ def fill_node(state: FormFillerState) -> dict:
 
     if result.status == "completed":
         parts.append(
-            "\nThe browser is still open for you to review what I filled in. "
-            "Please check the form and submit it yourself when you are satisfied."
+            "\nThe remote browser session is still open for you to review. "
+            "Open the link above to see the filled form and submit it yourself."
         )
     elif result.status == "failed":
         parts.append("\nThe form filling was not successful. See details above.")
