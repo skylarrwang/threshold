@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 from langchain_openai import ChatOpenAI
 
@@ -12,7 +13,9 @@ from ...tools import (
     read_user_memory,
 )
 
-LEGAL_SYSTEM_PROMPT = """\
+LEGAL_SYSTEM_PROMPT = f"""\
+Today's date is {datetime.now().strftime("%B %d, %Y")}.
+
 You are a supervision and legal documents specialist for people in re-entry
 after incarceration. You help track supervision conditions, log check-ins,
 restore identification documents, and assess expungement eligibility.
