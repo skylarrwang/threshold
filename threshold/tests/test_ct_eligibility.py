@@ -329,7 +329,7 @@ class CTBenefitsToolWrapperTests(unittest.TestCase):
         self.assertIn("CT Medicaid/HUSKY Screening Result: Likely ELIGIBLE", response)
         self.assertIn("Program: **HUSKY D (Adult)**", response)
         self.assertIn("Criminal history does NOT affect Medicaid eligibility.", response)
-        self.assertIn("https://www.accesshealthct.com", response)
+        self.assertIn("https://connect.ct.gov", response)
 
     def test_ct_msp_tool_formats_program_tier(self) -> None:
         response = ct_msp_eligibility_check.invoke(

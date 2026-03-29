@@ -155,18 +155,10 @@ def ct_medicaid_eligibility_check(
             f"${result.income_limit:,.0f} limit"
         )
         lines.append(
-            "\n**How to apply:**"
+            "\n**How to apply:**\n"
+            "- Online: https://connect.ct.gov\n"
+            "- Phone: 1-855-626-6632"
         )
-        if "HUSKY C" in result.program:
-            lines.append(
-                "- Online: https://connect.ct.gov\n"
-                "- Phone: 1-855-626-6632"
-            )
-        else:
-            lines.append(
-                "- Online: https://www.accesshealthct.com\n"
-                "- Phone: 1-855-805-4325"
-            )
     else:
         lines.append(
             f"- Monthly income: ${result.monthly_income:,.0f} vs "
