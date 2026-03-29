@@ -78,6 +78,21 @@ TYLER = {
     "snap_start_date": "2026-03-01",
     "snap_recertification_date": "2026-09-01",
     "veteran_status": False,
+    # Medicaid / HUSKY Health
+    "medicaid_case_number": "DSS-2026-441783",
+    "medicaid_plan": "HUSKY A",
+    "medicaid_application_date_display": "03/05/2026",
+    "medicaid_approval_date_display": "03/20/2026",
+    "medicaid_start_date_display": "03/01/2026",
+    "medicaid_recertification_date_display": "03/01/2027",
+    "medicaid_managed_care_org": "Community Health Network of CT",
+    # SNAP approval
+    "snap_application_date_display": "03/05/2026",
+    "snap_approval_date_display": "03/22/2026",
+    "snap_ebt_card_number": "6104-XXXX-XXXX-8291",
+    # DSS approval official
+    "dss_supervisor": "Sandra M. Whitfield",
+    "dss_supervisor_title": "Program Supervisor, Bureau of Assistance Programs",
     # Forklift cert details
     "forklift_cert_number": "FL-CT-2024-08817",
     "forklift_cert_date": "2024-04-22",

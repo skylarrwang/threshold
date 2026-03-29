@@ -58,8 +58,27 @@ export const useBenefitsStore = create<BenefitsState>()((set) => ({
       const enrolled: string[] = benefitsSection.benefits_enrolled ?? [];
       const pending: string[] = benefitsSection.benefits_applied_pending ?? [];
 
+      // Filter out MSP if user doesn't qualify (not 65+ and not disabled)
+      const identity = data.profile?.identity ?? {};
+      const health = data.profile?.health ?? {};
+      const dob = identity.date_of_birth;
+      let qualifiesForMedicare = false;
+      if (dob) {
+        const age = Math.floor(
+          (Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000),
+        );
+        qualifiesForMedicare = age >= 65;
+      }
+      if (health.disability_status === true) {
+        qualifiesForMedicare = true;
+      }
+
+      const eligible = qualifiesForMedicare
+        ? PROGRAMS
+        : PROGRAMS.filter((p) => p.program !== 'MSP');
+
       set({
-        benefits: PROGRAMS.map((p) => ({
+        benefits: eligible.map((p) => ({
           ...p,
           status: deriveStatus(p.program, enrolled, pending),
         })),

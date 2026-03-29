@@ -78,7 +78,11 @@ export function BenefitsPage() {
             Benefits &amp; Assistance
           </h2>
           <p className="text-on-surface-variant text-base max-w-2xl">
-            Connecticut benefits eligibility screening. Check your eligibility for SNAP, Medicaid, and Medicare Savings Programs.
+            Connecticut benefits eligibility screening. Check your eligibility for
+            {benefits.some((b) => b.program === 'MSP')
+              ? ' SNAP, Medicaid, and Medicare Savings Programs'
+              : ' SNAP and Medicaid'}
+            .
           </p>
         </div>
 
@@ -116,7 +120,9 @@ export function BenefitsPage() {
           <p className="text-sm text-on-surface-variant mt-1 leading-relaxed">
             Eligibility screenings use your profile information and 2026 Connecticut income guidelines.
             Click "Check Eligibility" to start a chat with Threshold, which will walk you through the
-            screening and estimate your benefits. Results are informational — not a guarantee of enrollment.
+            screening and estimate your benefits. Attaching your application in the document upload helps Threshold track your progress.
+            <br />
+            <i>Results are informational and not a guarantee of enrollment.</i>
           </p>
         </div>
       </div>
