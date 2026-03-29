@@ -1,3 +1,7 @@
+import os
+
+from langchain_openai import ChatOpenAI
+
 from ...tools import (
     add_condition,
     check_expungement_eligibility,
@@ -50,5 +54,9 @@ legal_subagent = {
         get_id_restoration_guide,
         check_expungement_eligibility,
     ],
-    "model": "claude-haiku-4-5-20251001",
+    "model": ChatOpenAI(
+        model=os.getenv("THRESHOLD_LEGAL_MODEL", "grok-4-1-fast"),
+        base_url="https://api.x.ai/v1",
+        api_key=os.getenv("XAI_API_KEY", "not-set"),
+    ),
 }
