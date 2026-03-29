@@ -202,12 +202,12 @@ export function RightPanel({
           </div>
         </div>
 
-        {/* User profile */}
+        {/* User profile + settings */}
         <div className={cn('mt-6', isCollapsed ? 'px-3' : 'px-6')}>
           <div
             className={cn(
               'pt-4 border-t border-outline-variant/20',
-              isCollapsed ? 'flex justify-center' : 'flex items-center gap-3'
+              isCollapsed ? 'flex flex-col items-center gap-3' : 'flex items-center gap-3'
             )}
             title={isCollapsed ? profile.personal.name : undefined}
           >
@@ -219,11 +219,21 @@ export function RightPanel({
                 .slice(0, 2)}
             </div>
             {!isCollapsed && (
-              <div>
+              <div className="flex-1 min-w-0">
                 <div className="text-sm font-bold text-on-surface">{profile.personal.name}</div>
                 <div className="text-[10px] uppercase text-on-surface-variant tracking-widest">Member</div>
               </div>
             )}
+            <button
+              onClick={() => {
+                navigate('/settings');
+                onClose?.();
+              }}
+              title="Settings"
+              className="p-1.5 rounded-xl text-on-surface-variant hover:text-primary hover:bg-surface-container-lowest transition-colors"
+            >
+              <span className="material-symbols-outlined text-xl">settings</span>
+            </button>
           </div>
         </div>
       </aside>
