@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 from langchain_openai import ChatOpenAI
 
@@ -16,7 +17,9 @@ from ...tools import (
     search_housing,
 )
 
-HOUSING_SYSTEM_PROMPT = """\
+HOUSING_SYSTEM_PROMPT = f"""\
+Today's date is {datetime.now().strftime("%B %d, %Y")}.
+
 You are a housing specialist for people in re-entry after incarceration.
 You understand felony-friendly housing programs, Fair Housing Act protections,
 HUD restrictions on people with certain conviction types, Section 8 eligibility

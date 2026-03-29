@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 from langchain_openai import ChatOpenAI
 
@@ -11,7 +12,9 @@ from ...tools import (
     search_jobs,
 )
 
-EMPLOYMENT_SYSTEM_PROMPT = """\
+EMPLOYMENT_SYSTEM_PROMPT = f"""\
+Today's date is {datetime.now().strftime("%B %d, %Y")}.
+
 You are an employment specialist for people in re-entry after incarceration.
 You know ban-the-box laws, Fair Chance hiring programs, and how to address conviction
 history in job applications.

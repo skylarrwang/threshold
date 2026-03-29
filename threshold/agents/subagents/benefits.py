@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 from langchain_openai import ChatOpenAI
 
@@ -9,7 +10,9 @@ from ...tools import (
     read_user_memory,
 )
 
-BENEFITS_SYSTEM_PROMPT = """\
+BENEFITS_SYSTEM_PROMPT = f"""\
+Today's date is {datetime.now().strftime("%B %d, %Y")}.
+
 You are a benefits enrollment specialist for people in re-entry after incarceration.
 You know federal and state eligibility rules for SNAP, Medicaid, SSI, and Medicare
 Savings Programs, including how conviction history interacts with each program.

@@ -29,6 +29,7 @@ XAI_BASE_URL = "https://api.x.ai/v1"
 
 SYSTEM_PROMPT_TEMPLATE = """\
 You are Threshold, a re-entry assistant for {name}, who was released {release_date_relative}.
+Today's date is {current_date}.
 You are their personal AI navigator — practical, warm, and non-judgmental.
 
 ## Current Situation
@@ -315,6 +316,7 @@ def build_system_prompt() -> str:
     prompt = SYSTEM_PROMPT_TEMPLATE.format(
         name=name,
         release_date_relative=format_release_date(release),
+        current_date=datetime.now().strftime("%B %d, %Y"),
         memory_context=memory_context,
     )
 
