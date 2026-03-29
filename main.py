@@ -333,6 +333,18 @@ def serve(
     )
 
 
+@app.command()
+def generate_docs(
+    output_dir: str = typer.Option(None, "--output", "-o", help="Output directory (default: data/demo_documents)"),
+):
+    """Generate mock documents for the OCR demo pipeline."""
+    from threshold.demo.generate import generate_all
+
+    console.print(Panel("[bold]Generating mock documents for Tyler Chen...[/bold]", title="Demo Documents"))
+    paths = generate_all(output_dir)
+    console.print(f"\n[bold green]{len(paths)} documents generated.[/bold green]")
+
+
 def _ensure_encryption_key():
     if not os.getenv("THRESHOLD_ENCRYPTION_KEY"):
         console.print(

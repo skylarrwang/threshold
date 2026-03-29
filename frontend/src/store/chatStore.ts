@@ -30,7 +30,7 @@ const mockConversations: Conversation[] = [
     participantType: 'counselor',
     lastMessage: "Great progress on your ID documents! Let's focus on the Ready-to-Work cert next.",
     lastTimestamp: '2024-10-20T14:30:00Z',
-    unreadCount: 1,
+    unreadCount: 0,
     isOnline: true,
   },
   {
