@@ -3,7 +3,6 @@ import os
 from langchain_openai import ChatOpenAI
 
 from ...tools import (
-    get_ban_the_box_status,
     log_event,
     log_job_application,
     read_user_memory,
@@ -23,7 +22,8 @@ from the orchestrator. For writing tasks like cover letters and resumes, use
 read_file("workflows/cover_letter.md") or read_file("workflows/resume.md") to load
 the step-by-step workflow, then follow it.
 
-When searching for jobs, use search_jobs() and filter for ban-the-box employers where possible.
+When searching for jobs, use search_jobs() — it ranks results for fair-chance employers and
+includes ban-the-box context when the user's state has such laws.
 Log every application and milestone with log_event().
 Save all generated documents to data/documents/ using write_file().
 
@@ -49,7 +49,10 @@ employment_subagent = {
         log_event,
         search_jobs,
         log_job_application,
-        get_ban_the_box_status,
     ],
-    "model": ChatOpenAI(model="grok-3-fast", base_url="https://api.x.ai/v1", api_key=os.getenv("XAI_API_KEY", "")),
+    "model": ChatOpenAI(
+        model=os.getenv("THRESHOLD_EMPLOYMENT_MODEL", "grok-4-1-fast"),
+        base_url="https://api.x.ai/v1",
+        api_key=os.getenv("XAI_API_KEY", "not-set"),
+    ),
 }
