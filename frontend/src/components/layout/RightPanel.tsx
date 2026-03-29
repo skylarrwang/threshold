@@ -1,6 +1,8 @@
+import { useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useProfileStore } from '@/store/profileStore';
+import { useDocumentsStore } from '@/store/documentsStore';
 import { useProgressSummary } from '@/hooks/useProgressSummary';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 
@@ -22,6 +24,10 @@ export function RightPanel({ onClose }: { onClose?: () => void }) {
   const { profile } = useProfileStore();
   const progress = useProgressSummary();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    useDocumentsStore.getState().fetchCompletion();
+  }, []);
 
   return (
     <aside className="h-screen w-72 overflow-y-auto bg-surface-container-low flex flex-col py-8 no-scrollbar">

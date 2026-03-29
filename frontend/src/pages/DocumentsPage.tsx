@@ -53,6 +53,7 @@ function VaultSection() {
           fields_written: result.fields_written ?? 0,
           uploaded_at: new Date().toISOString(),
         } as UploadedDocument);
+        useDocumentsStore.getState().fetchCompletion();
       } else {
         // Upload succeeded but no id returned — just refetch
         fetchUploads();
