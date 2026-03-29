@@ -33,9 +33,9 @@ export function MilestonesStepper({ milestones }: MilestonesStepperProps) {
   const filledPercent = total > 1 ? (completedCount / (total - 1)) * 100 : 0;
 
   return (
-    <div className="relative pl-6 space-y-10">
+    <div className="relative pl-5 space-y-7">
       {/* Background stepper line */}
-      <div className="absolute left-[7px] top-1 w-1 h-full bg-primary-fixed rounded-full">
+      <div className="absolute left-[6px] top-1 w-0.5 h-full bg-primary-fixed rounded-full">
         {/* Filled portion */}
         <div
           className="w-full bg-primary rounded-full transition-all duration-500"
@@ -52,14 +52,14 @@ export function MilestonesStepper({ milestones }: MilestonesStepperProps) {
           <div key={milestone.id} className="relative">
             <div
               className={cn(
-                'absolute -left-[23px] top-1 w-4 h-4 rounded-full',
+                'absolute -left-[19px] top-1 w-3.5 h-3.5 rounded-full',
                 dotClass
               )}
             />
             <p className={cn('text-xs font-bold uppercase', label.className)}>{label.text}</p>
             <p
               className={cn(
-                'text-sm font-bold text-on-surface',
+                'text-sm font-bold text-on-surface leading-5',
                 isLowOpacity && 'opacity-40'
               )}
             >

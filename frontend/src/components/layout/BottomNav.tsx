@@ -3,11 +3,11 @@ import { cn } from '@/lib/utils';
 
 const leftItems = [
   { path: '/dashboard', icon: 'dashboard', label: 'Home' },
-  { path: '/documents', icon: 'folder_open', label: 'Docs' },
+  { path: '/documents', icon: 'description', label: 'Docs' },
 ];
 
 const rightItems = [
-  { path: '/settings', icon: 'settings', label: 'Settings' },
+  { path: '/benefits', icon: 'volunteer_activism', label: 'Benefits' },
 ];
 
 export function BottomNav({ onOpenDrawer }: { onOpenDrawer?: () => void }) {

@@ -18,25 +18,25 @@ export function ActionPlanCard({ item }: ActionPlanCardProps) {
   return (
     <div
       className={cn(
-        'group relative bg-surface-container-lowest p-6 rounded-xl transition-all duration-300',
-        'border-b-2 border-transparent hover:border-primary',
+        'group relative bg-surface-container-lowest p-4 rounded-xl transition-all duration-300 border border-outline-variant/10',
+        'hover:border-primary/30 hover:shadow-[0_2px_10px_rgba(26,28,28,0.04)]',
         isDone && 'opacity-70'
       )}
     >
-      <div className="flex items-start gap-6">
+      <div className="flex items-start gap-4">
         <div
           className={cn(
-            'p-4 rounded-xl',
+            'p-3 rounded-xl shrink-0',
             isDone ? 'bg-primary/10 text-primary' : 'bg-surface-container-low text-primary'
           )}
         >
-          <span className="material-symbols-outlined text-3xl">{item.icon}</span>
+          <span className="material-symbols-outlined text-2xl">{item.icon}</span>
         </div>
         <div className="flex-1">
-          <div className="flex justify-between items-start mb-1">
+          <div className="flex justify-between items-start gap-3 mb-1.5">
             <h4
               className={cn(
-                'text-lg font-bold text-on-surface',
+                'text-base font-bold text-on-surface',
                 isDone && 'line-through'
               )}
             >
@@ -46,7 +46,7 @@ export function ActionPlanCard({ item }: ActionPlanCardProps) {
               {ACTION_BADGE[item.status].label}
             </Badge>
           </div>
-          <p className="text-sm text-on-surface-variant leading-relaxed">{item.description}</p>
+          <p className="text-sm text-on-surface-variant leading-6">{item.description}</p>
         </div>
       </div>
     </div>
