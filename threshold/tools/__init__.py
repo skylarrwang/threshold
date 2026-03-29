@@ -4,6 +4,9 @@ from .benefits_lookup import (
     check_medicaid_eligibility,
     check_snap_eligibility,
     check_ssi_eligibility,
+    ct_medicaid_eligibility_check,
+    ct_msp_eligibility_check,
+    ct_snap_eligibility_check,
     get_benefits_links,
 )
 from .supervision_tracker import add_condition, get_upcoming_requirements, log_check_in
@@ -30,6 +33,9 @@ __all__ = [
     "check_medicaid_eligibility",
     "check_ssi_eligibility",
     "get_benefits_links",
+    "ct_snap_eligibility_check",
+    "ct_medicaid_eligibility_check",
+    "ct_msp_eligibility_check",
     "add_condition",
     "log_check_in",
     "get_upcoming_requirements",

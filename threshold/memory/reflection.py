@@ -39,6 +39,20 @@ def build_memory_context(profile: UserProfile) -> str:
     if s.benefits_enrolled:
         lines.append(f"Benefits enrolled: {', '.join(s.benefits_enrolled)}")
 
+    f = profile.financial
+    if f.household_size > 1 or f.is_employed or f.income.job_income_monthly > 0:
+        lines.append(f"\nHousehold size: {f.household_size}")
+        total_income = sum(
+            getattr(f.income, field_name)
+            for field_name in f.income.model_fields
+        )
+        if total_income > 0:
+            lines.append(f"Monthly income: ~${total_income:,.0f}")
+        if f.is_employed:
+            lines.append("Currently employed")
+        if f.housing.rent_or_mortgage > 0:
+            lines.append(f"Rent/mortgage: ${f.housing.rent_or_mortgage:,.0f}/mo")
+
     g = profile.goals
     if g.short_term_goals:
         lines.append(f"Short-term goals: {', '.join(g.short_term_goals)}")
