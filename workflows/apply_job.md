@@ -68,20 +68,22 @@ no offense/supervision stuffing into generic contact autofill).
 
 ---
 
-## Stage 4: Browser Assist (Optional, Consent Required)
+## Stage 4: Browser Assist
 
 Use this when the user wants help **opening the listing and pre-filling safe fields** on the employer or job-board site.
 
 **Apply URL:** Use the **Apply** link from `search_jobs()` output (`redirect_url` from Adzuna — shown as **Apply:** in the markdown).
 
-**Two-step confirmation (required by the tool):**
-
-1. **First call:** `autofill_job_application(apply_url=..., user_confirmed=False)`  
-   - Returns instructions only; **no browser** yet. Use this to explain what will happen.
-
-2. **After explicit user consent** (they understand a real browser window will open and only contact-style fields may be filled):
-   **Second call:** same `apply_url`, `user_confirmed=True`, plus the contact fields you collected:
-   `applicant_email`, `applicant_phone`, `street_address`, `city`, `zip_code` as needed.
+**Call autofill_job_application:**
+```
+autofill_job_application(
+    apply_url=<the job URL>,
+    applicant_email=<their email>,
+    applicant_phone=<their phone>,
+    city=<their city>,
+    ...
+)
+```
 
 **What the tool does:**
 
@@ -124,7 +126,6 @@ Also use `log_event()` for milestones (e.g. drafted documents, interview schedul
 
 ## Key Principles
 
-- **Consent before browser autofill** — explain once, then `user_confirmed=True` only after a clear yes.
 - **Never submit for them** — the product design leaves final click with the user.
 - **Privacy** — treat offense and supervision as high-sensitivity; default is chat guidance, not automated pasting.
 - **Honesty** — encourage truthful applications; help with **how** to say things, not what to hide on required legal questions.
@@ -138,7 +139,7 @@ Also use `log_event()` for milestones (e.g. drafted documents, interview schedul
 |------|------|
 | Memory | `read_user_memory()` |
 | Find listings | `search_jobs(query, location="")` |
-| Open URL + safe autofill | `autofill_job_application(...)` (two-step `user_confirmed`) |
+| Open URL + safe autofill | `autofill_job_application(apply_url, ...)` |
 | Track pipeline | `log_job_application(company, position, status, notes="")` |
 | Milestones | `log_event(...)` |
 

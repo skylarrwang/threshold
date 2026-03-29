@@ -386,7 +386,6 @@ def _build_fill_data(
 @tool
 def autofill_job_application(
     apply_url: str,
-    user_confirmed: bool = False,
     applicant_email: str = "",
     applicant_phone: str = "",
     street_address: str = "",
@@ -403,8 +402,6 @@ def autofill_job_application(
 
     Args:
         apply_url: Listing or apply URL (e.g. Adzuna redirect_url).
-        user_confirmed: Must be True after the user explicitly agrees to open this URL
-            and allow autofilling. If False, returns instructions only (no browser).
         applicant_email: Email to use (not stored on UserProfile by default).
         applicant_phone: Phone number to use.
         street_address: Mailing / street line if the form asks for it.
@@ -414,17 +411,6 @@ def autofill_job_application(
     err = _validate_apply_url(apply_url)
     if err:
         return f"**Cannot open application link.** {err}"
-
-    if not user_confirmed:
-        return (
-            "**Confirmation required.**\n\n"
-            "This tool opens the employer or job-board site in a **visible browser** and may "
-            "fill **contact fields only** (email, phone, name, address). It **never** submits "
-            "the application.\n\n"
-            "Ask the user if they want to proceed with this specific URL. If they agree, call "
-            "again with **`user_confirmed=True`** and the same `apply_url`.\n\n"
-            f"Pending URL: {apply_url}"
-        )
 
     data = _build_fill_data(
         applicant_email=applicant_email,
