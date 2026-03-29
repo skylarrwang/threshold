@@ -224,6 +224,45 @@ export async function deleteJobApplication(id: string) {
 }
 
 // ---------------------------------------------------------------------------
+// Voice interview
+// ---------------------------------------------------------------------------
+
+export async function fetchVoiceConfig() {
+  return get<{ ok: boolean; bot_url: string }>('/voice/config');
+}
+
+export async function fetchActiveVoiceSession() {
+  return get<{
+    ok: boolean;
+    session_id?: string;
+    status?: string;
+    current_phase?: string;
+    completion_pct?: number;
+    engagement_score?: number;
+  }>('/voice/session/active');
+}
+
+export async function endVoiceSession(sessionId: string) {
+  return post<{ ok: boolean; summary?: string }>(`/voice/session/${sessionId}/end`);
+}
+
+export async function fetchVoiceSessionStatus(sessionId: string) {
+  return get<{
+    ok: boolean;
+    status: string;
+    current_phase: string;
+    completion_pct: number;
+    engagement_score: number;
+  }>(`/voice/session/${sessionId}/status`);
+}
+
+export async function fetchVoiceSessionSummary(sessionId: string) {
+  return get<{ ok: boolean; summary?: string; highlights?: unknown; care_plan?: unknown; stats?: unknown }>(
+    `/voice/session/${sessionId}/summary`
+  );
+}
+
+// ---------------------------------------------------------------------------
 // WebSocket
 // ---------------------------------------------------------------------------
 

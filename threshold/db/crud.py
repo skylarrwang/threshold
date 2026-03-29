@@ -142,6 +142,19 @@ FIELD_PRIORITY: dict[str, dict[str, Literal["critical", "important", "optional"]
         "benefits_applied_pending": "optional",
         "child_support_amount_monthly": "optional",
     },
+    "goals": {
+        "short_term_goals": "important",
+        "long_term_goals": "important",
+        "values": "optional",
+        "strengths": "optional",
+        "concerns": "important",
+    },
+    "support": {
+        "has_case_worker": "important",
+        "case_worker_name": "optional",
+        "trusted_people": "important",
+        "support_contacts": "optional",
+    },
     "preferences": {
         "communication_style": "important",
         "comfort_with_technology": "important",
@@ -203,6 +216,19 @@ FIELD_DESCRIPTIONS: dict[str, dict[str, str]] = {
         "benefits_enrolled": "Benefits currently receiving (SNAP, SSI, Medicaid, etc.)",
         "veteran_status": "Veteran status (unlocks VA benefits)",
         "child_support_obligations": "Whether child support is owed",
+    },
+    "goals": {
+        "short_term_goals": "Short-term goals (next few weeks/months)",
+        "long_term_goals": "Long-term goals (6+ months out)",
+        "values": "What matters most to them — values and priorities",
+        "strengths": "Strengths and skills they recognize in themselves",
+        "concerns": "Biggest worries or concerns right now",
+    },
+    "support": {
+        "has_case_worker": "Whether they already have a case worker",
+        "case_worker_name": "Case worker's name",
+        "trusted_people": "People they trust and can lean on",
+        "support_contacts": "Support network contacts",
     },
     "preferences": {
         "communication_style": "Preferred communication style (direct, gentle, informational)",
@@ -426,6 +452,19 @@ FIELD_DEFS: dict[str, dict[str, tuple[str, str]]] = {
         "veteran_status":           ("Veteran Status", "conversation"),
         "child_support_obligations": ("Child Support", "conversation"),
     },
+    "goals": {
+        "short_term_goals":  ("Short-Term Goals", "conversation"),
+        "long_term_goals":   ("Long-Term Goals", "conversation"),
+        "values":            ("Values & Priorities", "conversation"),
+        "strengths":         ("Strengths", "conversation"),
+        "concerns":          ("Concerns", "conversation"),
+    },
+    "support": {
+        "has_case_worker":   ("Has Case Worker", "conversation"),
+        "case_worker_name":  ("Case Worker Name", "conversation"),
+        "trusted_people":    ("Trusted People", "conversation"),
+        "support_contacts":  ("Support Contacts", "conversation"),
+    },
 }
 
 # Detail fields that only matter when their parent boolean is true.
@@ -527,13 +566,15 @@ _SECTION_LABELS = {
     "employment": "Employment",
     "health": "Health",
     "benefits": "Benefits",
+    "goals": "Goals",
+    "support": "Support Network",
 }
 
 
 def _is_populated(value: Any) -> bool:
     if value is None:
         return False
-    if isinstance(value, str) and value in ("", "[]"):
+    if isinstance(value, str) and value in ("", "[]", "__needs_help"):
         return False
     if isinstance(value, list) and len(value) == 0:
         return False

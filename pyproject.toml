@@ -23,4 +23,6 @@ dependencies = [
     "typer>=0.24.1",
     "uvicorn>=0.34",
     "aiosqlite>=0.22.1",
+    "pipecat-ai[daily,google,deepgram,elevenlabs,silero,runner]>=0.0.108",
+    "pipecat-ai-flows>=0.0.23",
 ]

@@ -39,7 +39,11 @@ def is_url_allowed(url: str) -> bool:
 
 
 def filter_profile_for_form(profile: UserProfile) -> dict[str, str]:
-    """Extract only safe, non-sensitive fields from the user profile."""
+    """Extract only safe, non-sensitive fields from the user profile.
+
+    The profile is expected to come from profile_bridge.load_profile_from_db(),
+    which already reads all data from the canonical SQLite DB.
+    """
     safe: dict[str, str] = {}
 
     p = profile.personal

@@ -438,13 +438,12 @@ def search_jobs(query: str, location: str = "") -> str:
         profile = load_profile_from_db(db)
     finally:
         db.close()
+    home_state = (profile.personal.home_state if profile else "") or ""
     where = (location or "").strip()
-    if not where and profile is not None:
-        where = (profile.personal.home_state or "").strip()
+    if not where:
+        where = home_state.strip()
 
-    user_state = None
-    if profile is not None:
-        user_state = _infer_state_code(profile.personal.home_state)
+    user_state = _infer_state_code(home_state) if home_state else None
     if user_state is None and where:
         user_state = _infer_state_code(where)
 

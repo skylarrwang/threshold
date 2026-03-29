@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 const leftItems = [
   { path: '/dashboard', icon: 'dashboard', label: 'Home' },
   { path: '/documents', icon: 'description', label: 'Docs' },
+  { path: '/interview', icon: 'mic', label: 'Interview' },
 ];
 
 const rightItems = [

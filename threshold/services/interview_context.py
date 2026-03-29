@@ -7,23 +7,147 @@ context that gets injected into the interview agent's system prompt.
 This is the bridge between the intake pipeline and the interview agent:
   OCR fills what it can → this module checks what's left → interview agent
   gets a targeted list of what to ask about, organized by priority.
+
+The InterviewCache holds an in-memory mirror of the user's profile so that
+context building and completion stats don't re-query SQLite on every turn.
+Writes still go to the DB (via crud.upsert_fields) — the cache is updated
+alongside each write.
 """
 from __future__ import annotations
 
+import json
+import logging
 from typing import Any
 
 from sqlalchemy.orm import Session
 
 from threshold.db.crud import (
     FIELD_DESCRIPTIONS,
+    FIELD_PRIORITY,
+    _JSON_FIELDS,
+    get_full_profile,
     get_intake_status,
     get_populated_fields,
 )
 
+logger = logging.getLogger(__name__)
 
-def build_interview_prompt_context(db: Session, user_id: str) -> str:
+
+class InterviewCache:
+    """In-memory mirror of a single user's profile for fast context builds.
+
+    Lifecycle:
+      1. Created once when the interview starts.
+      2. Populated via load() from the DB.
+      3. Updated in-place by update_field() on every save_field() call.
+      4. Read by get_intake_status() and get_completion_summary() instead
+         of hitting the DB.
+    """
+
+    def __init__(self) -> None:
+        self._profile: dict[str, dict[str, Any]] = {}
+        self._loaded = False
+
+    @property
+    def loaded(self) -> bool:
+        return self._loaded
+
+    def load(self, db: Session, user_id: str) -> None:
+        self._profile = get_full_profile(db, user_id)
+        self._loaded = True
+        logger.debug("InterviewCache loaded for %s", user_id)
+
+    def update_field(self, section: str, field: str, value: Any) -> None:
+        if section not in self._profile:
+            self._profile[section] = {}
+        if field in _JSON_FIELDS and isinstance(value, (list, dict)):
+            self._profile[section][field] = value
+        elif field in _JSON_FIELDS and isinstance(value, str):
+            try:
+                self._profile[section][field] = json.loads(value)
+            except json.JSONDecodeError:
+                self._profile[section][field] = value
+        else:
+            self._profile[section][field] = value
+
+    def get_intake_status(self) -> dict[str, Any]:
+        populated: dict[str, dict[str, Any]] = {}
+        missing_critical: dict[str, list[dict]] = {}
+        missing_important: dict[str, list[dict]] = {}
+        total_fields = 0
+        filled_fields = 0
+
+        for section, fields in self._profile.items():
+            section_desc = FIELD_DESCRIPTIONS.get(section, {})
+            section_prio = FIELD_PRIORITY.get(section, {})
+
+            for field_name, value in fields.items():
+                total_fields += 1
+                is_pop = _is_populated(value)
+
+                if is_pop:
+                    filled_fields += 1
+                    populated.setdefault(section, {})[field_name] = value
+                else:
+                    prio = section_prio.get(field_name, "optional")
+                    desc = section_desc.get(field_name, field_name)
+                    if prio == "critical":
+                        missing_critical.setdefault(section, []).append(
+                            {"field": field_name, "description": desc}
+                        )
+                    elif prio == "important":
+                        missing_important.setdefault(section, []).append(
+                            {"field": field_name, "description": desc}
+                        )
+
+        pct = round(filled_fields / total_fields * 100, 1) if total_fields else 0
+        crit_count = sum(len(v) for v in missing_critical.values())
+        imp_count = sum(len(v) for v in missing_important.values())
+
+        return {
+            "overall_pct": pct,
+            "populated": populated,
+            "missing_critical": missing_critical,
+            "missing_important": missing_important,
+            "critical_count": crit_count,
+            "important_count": imp_count,
+        }
+
+    def get_completion_summary(self) -> dict[str, Any]:
+        total = 0
+        filled = 0
+        for fields in self._profile.values():
+            for value in fields.values():
+                total += 1
+                if _is_populated(value):
+                    filled += 1
+        return {
+            "overall_pct": round(filled / total * 100, 1) if total else 0,
+            "filled": filled,
+            "total": total,
+        }
+
+
+def _is_populated(value: Any) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, str) and value in ("", "[]", "__needs_help"):
+        return False
+    if isinstance(value, list) and len(value) == 0:
+        return False
+    return True
+
+
+def build_interview_prompt_context(
+    db: Session,
+    user_id: str,
+    cache: InterviewCache | None = None,
+) -> str:
     """Build the context block that gets injected into the interview agent's
     system prompt.
+
+    If a loaded InterviewCache is provided, uses the in-memory profile
+    instead of querying the DB (much faster during an active interview).
 
     Returns a formatted string covering:
     1. What we already know (from OCR / prior intake)
@@ -31,7 +155,10 @@ def build_interview_prompt_context(db: Session, user_id: str) -> str:
     3. Important fields still missing (cover if comfortable)
     4. Guidance on what NOT to re-ask
     """
-    status = get_intake_status(db, user_id)
+    if cache and cache.loaded:
+        status = cache.get_intake_status()
+    else:
+        status = get_intake_status(db, user_id)
 
     parts: list[str] = []
 
@@ -40,14 +167,15 @@ def build_interview_prompt_context(db: Session, user_id: str) -> str:
     if populated:
         parts.append("## What We Already Know")
         parts.append(
-            "The following was extracted from uploaded documents. "
-            "Do NOT re-ask for this information unless the person wants to correct it."
+            "The following was extracted from uploaded documents or earlier "
+            "in this conversation. Do NOT re-ask for this information unless "
+            "the person wants to correct it. These fields are ALREADY SAVED."
         )
         for section, fields in populated.items():
             field_lines = []
             for field, value in fields.items():
                 desc = FIELD_DESCRIPTIONS.get(section, {}).get(field, field)
-                field_lines.append(f"  - {desc}: {value}")
+                field_lines.append(f"  - {desc} [{section}.{field}]: {value}")
             parts.append(f"\n**{section.title()}**")
             parts.extend(field_lines)
         parts.append("")
@@ -64,7 +192,10 @@ def build_interview_prompt_context(db: Session, user_id: str) -> str:
         for section, fields in critical.items():
             parts.append(f"\n**{section.title()}**")
             for f in fields:
-                parts.append(f"  - {f['description']}")
+                parts.append(
+                    f"  - {f['description']} → "
+                    f"save_field(section='{section}', field='{f['field']}')"
+                )
         parts.append("")
 
     # --- Important missing fields ---
@@ -79,7 +210,10 @@ def build_interview_prompt_context(db: Session, user_id: str) -> str:
         for section, fields in important.items():
             parts.append(f"\n**{section.title()}**")
             for f in fields:
-                parts.append(f"  - {f['description']}")
+                parts.append(
+                    f"  - {f['description']} → "
+                    f"save_field(section='{section}', field='{f['field']}')"
+                )
         parts.append("")
 
     # --- Summary stats ---

@@ -98,6 +98,25 @@ FIELD_REGISTRY: dict[str, tuple[str, str]] = {
 DEFAULT_USER_ID = os.getenv("THRESHOLD_USER_ID", "default-user")
 
 
+_VALID_HOUSING = {"housed", "shelter", "couch_surfing", "unhoused", "unknown"}
+_HOUSING_MAP = {
+    "stable": "housed", "family": "housed", "friends": "couch_surfing",
+    "transitional": "shelter", "halfway_house": "shelter",
+    "sober_living": "shelter", "hotel": "shelter", "motel": "shelter",
+    "street": "unhoused", "car": "unhoused", "tent": "unhoused",
+    "none": "unhoused",
+}
+
+
+def _normalize_housing(val: Any) -> str:
+    if not val:
+        return "unknown"
+    v = str(val).strip().lower()
+    if v in _VALID_HOUSING:
+        return v
+    return _HOUSING_MAP.get(v, "unknown")
+
+
 def _parse_json_list(val: Any) -> list:
     if isinstance(val, list):
         return val
@@ -166,14 +185,14 @@ def load_profile_from_db(db: Session, user_id: str | None = None) -> UserProfile
             home_state=ident.get("state_of_release") or "",
             release_date=ident.get("release_date") or "",
             time_served=ident.get("time_served") or "",
-            offense_category=ident.get("offense_category") or "other",
+            offense_category=ident.get("offense_category") or "Unknown",
             comfort_with_technology=prefs.get("comfort_with_technology") or "moderate",
         ),
         situation=SituationContext(
-            housing_status=housing.get("housing_status") or "unknown",
-            employment_status=employment.get("employment_status") or "unemployed",
+            housing_status=housing.get("housing_status") or "Unknown",
+            employment_status=employment.get("employment_status") or "Unknown",
             benefits_enrolled=_parse_json_list(benefits.get("benefits_enrolled")),
-            supervision_type=supervision.get("supervision_type") or "none",
+            supervision_type=supervision.get("supervision_type") or "Unknown",
             supervision_end_date=str(supervision["supervision_end_date"]) if supervision.get("supervision_end_date") else None,
             immediate_needs=_parse_json_list(prefs.get("immediate_needs")),
         ),
