@@ -44,6 +44,18 @@ def init_db() -> None:
     """Create all tables if they don't exist."""
     _ensure_engine()
     Base.metadata.create_all(_engine)
+    # Migrate existing document_upload table to add new columns
+    with _engine.connect() as conn:
+        for col in ("raw_extraction TEXT", "mapped_fields TEXT", "file_path VARCHAR", "mime_type VARCHAR"):
+            try:
+                conn.execute(
+                    __import__("sqlalchemy").text(
+                        f"ALTER TABLE document_upload ADD COLUMN {col}"
+                    )
+                )
+                conn.commit()
+            except Exception:
+                conn.rollback()
 
 
 def get_db() -> Session:

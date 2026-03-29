@@ -242,7 +242,7 @@ class HousingApplication(Base):
 
 
 class DocumentUpload(Base):
-    """Logs each OCR document upload — no image bytes stored."""
+    """Logs each OCR document upload. File saved to data/documents/."""
     __tablename__ = "document_upload"
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid4()))
@@ -250,6 +250,10 @@ class DocumentUpload(Base):
     document_type: Mapped[str] = mapped_column(String, nullable=False)
     sections_updated: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="[]")
     fields_written: Mapped[int] = mapped_column(default=0)
+    raw_extraction: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    mapped_fields: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    file_path: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    mime_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     uploaded_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
     def to_dict(self) -> dict:
@@ -258,6 +262,10 @@ class DocumentUpload(Base):
             "document_type": self.document_type,
             "sections_updated": json.loads(self.sections_updated or "[]"),
             "fields_written": self.fields_written,
+            "raw_extraction": json.loads(self.raw_extraction or "{}"),
+            "mapped_fields": json.loads(self.mapped_fields or "{}"),
+            "file_path": self.file_path,
+            "mime_type": self.mime_type,
             "uploaded_at": self.uploaded_at.isoformat() if self.uploaded_at else "",
         }
 

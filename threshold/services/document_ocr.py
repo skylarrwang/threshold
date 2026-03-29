@@ -280,10 +280,10 @@ def process_document(
     image_data: bytes,
     user_id: str,
     mime_type: str = "image/jpeg",
+    file_path: str | None = None,
+    file_content_type: str | None = None,
 ) -> dict[str, Any]:
     """Full pipeline: OCR extract → schema map → DB upsert → return summary.
-
-    Image bytes are NOT persisted — privacy by design.
 
     Returns dict with:
       - document_type: what kind of document was detected
@@ -298,16 +298,22 @@ def process_document(
 
     sections = list(mapped.keys())
 
+    doc_id = None
     if mapped:
         db = get_db()
         try:
             upsert_from_extraction(db, user_id, mapped)
-            save_document_upload(db, user_id, raw.get("document_type", "unknown"),
-                                sections, fields_count)
+            doc_id = save_document_upload(
+                db, user_id, raw.get("document_type", "unknown"),
+                sections, fields_count,
+                raw_extraction=raw, mapped_fields=mapped,
+                file_path=file_path, mime_type=file_content_type,
+            )
         finally:
             db.close()
 
     return {
+        "id": doc_id,
         "document_type": raw.get("document_type", "unknown"),
         "raw_extraction": raw,
         "mapped_fields": mapped,

@@ -32,10 +32,13 @@ load_dotenv()
 
 from threshold.db.crud import (
     create_user,
+    get_completion_status,
     get_completion_summary,
     get_full_profile,
     get_intake_status,
     get_populated_fields,
+    get_profile_field_matrix,
+    get_uploaded_document_by_id,
     get_uploaded_documents,
     upsert_fields,
     user_exists,
@@ -196,13 +199,22 @@ async def post_ocr_summary():
 # Document upload (OCR)
 # ---------------------------------------------------------------------------
 
+_MIME_EXT = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+    "image/heic": ".heic",
+    "application/pdf": ".pdf",
+}
+
+
 @app.post("/api/documents/upload")
 async def upload_document(file: UploadFile = File(...)):
     """Upload a document image for OCR extraction.
 
     Accepts JPEG, PNG, WebP, HEIC, or PDF. Extracts structured fields
     via Gemini Flash, maps to the DB schema, and writes to the profile.
-    The uploaded image is NOT persisted.
+    The uploaded file is saved to data/documents/.
     """
     if not file.content_type:
         return {"ok": False, "error": "No content type specified"}
@@ -213,9 +225,19 @@ async def upload_document(file: UploadFile = File(...)):
 
     image_data = await file.read()
 
+    # Save file to disk
+    docs_dir = DATA_DIR / "documents"
+    docs_dir.mkdir(parents=True, exist_ok=True)
+    ext = _MIME_EXT.get(file.content_type, "")
+    file_id = str(uuid4())
+    file_name = f"{file_id}{ext}"
+    file_on_disk = docs_dir / file_name
+    file_on_disk.write_bytes(image_data)
+
     try:
         result = await asyncio.to_thread(
-            process_document, image_data, DEFAULT_USER_ID, file.content_type
+            process_document, image_data, DEFAULT_USER_ID, file.content_type,
+            str(file_on_disk), file.content_type,
         )
         return {"ok": True, **result}
     except Exception as e:
@@ -229,6 +251,59 @@ async def list_uploaded_documents():
     db = get_db()
     try:
         return get_uploaded_documents(db, DEFAULT_USER_ID)
+    finally:
+        db.close()
+
+
+@app.get("/api/documents/uploads/{doc_id}")
+async def get_uploaded_document(doc_id: str):
+    """Get a single uploaded document with full extraction details."""
+    db = get_db()
+    try:
+        doc = get_uploaded_document_by_id(db, doc_id)
+        if not doc:
+            raise HTTPException(status_code=404, detail="Document not found")
+        return doc
+    finally:
+        db.close()
+
+
+@app.get("/api/documents/uploads/{doc_id}/file")
+async def get_uploaded_document_file(doc_id: str):
+    """Serve the original uploaded file for a document."""
+    from fastapi.responses import FileResponse
+
+    db = get_db()
+    try:
+        doc = get_uploaded_document_by_id(db, doc_id)
+        if not doc:
+            raise HTTPException(status_code=404, detail="Document not found")
+    finally:
+        db.close()
+
+    fp = doc.get("file_path")
+    if not fp or not Path(fp).exists():
+        raise HTTPException(status_code=404, detail="File not found on disk")
+
+    return FileResponse(fp, media_type=doc.get("mime_type", "application/octet-stream"))
+
+
+@app.get("/api/profile/completion/fields")
+async def profile_completion_fields():
+    """Per-field completion status: {section: {field: bool}}."""
+    db = get_db()
+    try:
+        return get_completion_status(db, DEFAULT_USER_ID)
+    finally:
+        db.close()
+
+
+@app.get("/api/profile/completion/matrix")
+async def profile_completion_matrix():
+    """Curated profile field matrix with human labels and conditional logic."""
+    db = get_db()
+    try:
+        return get_profile_field_matrix(db, DEFAULT_USER_ID)
     finally:
         db.close()
 

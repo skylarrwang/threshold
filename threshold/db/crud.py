@@ -343,6 +343,193 @@ def get_full_profile(db: Session, user_id: str) -> dict[str, dict[str, Any]]:
     return {section: get_section(db, user_id, section) for section in TABLE_MAP}
 
 
+# ---------------------------------------------------------------------------
+# Human-readable field labels for the profile completion matrix.
+# Only fields that make sense to show in the UI are listed here.
+# Conditional detail fields (e.g. disability_type) are handled separately.
+# ---------------------------------------------------------------------------
+
+# Each field maps to (label, source).
+# source: "document" = extracted from papers, "conversation" = asked in chat,
+#         "manual" = user types in (numeric amounts).
+FIELD_DEFS: dict[str, dict[str, tuple[str, str]]] = {
+    "identity": {
+        "legal_name":        ("Legal Name", "document"),
+        "date_of_birth":     ("Date of Birth", "document"),
+        "current_address":   ("Current Address", "document"),
+        "state_of_release":  ("State of Release", "document"),
+        "ssn_encrypted":     ("Social Security Number", "document"),
+        "phone_number":      ("Phone Number", "conversation"),
+        "gender_identity":   ("Gender Identity", "conversation"),
+        "mailing_address":   ("Mailing Address", "conversation"),
+        "preferred_language": ("Preferred Language", "conversation"),
+    },
+    "documents": {
+        "documents_in_hand": ("Documents on Hand", "document"),
+    },
+    "supervision": {
+        "supervision_type":      ("Supervision Type", "document"),
+        "supervision_end_date":  ("Supervision End Date", "document"),
+        "po_name":               ("Parole/Probation Officer", "document"),
+        "po_phone":              ("Officer Phone Number", "document"),
+        "next_reporting_date":   ("Next Reporting Date", "document"),
+        "reporting_frequency":   ("Reporting Frequency", "document"),
+        "curfew_start":          ("Curfew Start", "document"),
+        "curfew_end":            ("Curfew End", "document"),
+        "drug_testing_required": ("Drug Testing Required", "document"),
+        "electronic_monitoring": ("Electronic Monitoring", "document"),
+        "geographic_restrictions": ("Geographic Restrictions", "document"),
+        "mandatory_treatment":   ("Mandatory Treatment", "document"),
+        "restitution_owed":      ("Restitution Owed", "document"),
+        "no_contact_orders":     ("No-Contact Orders", "document"),
+        "outstanding_fines":     ("Outstanding Fines", "document"),
+    },
+    "housing": {
+        "housing_status":           ("Housing Status", "conversation"),
+        "returning_to_housing_with": ("Living Situation", "conversation"),
+        "sex_offender_registry":    ("Sex Offender Registry", "conversation"),
+        "eviction_history":         ("Eviction History", "conversation"),
+        "accessibility_needs":      ("Accessibility Needs", "conversation"),
+    },
+    "employment": {
+        "employment_status":        ("Employment Status", "conversation"),
+        "felony_category":          ("Offense Category", "document"),
+        "has_valid_drivers_license": ("Valid Driver's License", "conversation"),
+        "has_ged_or_diploma":       ("GED or Diploma", "conversation"),
+        "college_completed":        ("College Completed", "conversation"),
+        "trade_skills":             ("Trade Skills", "conversation"),
+        "certifications":           ("Certifications", "conversation"),
+        "physical_limitations":     ("Physical Limitations", "conversation"),
+    },
+    "health": {
+        "current_medications":              ("Current Medications", "conversation"),
+        "has_active_medicaid":              ("Active Medicaid", "conversation"),
+        "disability_status":                ("Disability Status", "conversation"),
+        "chronic_conditions":               ("Chronic Conditions", "conversation"),
+        "substance_use_disorder_diagnosis": ("Substance Use Disorder", "conversation"),
+        "insurance_gap":                    ("Insurance Gap", "conversation"),
+        "mental_health_diagnoses":          ("Mental Health Diagnoses", "conversation"),
+    },
+    "benefits": {
+        "benefits_enrolled":        ("Benefits Enrolled", "conversation"),
+        "benefits_applied_pending": ("Benefits Applied/Pending", "conversation"),
+        "veteran_status":           ("Veteran Status", "conversation"),
+        "child_support_obligations": ("Child Support", "conversation"),
+    },
+}
+
+# Detail fields that only matter when their parent boolean is true.
+# Format: {section: {detail_field: parent_boolean_field}}
+_CONDITIONAL_FIELDS: dict[str, dict[str, str]] = {
+    "supervision": {
+        "drug_testing_frequency": "drug_testing_required",
+        "geographic_restrictions_detail": "geographic_restrictions",
+        "no_contact_orders_detail": "no_contact_orders",
+        "mandatory_treatment_detail": "mandatory_treatment",
+        "restitution_amount": "restitution_owed",
+        "outstanding_fines_amount": "outstanding_fines",
+    },
+    "housing": {
+        "sex_offender_registry_tier": "sex_offender_registry",
+    },
+    "employment": {
+        "physical_limitations_detail": "physical_limitations",
+    },
+    "health": {
+        "disability_type": "disability_status",
+    },
+    "benefits": {
+        "child_support_amount_monthly": "child_support_obligations",
+    },
+}
+
+# (label, source) for conditional detail fields
+_CONDITIONAL_DEFS: dict[str, tuple[str, str]] = {
+    "drug_testing_frequency":        ("Testing Frequency", "document"),
+    "geographic_restrictions_detail": ("Restriction Details", "document"),
+    "no_contact_orders_detail":      ("No-Contact Details", "document"),
+    "mandatory_treatment_detail":    ("Treatment Details", "document"),
+    "restitution_amount":            ("Restitution Amount", "manual"),
+    "outstanding_fines_amount":      ("Fines Amount", "manual"),
+    "sex_offender_registry_tier":    ("Registry Tier", "conversation"),
+    "physical_limitations_detail":   ("Limitation Details", "conversation"),
+    "disability_type":               ("Disability Type", "conversation"),
+    "child_support_amount_monthly":  ("Monthly Amount", "manual"),
+}
+
+
+def get_profile_field_matrix(db: Session, user_id: str) -> list[dict]:
+    """Build a curated profile completion matrix for the frontend.
+
+    Returns a list of section objects, each with labeled fields,
+    source tags (document/conversation/manual), and smart conditional
+    logic (detail fields only appear when their parent boolean is true).
+
+    Excludes: preferences (internal UX config), documents_needed and
+    documents_pending (tracking lists, not profile fields).
+    """
+    profile = get_full_profile(db, user_id)
+    sections = []
+
+    for section_key, defs in FIELD_DEFS.items():
+        section_data = profile.get(section_key, {})
+        fields = []
+
+        for field_key, (label, source) in defs.items():
+            value = section_data.get(field_key)
+            filled = _is_populated(value)
+            fields.append({"key": field_key, "label": label, "filled": filled, "source": source})
+
+        # Add conditional detail fields only when parent is true
+        conditionals = _CONDITIONAL_FIELDS.get(section_key, {})
+        for detail_field, parent_field in conditionals.items():
+            parent_val = section_data.get(parent_field)
+            if parent_val is True or (isinstance(parent_val, str) and parent_val.lower() in ("true", "yes")):
+                value = section_data.get(detail_field)
+                filled = _is_populated(value)
+                label, source = _CONDITIONAL_DEFS.get(detail_field, (detail_field, "conversation"))
+                # Insert after the parent field
+                parent_idx = next(
+                    (i for i, f in enumerate(fields) if f["key"] == parent_field), len(fields)
+                )
+                fields.insert(parent_idx + 1, {
+                    "key": detail_field, "label": label, "filled": filled,
+                    "source": source, "conditional": True,
+                })
+
+        filled_count = sum(1 for f in fields if f["filled"])
+        sections.append({
+            "key": section_key,
+            "label": _SECTION_LABELS.get(section_key, section_key),
+            "filled": filled_count,
+            "total": len(fields),
+            "fields": fields,
+        })
+
+    return sections
+
+
+_SECTION_LABELS = {
+    "identity": "Identity",
+    "documents": "Documents",
+    "supervision": "Supervision",
+    "housing": "Housing",
+    "employment": "Employment",
+    "health": "Health",
+    "benefits": "Benefits",
+}
+
+
+def _is_populated(value: Any) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, str) and value in ("", "[]"):
+        return False
+    if isinstance(value, list) and len(value) == 0:
+        return False
+    return True
+
+
 def get_completion_status(db: Session, user_id: str) -> dict[str, dict[str, bool]]:
     """Check which fields are populated across all sections.
 
@@ -627,6 +814,55 @@ def update_housing_application(db: Session, app_id: str, fields: dict[str, Any])
     row.updated_at = datetime.now()
     db.commit()
     return row.to_dict()
+
+
+# ---------------------------------------------------------------------------
+# Document upload tracking
+# ---------------------------------------------------------------------------
+
+
+def save_document_upload(
+    db: Session,
+    user_id: str,
+    document_type: str,
+    sections_updated: list[str],
+    fields_written: int,
+    raw_extraction: dict | None = None,
+    mapped_fields: dict | None = None,
+    file_path: str | None = None,
+    mime_type: str | None = None,
+) -> str:
+    """Persist metadata about an OCR document upload. Returns the new row id."""
+    row = DocumentUpload(
+        user_id=user_id,
+        document_type=document_type,
+        sections_updated=json.dumps(sections_updated),
+        fields_written=fields_written,
+        raw_extraction=json.dumps(raw_extraction, default=str) if raw_extraction else None,
+        mapped_fields=json.dumps(mapped_fields, default=str) if mapped_fields else None,
+        file_path=file_path,
+        mime_type=mime_type,
+    )
+    db.add(row)
+    db.commit()
+    return row.id
+
+
+def get_uploaded_documents(db: Session, user_id: str) -> list[dict]:
+    """Get all document uploads for a user, most recent first."""
+    rows = (
+        db.query(DocumentUpload)
+        .filter_by(user_id=user_id)
+        .order_by(DocumentUpload.uploaded_at.desc())
+        .all()
+    )
+    return [r.to_dict() for r in rows]
+
+
+def get_uploaded_document_by_id(db: Session, doc_id: str) -> dict | None:
+    """Get a single document upload by its ID."""
+    row = db.query(DocumentUpload).filter_by(id=doc_id).first()
+    return row.to_dict() if row else None
 
 
 def delete_housing_application(db: Session, app_id: str) -> bool:

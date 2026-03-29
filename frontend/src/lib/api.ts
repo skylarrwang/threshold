@@ -86,10 +86,42 @@ export interface UploadedDocument {
   sections_updated: string[];
   fields_written: number;
   uploaded_at: string;
+  raw_extraction?: Record<string, unknown>;
+  mapped_fields?: Record<string, Record<string, unknown>>;
+  file_path?: string | null;
+  mime_type?: string | null;
 }
 
 export async function fetchUploadedDocuments() {
   return get<UploadedDocument[]>('/documents/uploads');
+}
+
+export async function fetchUploadedDocumentDetail(docId: string) {
+  return get<UploadedDocument>(`/documents/uploads/${docId}`);
+}
+
+export async function fetchFieldCompletion() {
+  return get<Record<string, Record<string, boolean>>>('/profile/completion/fields');
+}
+
+export interface MatrixField {
+  key: string;
+  label: string;
+  filled: boolean;
+  source: 'document' | 'conversation' | 'manual';
+  conditional?: boolean;
+}
+
+export interface MatrixSection {
+  key: string;
+  label: string;
+  filled: number;
+  total: number;
+  fields: MatrixField[];
+}
+
+export async function fetchProfileMatrix() {
+  return get<MatrixSection[]>('/profile/completion/matrix');
 }
 
 export async function uploadDocument(file: File) {
