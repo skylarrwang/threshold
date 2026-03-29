@@ -1,7 +1,6 @@
 import { useHousingStore } from '@/store/housingStore';
 import { useJobStore } from '@/store/jobStore';
 import { useBenefitsStore } from '@/store/benefitsStore';
-import { useDocumentsStore } from '@/store/documentsStore';
 
 // Stage weights: each step in the happy-path pipeline gets a sequential weight.
 // Terminal-negative statuses (denied, rejected, withdrawn) are excluded.
@@ -44,7 +43,6 @@ export interface ProgressSummary {
   employment: number;
   employmentStageLabel?: string;
   benefits: number;
-  documents: number;
   overall: number;
 }
 
@@ -52,7 +50,6 @@ export function useProgressSummary(): ProgressSummary {
   const housingPipeline = useHousingStore((s) => s.pipeline);
   const jobPipeline = useJobStore((s) => s.pipeline);
   const benefits = useBenefitsStore((s) => s.benefits);
-  const documents = useDocumentsStore((s) => s.completionPercent);
 
   // --- Housing: best active application's stage progress ---
   let housing = 0;
@@ -99,8 +96,8 @@ export function useProgressSummary(): ProgressSummary {
 
   // --- Overall: weighted composite of all domains ---
   const overall = Math.round(
-    housing * 0.30 + employment * 0.30 + benefitsPercent * 0.20 + documents * 0.20,
+    housing * 0.40 + employment * 0.40 + benefitsPercent * 0.20,
   );
 
-  return { housing, housingStageLabel, employment, employmentStageLabel, benefits: benefitsPercent, documents, overall };
+  return { housing, housingStageLabel, employment, employmentStageLabel, benefits: benefitsPercent, overall };
 }

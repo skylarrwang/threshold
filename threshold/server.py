@@ -855,11 +855,14 @@ async def websocket_chat(ws: WebSocket):
                 })
 
     except WebSocketDisconnect:
-        pass
+        logger.info("[ws] client disconnected")
     except Exception as e:
         logger.error("WebSocket error: %s\n%s", e, traceback.format_exc())
         try:
             await ws.send_json({"type": "error", "message": str(e)})
+        except (WebSocketDisconnect, RuntimeError):
+            # Client already disconnected, ignore
+            pass
         except Exception:
             pass
 
@@ -1117,7 +1120,7 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                     # Track domain for workflow_update events
                     if subagent_type and subagent_type in _DOMAIN_TOOL_STAGES:
                         active_domain = subagent_type
-                        await ws.send_json({
+                        await _safe_send({
                             "type": "workflow_update",
                             "domain": active_domain,
                             "workflow_event": "start",
@@ -1167,7 +1170,7 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                                 label = f"{stage_label} — found {payload['count']}"
                             elif payload.get("program"):
                                 label = f"{stage_label}: {payload['program']}"
-                            await ws.send_json({
+                            await _safe_send({
                                 "type": "workflow_update",
                                 "domain": active_domain,
                                 "workflow_event": "tool_result",

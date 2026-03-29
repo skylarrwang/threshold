@@ -12,7 +12,6 @@ const progressItems = [
   { path: '/housing', icon: 'home_work', label: 'Housing', key: 'housing' as const, stageLabelKey: 'housingStageLabel' as const },
   { path: '/employment', icon: 'work_history', label: 'Employment', key: 'employment' as const, stageLabelKey: 'employmentStageLabel' as const },
   { path: '/benefits', icon: 'volunteer_activism', label: 'Benefits', key: 'benefits' as const, stageLabelKey: undefined },
-  { path: '/documents', icon: 'description', label: 'Documents', key: 'documents' as const, stageLabelKey: undefined },
 ];
 
 interface RightPanelProps {
@@ -237,6 +236,33 @@ export function RightPanel({
               );
             })}
           </div>
+
+          {/* Documents link (no progress bar) */}
+          <button
+            onClick={() => {
+              navigate('/documents');
+              onClose?.();
+            }}
+            title={isCollapsed ? 'Documents' : undefined}
+            className={cn(
+              'w-full rounded-xl transition-all duration-200 group mt-1',
+              isCollapsed
+                ? 'flex items-center justify-center px-0 py-3 hover:bg-surface-container-lowest/60'
+                : 'flex items-center gap-3 px-3 py-3 hover:bg-surface-container-lowest/60 text-left'
+            )}
+          >
+            <span className="material-symbols-outlined text-xl text-on-surface-variant group-hover:text-primary transition-colors shrink-0">
+              description
+            </span>
+            {!isCollapsed && (
+              <>
+                <span className="flex-1 text-sm font-label text-on-surface">Documents</span>
+                <span className="material-symbols-outlined text-base text-outline opacity-0 group-hover:opacity-100 transition-opacity">
+                  chevron_right
+                </span>
+              </>
+            )}
+          </button>
 
           {/* Alert nudges */}
           {!isCollapsed && alertNudges.length > 0 && (
