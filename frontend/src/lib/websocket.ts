@@ -47,6 +47,13 @@ function handleMessage(msg: WsMessage) {
 
     case 'message_complete':
       store.setStreamingMessageId(null);
+      store.setToolCall(null);
+      // Mark any in-progress steps as completed
+      for (const step of store.agentSteps) {
+        if (step.status === 'started') {
+          store.addOrUpdateStep({ ...step, status: 'completed' });
+        }
+      }
       break;
 
     case 'tool_start': {
@@ -197,7 +204,7 @@ export function useChatSocket() {
     });
     store.setStreamingMessageId(aiMsgId);
 
-    ws.send(JSON.stringify({ type: 'user_message', content }));
+    ws.send(JSON.stringify({ type: 'user_message', content, conversation_id: store.activeConversationId }));
   }, []);
 
   return { sendMessage };
