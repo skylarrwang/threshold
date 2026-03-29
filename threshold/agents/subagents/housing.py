@@ -3,6 +3,7 @@ import os
 from langchain_openai import ChatOpenAI
 
 from ...tools import (
+    check_pha_waitlist_status,
     find_emergency_shelter,
     find_reentry_housing,
     get_fair_chance_housing_laws,
@@ -37,7 +38,12 @@ Key knowledge:
 
 ## Housing Pipeline — Your Full Toolkit
 
-You have tools for every stage of the housing journey. Use them in this order:
+You have tools for every stage of the housing journey:
+
+### Stage 0: Check Existing Pipeline (DO THIS FIRST)
+- get_housing_pipeline_status() — check for existing applications, overdue follow-ups,
+  and approaching deadlines BEFORE starting new searches
+- Address overdue follow-ups first. Help prepare for upcoming interviews.
 
 ### Stage 1: Immediate Safety
 - find_emergency_shelter(location) — shelters, recovery housing, SAMHSA database
@@ -47,6 +53,7 @@ You have tools for every stage of the housing journey. Use them in this order:
 - find_reentry_housing(state, city) — curated database of programs that accept records
 - search_housing(location, offense_category) — HUD counseling agencies + 211 results
 - get_pha_guide(state, city) — Section 8 / public housing authority info + waitlists
+- check_pha_waitlist_status(city, state) — current waitlist status + direct portal links
 - Log every promising program: log_housing_application(program, "discovered")
 
 ### Stage 3: Know Your Rights
@@ -59,15 +66,36 @@ You have tools for every stage of the housing journey. Use them in this order:
 - Help gather missing documents: ID restoration, SSN card, income verification
 
 ### Stage 5: Apply & Track
-- log_housing_application(program, status, notes, follow_up_date, contact_name, phone)
-  — track each application through: discovered → documents_ready → applied →
-  waitlisted → interview_scheduled → approved/denied → moved_in
-- get_housing_pipeline_status() — see all applications and next steps at a glance
+- log_housing_application() tracks each application through 14 real-world stages:
+  discovered → contacted → documents_gathering → applied → screening → waitlisted →
+  voucher_issued → unit_search → interview_scheduled → approved → lease_review →
+  moved_in (or denied → appeal_filed)
+
+  Important fields to always include when logging:
+  - housing_type: section_8, transitional, private_rental, recovery, rapid_rehousing
+  - application_url: direct link to apply online (if available from program listing)
+  - follow_up_date: when to check back
+  - deadline: voucher expiry or application deadline (YYYY-MM-DD)
+  - interview_date/time/location: when interview is scheduled
+  - denial_reason: capture this for appeals
+
+  Typical paths by housing type:
+  - Section 8: discovered → contacted → documents_gathering → applied → screening →
+    waitlisted → voucher_issued → unit_search → approved → lease_review → moved_in
+  - Transitional: discovered → contacted → documents_gathering → applied → screening →
+    interview_scheduled → approved → moved_in
+  - Private rental: discovered → contacted → documents_gathering → applied → screening →
+    approved → lease_review → moved_in
+  - Recovery: discovered → contacted → interview_scheduled → approved → moved_in
+
+  Section 8 specific: When a voucher is issued, IMMEDIATELY set a deadline for the
+  expiry date (typically 60-120 days). Move the application to `unit_search` stage.
+  The clock is ticking — search for units daily.
 
 ### Stage 6: Follow Up & Advocate
-- If denied: help draft appeal letters, connect to legal aid
+- If denied: capture denial_reason, help draft appeal letters, connect to legal aid
 - If waitlisted: set follow-up dates, apply to more programs in parallel
-- If approved: review lease terms, prepare for move-in
+- If approved: review lease terms, prepare for move-in, track deposits
 
 ## Rules
 - Always load the user's memory first with read_user_memory()
@@ -112,6 +140,7 @@ housing_subagent = {
         find_reentry_housing,
         prepare_housing_application,
         get_pha_guide,
+        check_pha_waitlist_status,
     ],
     "model": ChatOpenAI(model="grok-3-fast", base_url="https://api.x.ai/v1", api_key=os.getenv("XAI_API_KEY", "")),
 }

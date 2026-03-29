@@ -10,6 +10,7 @@ import { LogApplicationModal } from '@/components/housing/LogApplicationModal';
 import { QuickActionsGrid } from '@/components/housing/QuickActionsGrid';
 import { FairChanceLawsPanel } from '@/components/housing/FairChanceLawsPanel';
 import { ReadinessChecklist } from '@/components/housing/ReadinessChecklist';
+import { AlertsBanner } from '@/components/housing/AlertsBanner';
 
 const HOUSING_STATUS_LABELS: Record<string, string> = {
   housed: 'Housed',
@@ -33,9 +34,11 @@ export function HousingPage() {
   const {
     pipeline,
     pipelineLoading,
+    alerts,
     fairChanceLaw,
     fairChanceLawLoading,
     fetchPipeline,
+    fetchAlerts,
     fetchFairChanceLaw,
     setLogModalOpen,
   } = useHousingStore();
@@ -43,7 +46,8 @@ export function HousingPage() {
   // Fetch data on mount
   useEffect(() => {
     fetchPipeline();
-  }, [fetchPipeline]);
+    fetchAlerts();
+  }, [fetchPipeline, fetchAlerts]);
 
   useEffect(() => {
     const state = profile.personal.home_state || 'CT';
@@ -76,7 +80,7 @@ export function HousingPage() {
     {
       id: 'applications',
       label: 'At least 3 housing applications submitted',
-      done: applications.filter((a) => ['applied', 'waitlisted', 'interview_scheduled', 'approved', 'moved_in'].includes(a.status)).length >= 3,
+      done: applications.filter((a) => ['applied', 'screening', 'waitlisted', 'voucher_issued', 'unit_search', 'interview_scheduled', 'approved', 'lease_review', 'moved_in'].includes(a.status)).length >= 3,
     },
     {
       id: 'rights',
@@ -132,6 +136,9 @@ export function HousingPage() {
           )}
         </div>
       </section>
+
+      {/* ─── Alerts Banner ─── */}
+      {alerts && <AlertsBanner alerts={alerts} />}
 
       {/* ─── Section 2: Pipeline Tracker ─── */}
       <section className="space-y-4">

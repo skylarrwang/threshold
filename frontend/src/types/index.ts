@@ -67,13 +67,19 @@ export interface JobApplication {
 
 export type HousingPipelineStage =
   | 'discovered'
-  | 'documents_ready'
+  | 'contacted'
+  | 'documents_gathering'
   | 'applied'
+  | 'screening'
   | 'waitlisted'
+  | 'voucher_issued'
+  | 'unit_search'
   | 'interview_scheduled'
   | 'approved'
+  | 'lease_review'
+  | 'moved_in'
   | 'denied'
-  | 'moved_in';
+  | 'appeal_filed';
 
 export interface HousingApplication {
   id: string;
@@ -85,9 +91,38 @@ export interface HousingApplication {
   follow_up_date?: string;
   contact_name?: string;
   contact_phone?: string;
+  application_url?: string;
+  deadline?: string;
+  interview_date?: string;
+  interview_time?: string;
+  interview_location?: string;
+  denial_reason?: string;
+  documents_submitted?: string;
+  housing_type?: string;
   next_action?: string;
   stage_label?: string;
   history: { status: string; notes: string; date: string }[];
+}
+
+export interface HousingAlertItem {
+  program: string;
+  status?: string;
+  follow_up_date?: string;
+  days_overdue?: number;
+  days_until?: number;
+  contact_phone?: string;
+  interview_date?: string;
+  interview_time?: string;
+  interview_location?: string;
+  deadline?: string;
+  days_left?: number;
+}
+
+export interface HousingAlerts {
+  overdue: HousingAlertItem[];
+  upcoming_7_days: HousingAlertItem[];
+  interviews_upcoming: HousingAlertItem[];
+  deadlines_soon: HousingAlertItem[];
 }
 
 export interface HousingPipelineSummary {

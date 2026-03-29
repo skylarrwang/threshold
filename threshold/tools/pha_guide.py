@@ -19,6 +19,9 @@ _PHA_DATABASE: list[dict] = [
         "city": "Hartford",
         "phone": "860-723-8400",
         "website": "https://www.hartfordhousing.org",
+        "application_url": "https://www.hartfordhousing.org",
+        "waitlist_check_url": "https://www.hartfordhousing.org",
+        "last_verified": "2026-03-28",
         "section_8_status": "Waitlist currently CLOSED. Check website for reopening announcements.",
         "public_housing_status": "Limited availability. Apply through website.",
         "reentry_notes": (
@@ -47,6 +50,9 @@ _PHA_DATABASE: list[dict] = [
         "city": "New Haven",
         "phone": "203-498-8800",
         "website": "https://www.elmcitycommunities.org",
+        "application_url": "https://www.elmcitycommunities.org",
+        "waitlist_check_url": "https://www.elmcitycommunities.org",
+        "last_verified": "2026-03-28",
         "section_8_status": "Waitlist status varies. Check website or call.",
         "public_housing_status": "Multiple developments. Apply through central office.",
         "reentry_notes": (
@@ -73,6 +79,9 @@ _PHA_DATABASE: list[dict] = [
         "city": "Bridgeport",
         "phone": "203-337-8900",
         "website": "https://www.parkcitycommunities.org",
+        "application_url": "https://www.parkcitycommunities.org",
+        "waitlist_check_url": "https://www.parkcitycommunities.org",
+        "last_verified": "2026-03-28",
         "section_8_status": "Waitlist typically CLOSED. Opens periodically — check website.",
         "public_housing_status": "Applications accepted. Long wait times.",
         "reentry_notes": (
@@ -97,6 +106,9 @@ _PHA_DATABASE: list[dict] = [
         "city": "Waterbury",
         "phone": "203-596-2640",
         "website": "https://www.waterburyha.org",
+        "application_url": "https://www.waterburyha.org",
+        "waitlist_check_url": "https://www.waterburyha.org",
+        "last_verified": "2026-03-28",
         "section_8_status": "Check website for waitlist status.",
         "public_housing_status": "Applications accepted for multiple properties.",
         "reentry_notes": (
@@ -117,6 +129,9 @@ _PHA_DATABASE: list[dict] = [
         "city": "New London",
         "phone": "860-443-2851",
         "website": "",
+        "application_url": "",
+        "waitlist_check_url": "",
+        "last_verified": "2026-03-28",
         "section_8_status": "Limited. Call for current status.",
         "public_housing_status": "Applications accepted.",
         "reentry_notes": "Standard HUD individualized assessment. Smaller agency — decisions may be faster.",
@@ -167,6 +182,12 @@ def get_pha_guide(state: str = "CT", city: str = "") -> str:
                 lines.append(f"**Phone:** {pha['phone']}")
             if pha["website"]:
                 lines.append(f"**Website:** {pha['website']}")
+            if pha.get("application_url"):
+                lines.append(f"**Apply online:** {pha['application_url']}")
+            if pha.get("waitlist_check_url"):
+                lines.append(f"**Check waitlist status:** {pha['waitlist_check_url']}")
+            if pha.get("last_verified"):
+                lines.append(f"**Data last verified:** {pha['last_verified']}")
             lines.append(f"\n**Section 8 (Housing Choice Voucher):** {pha['section_8_status']}")
             lines.append(f"**Public Housing:** {pha['public_housing_status']}")
             lines.append(f"\n**Criminal Record Policy:**\n{pha['reentry_notes']}")
@@ -200,5 +221,61 @@ def get_pha_guide(state: str = "CT", city: str = "") -> str:
     lines.append(
         "*This is general information, not legal advice. PHA policies change — "
         "always call to confirm current waitlist status and application procedures.*"
+    )
+    return "\n".join(lines)
+
+
+@tool
+def check_pha_waitlist_status(city: str = "", state: str = "CT") -> str:
+    """Check the latest known waitlist status for Public Housing Authorities.
+
+    Returns stored status, direct links to verify online, and phone numbers.
+    PHA waitlists change frequently — always verify by calling or checking their website.
+
+    Args:
+        city: Optional city to filter (e.g. "Hartford")
+        state: Two-letter state code (default "CT")
+    """
+    state_upper = state.upper().strip()
+    matches = [p for p in _PHA_DATABASE if p["state"] == state_upper]
+
+    if city:
+        city_lower = city.lower().strip()
+        city_matches = [p for p in matches if city_lower in p["city"].lower()]
+        if city_matches:
+            matches = city_matches
+
+    if not matches:
+        return (
+            f"*No PHA waitlist data for {state_upper}"
+            + (f" / {city}" if city else "")
+            + " in the database.*\n\n"
+            "Find your local PHA:\n"
+            "- HUD directory: https://www.hud.gov/program_offices/public_indian_housing/pha/contacts\n"
+            "- Call **211** and ask for 'Section 8 waitlist status'\n"
+        )
+
+    lines = [f"## PHA Waitlist Status — {state_upper}"]
+    if city:
+        lines[0] += f" ({city})"
+    lines.append("")
+
+    for pha in matches:
+        lines.append(f"### {pha['name']}")
+        lines.append(f"**Section 8 (Housing Choice Voucher):** {pha['section_8_status']}")
+        lines.append(f"**Public Housing:** {pha['public_housing_status']}")
+        if pha.get("waitlist_check_url"):
+            lines.append(f"**Check current status online:** {pha['waitlist_check_url']}")
+        if pha.get("phone"):
+            lines.append(f"**Call to verify:** {pha['phone']}")
+        if pha.get("last_verified"):
+            lines.append(f"**Data last verified:** {pha['last_verified']}")
+        lines.append("")
+
+    lines.append("---")
+    lines.append(
+        "*Waitlist status changes frequently. This information was last verified on the "
+        "dates shown above. Always call or check the website before making decisions "
+        "based on waitlist status.*"
     )
     return "\n".join(lines)

@@ -110,6 +110,10 @@ export async function fetchHousingPipeline() {
   return get<import('@/types').HousingPipelineSummary>('/housing/pipeline');
 }
 
+export async function fetchHousingAlerts() {
+  return get<import('@/types').HousingAlerts>('/housing/alerts');
+}
+
 export async function logHousingApplication(data: {
   program: string;
   status: string;

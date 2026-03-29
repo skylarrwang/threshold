@@ -1,11 +1,14 @@
 import { create } from 'zustand';
-import type { HousingPipelineSummary, HousingApplication, FairChanceLaw } from '@/types';
-import { fetchHousingPipeline, logHousingApplication, fetchFairChanceLaws } from '@/lib/api';
+import type { HousingPipelineSummary, HousingApplication, HousingAlerts, FairChanceLaw } from '@/types';
+import { fetchHousingPipeline, logHousingApplication, fetchHousingAlerts, fetchFairChanceLaws } from '@/lib/api';
 
 interface HousingState {
   pipeline: HousingPipelineSummary | null;
   pipelineLoading: boolean;
   pipelineError: string | null;
+
+  alerts: HousingAlerts | null;
+  alertsLoading: boolean;
 
   fairChanceLaw: FairChanceLaw | null;
   fairChanceLawLoading: boolean;
@@ -15,6 +18,7 @@ interface HousingState {
 
   // Actions
   fetchPipeline: () => Promise<void>;
+  fetchAlerts: () => Promise<void>;
   logApplication: (data: {
     program: string;
     status: string;
@@ -32,6 +36,9 @@ export const useHousingStore = create<HousingState>()((set, get) => ({
   pipelineLoading: false,
   pipelineError: null,
 
+  alerts: null,
+  alertsLoading: false,
+
   fairChanceLaw: null,
   fairChanceLawLoading: false,
 
@@ -44,6 +51,16 @@ export const useHousingStore = create<HousingState>()((set, get) => ({
       set({ pipeline: data, pipelineLoading: false });
     } catch (e) {
       set({ pipelineError: (e as Error).message, pipelineLoading: false });
+    }
+  },
+
+  async fetchAlerts() {
+    set({ alertsLoading: true });
+    try {
+      const data = await fetchHousingAlerts();
+      set({ alerts: data, alertsLoading: false });
+    } catch {
+      set({ alertsLoading: false });
     }
   },
 

@@ -19,6 +19,7 @@ _REENTRY_PROGRAMS: list[dict] = [
         "state": "CT",
         "phone": "860-566-2030",
         "website": "https://www.cpaonline.org",
+        "application_url": "https://www.cpaonline.org",
         "description": (
             "Transitional housing for men and women returning from incarceration. "
             "Case management, employment readiness, substance abuse support. "
@@ -36,6 +37,7 @@ _REENTRY_PROGRAMS: list[dict] = [
         "state": "CT",
         "phone": "860-525-3447",
         "website": "https://www.openhearthct.org",
+        "application_url": "",
         "description": (
             "Emergency shelter beds + 6-month transitional housing program for men. "
             "Includes job training, financial literacy, and case management. "
@@ -53,6 +55,7 @@ _REENTRY_PROGRAMS: list[dict] = [
         "state": "CT",
         "phone": "860-808-2100",
         "website": "https://www.mercyhousingct.org",
+        "application_url": "",
         "description": (
             "Emergency shelter + transitional housing. Partners with reentry services. "
             "On-site case managers help with housing search and benefits enrollment."
@@ -69,6 +72,7 @@ _REENTRY_PROGRAMS: list[dict] = [
         "state": "CT",
         "phone": "203-401-4400",
         "website": "https://www.columbushouse.org",
+        "application_url": "",
         "description": (
             "Emergency shelter + rapid rehousing program that helps place people in "
             "permanent housing with short-term rental assistance. Reentry-friendly."
@@ -85,6 +89,7 @@ _REENTRY_PROGRAMS: list[dict] = [
         "state": "CT",
         "phone": "1-888-774-2900",
         "website": "https://cceh.org",
+        "application_url": "",
         "description": (
             "NOT a housing program itself — this is the intake gateway. CAN does "
             "assessments and connects you to available shelter beds and transitional "
@@ -102,6 +107,7 @@ _REENTRY_PROGRAMS: list[dict] = [
         "state": "CT",
         "phone": "860-560-5600",
         "website": "",
+        "application_url": "",
         "description": (
             "Day-of-release support center. Connects newly released individuals "
             "to housing, food, ID restoration, and employment services. "
@@ -119,6 +125,7 @@ _REENTRY_PROGRAMS: list[dict] = [
         "state": "CT",
         "phone": "203-334-6228",
         "website": "",
+        "application_url": "",
         "description": (
             "Residential reentry program for men. Up to 6 months of transitional "
             "housing with structured programming, job placement, and relapse prevention."
@@ -135,6 +142,7 @@ _REENTRY_PROGRAMS: list[dict] = [
         "state": "CT",
         "phone": "860-263-4400",
         "website": "https://www.chrysaliscenterct.org",
+        "application_url": "https://www.chrysaliscenterct.org",
         "description": (
             "Supportive housing + workforce development for women in recovery and reentry. "
             "On-site childcare, mental health services, and financial coaching."
@@ -151,6 +159,7 @@ _REENTRY_PROGRAMS: list[dict] = [
         "state": "CT",
         "phone": "860-692-7480",
         "website": "https://portal.ct.gov/doc",
+        "application_url": "",
         "description": (
             "DOC-contracted halfway houses for people on transitional supervision. "
             "Not voluntary — assigned by DOC. But if you're eligible, ask your "
@@ -168,6 +177,7 @@ _REENTRY_PROGRAMS: list[dict] = [
         "state": "CT",
         "phone": "860-569-5900",
         "website": "https://www.intercommunityct.org",
+        "application_url": "https://www.intercommunityct.org",
         "description": (
             "Sober living and recovery housing with integrated mental health services. "
             "Accepts people with criminal records. Medication-assisted treatment available."
@@ -260,6 +270,8 @@ def find_reentry_housing(
             lines.append(f"**Phone:** {prog['phone']}")
         if prog["website"]:
             lines.append(f"**Website:** {prog['website']}")
+        if prog.get("application_url"):
+            lines.append(f"**Apply online:** {prog['application_url']}")
         lines.append(f"**How to apply:** {prog['how_to_apply']}")
         lines.append(f"**Waitlist:** {prog['waitlist_note']}")
         lines.append(f"**Eligibility:** {prog['eligibility']}")

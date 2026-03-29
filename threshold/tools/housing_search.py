@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from uuid import uuid4
 
@@ -433,37 +433,100 @@ def get_fair_chance_housing_laws(state: str) -> str:
 
 
 _PIPELINE_STAGES = [
-    "discovered",       # Found the program, added to list
-    "documents_ready",  # Have the docs needed for this application
-    "applied",          # Application submitted
-    "waitlisted",       # On waitlist
-    "interview_scheduled",  # Interview or intake scheduled
-    "approved",         # Accepted
-    "denied",           # Denied (with appeal info)
-    "moved_in",         # Successfully housed
+    "discovered",           # Found the program or listing
+    "contacted",            # Called/emailed intake, got requirements
+    "documents_gathering",  # Actively collecting required paperwork
+    "applied",              # Application or pre-application submitted
+    "screening",            # Background/credit check or eligibility review underway
+    "waitlisted",           # On waitlist (Section 8 can be months or years)
+    "voucher_issued",       # Received Housing Choice Voucher (Section 8 / rapid rehousing)
+    "unit_search",          # Actively searching for unit with voucher
+    "interview_scheduled",  # Intake meeting, interview, or unit viewing set
+    "approved",             # Accepted into program or approved for unit
+    "lease_review",         # Reviewing lease, arranging deposits, inspection if needed
+    "moved_in",             # Successfully housed
+    "denied",               # Application denied
+    "appeal_filed",         # Requested informal hearing or filed appeal
 ]
 
 _STAGE_LABELS = {
     "discovered": "Found Program",
-    "documents_ready": "Documents Ready",
-    "applied": "Applied",
+    "contacted": "Contacted Intake",
+    "documents_gathering": "Gathering Documents",
+    "applied": "Application Submitted",
+    "screening": "Background Screening",
     "waitlisted": "On Waitlist",
-    "interview_scheduled": "Interview Scheduled",
-    "approved": "Approved",
-    "denied": "Denied",
+    "voucher_issued": "Voucher Issued",
+    "unit_search": "Searching for Unit",
+    "interview_scheduled": "Interview / Viewing Set",
+    "approved": "Approved / Accepted",
+    "lease_review": "Reviewing Lease",
     "moved_in": "Moved In",
+    "denied": "Denied",
+    "appeal_filed": "Appeal Filed",
 }
 
 _NEXT_ACTIONS: dict[str, str] = {
-    "discovered": "Gather required documents. Use `prepare_housing_application()` for a checklist.",
-    "documents_ready": "Submit the application. Call the program to confirm how to apply.",
-    "applied": "Follow up in 1-2 weeks if you haven't heard back. Keep a record of who you spoke to.",
-    "waitlisted": "Check in monthly. Apply to other programs in parallel — don't wait on one.",
-    "interview_scheduled": "Prepare: bring all documents, arrive early, dress presentably. Practice your story.",
-    "approved": "Review the lease carefully before signing. Ask about move-in costs and timeline.",
-    "denied": "Request denial reason IN WRITING. You have 14 days to appeal. Contact legal aid: lawhelp.org",
-    "moved_in": "Congratulations! Set up mail forwarding, update your address with PO and benefits.",
+    "discovered": (
+        "Call the program to ask about availability and their screening process "
+        "for people with records."
+    ),
+    "contacted": (
+        "Get the document checklist. Use `prepare_housing_application()` for your "
+        "personalized list. Ask about timeline and next steps."
+    ),
+    "documents_gathering": (
+        "Track what you still need. Missing ID? Start with DMV. Missing SSN card? "
+        "Visit ssa.gov. Need release papers? Contact DOC records."
+    ),
+    "applied": (
+        "Confirm receipt of your application. Get a confirmation number or the name "
+        "of who processed it. Write down the date you applied."
+    ),
+    "screening": (
+        "Wait for results — typically 1-4 weeks. One follow-up call per week is "
+        "appropriate. Don't call daily."
+    ),
+    "waitlisted": (
+        "Check in monthly. Ask your position on the list. Apply to OTHER programs "
+        "in parallel — NEVER wait on just one."
+    ),
+    "voucher_issued": (
+        "You typically have 60-120 days to find a unit. Start searching IMMEDIATELY. "
+        "The clock is ticking."
+    ),
+    "unit_search": (
+        "Look for landlords who accept vouchers. In CT, landlords CANNOT legally "
+        "refuse Section 8. Contact units daily."
+    ),
+    "interview_scheduled": (
+        "Bring ALL documents. Arrive 15 min early. Prepare your story: focus on "
+        "stability, employment, and your support network."
+    ),
+    "approved": (
+        "Review the offer carefully. Ask about: security deposit, first/last month, "
+        "utilities, move-in date, house rules."
+    ),
+    "lease_review": (
+        "Read every clause. Watch for: fees, maintenance responsibilities, guest "
+        "policies, inspection requirements. Ask questions BEFORE signing."
+    ),
+    "moved_in": (
+        "Update your address with: PO/probation, benefits (SNAP, Medicaid), employer, "
+        "DMV. Set up mail forwarding. Apply for utility assistance if needed."
+    ),
+    "denied": (
+        "Request the denial reason IN WRITING within 3 days. You have 14 days to "
+        "request an informal hearing. Contact CT Legal Aid: 1-800-453-3320."
+    ),
+    "appeal_filed": (
+        "Prepare for the hearing: gather character references, program completion "
+        "certificates, employment proof. Legal aid can represent you for free."
+    ),
 }
+
+# Terminal statuses — these are "done" and don't need follow-ups
+_TERMINAL_STATUSES = {"moved_in", "denied", "appeal_filed"}
 
 
 def _fuzzy_match_program(apps: list[dict], program: str) -> dict | None:
@@ -513,6 +576,14 @@ def log_housing_application(
     follow_up_date: str = "",
     contact_name: str = "",
     contact_phone: str = "",
+    application_url: str = "",
+    deadline: str = "",
+    interview_date: str = "",
+    interview_time: str = "",
+    interview_location: str = "",
+    denial_reason: str = "",
+    documents_submitted: str = "",
+    housing_type: str = "",
 ) -> str:
     """Log or update a housing application in the pipeline tracker.
 
@@ -527,6 +598,14 @@ def log_housing_application(
         follow_up_date: When to follow up (YYYY-MM-DD format)
         contact_name: Name of person you spoke to
         contact_phone: Phone number for follow-up
+        application_url: Direct link to the program's application portal
+        deadline: Application or voucher deadline (YYYY-MM-DD format)
+        interview_date: Interview or viewing date (YYYY-MM-DD format)
+        interview_time: Interview time (e.g. "10:00 AM")
+        interview_location: Interview address, "phone", or "virtual"
+        denial_reason: Reason given for denial (important for appeals)
+        documents_submitted: Comma-separated list of documents submitted (e.g. "photo_id, ssn_card, income_proof")
+        housing_type: Type of housing: section_8, transitional, private_rental, recovery, rapid_rehousing
     """
     HOUSING_APPS_LOG.parent.mkdir(parents=True, exist_ok=True)
     apps: list[dict] = []
@@ -540,6 +619,21 @@ def log_housing_application(
 
     now = datetime.now().isoformat()
     action = "updated"
+
+    # Fields that get set/updated when provided
+    _optional_fields = {
+        "follow_up_date": follow_up_date,
+        "contact_name": contact_name,
+        "contact_phone": contact_phone,
+        "application_url": application_url,
+        "deadline": deadline,
+        "interview_date": interview_date,
+        "interview_time": interview_time,
+        "interview_location": interview_location,
+        "denial_reason": denial_reason,
+        "documents_submitted": documents_submitted,
+        "housing_type": housing_type,
+    }
 
     if existing:
         old_status = existing.get("status", "")
@@ -575,12 +669,9 @@ def log_housing_application(
             "updated_at": now,
             "history": [],
         }
-        if follow_up_date:
-            entry["follow_up_date"] = follow_up_date
-        if contact_name:
-            entry["contact_name"] = contact_name
-        if contact_phone:
-            entry["contact_phone"] = contact_phone
+        for key, value in _optional_fields.items():
+            if value:
+                entry[key] = value
         apps.append(entry)
 
     HOUSING_APPS_LOG.write_text(json.dumps(apps, indent=2))
@@ -604,6 +695,17 @@ def log_housing_application(
         result += f"\n**Next step:** {next_action}"
     if follow_up_date:
         result += f"\n**Follow up by:** {follow_up_date}"
+    if deadline:
+        result += f"\n**Deadline:** {deadline}"
+    if interview_date:
+        interview_str = f"\n**Interview:** {interview_date}"
+        if interview_time:
+            interview_str += f" at {interview_time}"
+        if interview_location:
+            interview_str += f" — {interview_location}"
+        result += interview_str
+    if application_url:
+        result += f"\n**Apply online:** {application_url}"
     return result
 
 
@@ -640,10 +742,12 @@ def get_housing_pipeline_status() -> str:
     lines = ["## Your Housing Pipeline\n"]
 
     # Count active applications
-    active = [a for a in apps if a.get("status") not in ("denied", "moved_in")]
+    active = [a for a in apps if a.get("status") not in _TERMINAL_STATUSES]
     resolved = [a for a in apps if a.get("status") in ("approved", "moved_in")]
     lines.append(f"**{len(active)} active** | **{len(apps)} total** | "
                  f"**{len(resolved)} approved/housed**\n")
+
+    today_str = datetime.now().strftime("%Y-%m-%d")
 
     # Show pipeline in stage order
     for stage in _PIPELINE_STAGES:
@@ -656,11 +760,33 @@ def get_housing_pipeline_status() -> str:
 
         for app in stage_apps:
             lines.append(f"**{app['program']}**")
+            if app.get("housing_type"):
+                lines.append(f"   Type: {app['housing_type']}")
             if app.get("contact_name"):
                 lines.append(f"   Contact: {app['contact_name']}"
                              + (f" — {app['contact_phone']}" if app.get("contact_phone") else ""))
+            if app.get("application_url"):
+                lines.append(f"   Apply online: {app['application_url']}")
             if app.get("follow_up_date"):
-                lines.append(f"   Follow up by: {app['follow_up_date']}")
+                fu = app["follow_up_date"]
+                overdue = fu < today_str
+                lines.append(f"   Follow up by: {fu}" + (" ⚠ OVERDUE" if overdue else ""))
+            if app.get("deadline"):
+                dl = app["deadline"]
+                urgent = dl <= today_str
+                lines.append(f"   Deadline: {dl}" + (" ⚠ PAST DUE" if urgent else ""))
+            # Stage-specific fields
+            if stage == "interview_scheduled" and app.get("interview_date"):
+                interview_str = f"   Interview: {app['interview_date']}"
+                if app.get("interview_time"):
+                    interview_str += f" at {app['interview_time']}"
+                if app.get("interview_location"):
+                    interview_str += f" — {app['interview_location']}"
+                lines.append(interview_str)
+            if stage == "denied" and app.get("denial_reason"):
+                lines.append(f"   Denial reason: {app['denial_reason']}")
+            if app.get("documents_submitted"):
+                lines.append(f"   Docs submitted: {app['documents_submitted']}")
             if app.get("notes"):
                 lines.append(f"   Notes: {app['notes']}")
             updated = app.get("updated_at", app.get("created_at", ""))
@@ -672,15 +798,132 @@ def get_housing_pipeline_status() -> str:
             lines.append("")
 
     # Follow-up reminders
-    follow_ups = [a for a in apps if a.get("follow_up_date") and a.get("status") not in ("denied", "moved_in")]
+    follow_ups = [
+        a for a in apps
+        if a.get("follow_up_date") and a.get("status") not in _TERMINAL_STATUSES
+    ]
     if follow_ups:
         follow_ups.sort(key=lambda a: a.get("follow_up_date", ""))
         lines.append("### Upcoming Follow-ups\n")
         for app in follow_ups:
-            lines.append(f"- **{app['follow_up_date']}** — {app['program']} ({_STAGE_LABELS.get(app['status'], app['status'])})")
+            fu = app["follow_up_date"]
+            overdue = " ⚠ OVERDUE" if fu < today_str else ""
+            lines.append(
+                f"- **{fu}**{overdue} — {app['program']} "
+                f"({_STAGE_LABELS.get(app['status'], app['status'])})"
+            )
+        lines.append("")
+
+    # Deadline warnings
+    deadlines = [
+        a for a in apps
+        if a.get("deadline") and a.get("status") not in _TERMINAL_STATUSES
+    ]
+    if deadlines:
+        deadlines.sort(key=lambda a: a.get("deadline", ""))
+        lines.append("### Approaching Deadlines\n")
+        for app in deadlines:
+            dl = app["deadline"]
+            try:
+                days_left = (datetime.strptime(dl, "%Y-%m-%d") - datetime.now()).days
+                urgency = f" ({days_left} days left)" if days_left >= 0 else " ⚠ PAST DUE"
+            except ValueError:
+                urgency = ""
+            lines.append(
+                f"- **{dl}**{urgency} — {app['program']} "
+                f"({_STAGE_LABELS.get(app['status'], app['status'])})"
+            )
         lines.append("")
 
     lines.append("---")
     lines.append("*Apply to multiple programs in parallel. Don't wait on one waitlist. "
                  "The more applications out there, the faster you get housed.*")
     return "\n".join(lines)
+
+
+def get_pending_follow_ups() -> dict:
+    """Check for overdue and upcoming follow-ups. Called at session start, not by user."""
+    apps: list[dict] = []
+    if HOUSING_APPS_LOG.exists():
+        try:
+            apps = json.loads(HOUSING_APPS_LOG.read_text())
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    if not apps:
+        return {"overdue": [], "upcoming_7_days": [], "interviews_upcoming": [], "deadlines_soon": []}
+
+    today = datetime.now()
+    today_str = today.strftime("%Y-%m-%d")
+    week_out = (today + timedelta(days=7)).strftime("%Y-%m-%d")
+
+    active = [a for a in apps if a.get("status") not in _TERMINAL_STATUSES]
+
+    overdue = []
+    upcoming_7_days = []
+    interviews_upcoming = []
+    deadlines_soon = []
+
+    for app in active:
+        program = app.get("program", "Unknown")
+        status = app.get("status", "")
+        contact_phone = app.get("contact_phone", "")
+
+        # Follow-up dates
+        fu = app.get("follow_up_date", "")
+        if fu:
+            if fu < today_str:
+                try:
+                    days_overdue = (today - datetime.strptime(fu, "%Y-%m-%d")).days
+                except ValueError:
+                    days_overdue = 0
+                overdue.append({
+                    "program": program,
+                    "follow_up_date": fu,
+                    "status": status,
+                    "days_overdue": days_overdue,
+                    "contact_phone": contact_phone,
+                })
+            elif fu <= week_out:
+                try:
+                    days_until = (datetime.strptime(fu, "%Y-%m-%d") - today).days
+                except ValueError:
+                    days_until = 0
+                upcoming_7_days.append({
+                    "program": program,
+                    "follow_up_date": fu,
+                    "status": status,
+                    "days_until": days_until,
+                })
+
+        # Upcoming interviews
+        idate = app.get("interview_date", "")
+        if idate and idate >= today_str:
+            interviews_upcoming.append({
+                "program": program,
+                "interview_date": idate,
+                "interview_time": app.get("interview_time", ""),
+                "interview_location": app.get("interview_location", ""),
+            })
+
+        # Approaching deadlines
+        dl = app.get("deadline", "")
+        if dl:
+            try:
+                days_left = (datetime.strptime(dl, "%Y-%m-%d") - today).days
+            except ValueError:
+                days_left = 999
+            if days_left <= 30:
+                deadlines_soon.append({
+                    "program": program,
+                    "deadline": dl,
+                    "days_left": days_left,
+                    "status": status,
+                })
+
+    return {
+        "overdue": sorted(overdue, key=lambda x: x.get("days_overdue", 0), reverse=True),
+        "upcoming_7_days": sorted(upcoming_7_days, key=lambda x: x.get("follow_up_date", "")),
+        "interviews_upcoming": sorted(interviews_upcoming, key=lambda x: x.get("interview_date", "")),
+        "deadlines_soon": sorted(deadlines_soon, key=lambda x: x.get("days_left", 0)),
+    }
