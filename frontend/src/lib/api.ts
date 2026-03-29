@@ -27,16 +27,6 @@ async function patch<T = unknown>(path: string, body: unknown): Promise<T> {
   return res.json();
 }
 
-async function post<T = unknown>(path: string, body?: unknown): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method: 'POST',
-    headers: body ? { 'Content-Type': 'application/json' } : {},
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  if (!res.ok) throw new Error(`POST ${path} failed: ${res.status}`);
-  return res.json();
-}
-
 // ---------------------------------------------------------------------------
 // Profile
 // ---------------------------------------------------------------------------

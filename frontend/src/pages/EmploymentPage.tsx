@@ -1,54 +1,7 @@
 import { KanbanBoard } from '@/components/employment/KanbanBoard';
 import { StickyNote } from '@/components/shared/StickyNote';
 import { useJobStore } from '@/store/jobStore';
-
-const documents = [
-  {
-    id: 'doc-1',
-    name: 'State ID',
-    detail: 'Verified by counselor',
-    icon: 'badge',
-    iconColor: 'text-primary',
-    status: 'verified',
-  },
-  {
-    id: 'doc-2',
-    name: 'Resume (draft)',
-    detail: 'Last edited Oct 24',
-    icon: 'description',
-    iconColor: 'text-on-surface-variant',
-    status: 'draft',
-  },
-  {
-    id: 'doc-3',
-    name: 'Ready-to-Work Certificate',
-    detail: 'In progress — est. Nov 10',
-    icon: 'workspace_premium',
-    iconColor: 'text-secondary',
-    status: 'in_progress',
-  },
-];
-
-const workshops = [
-  {
-    id: 'ws-1',
-    title: 'Mastering the Interview',
-    description: 'Mock interview session with Counselor Sarah — address employment gaps with confidence.',
-    date: 'Oct 28',
-    time: '2:00 – 3:30 PM',
-    location: 'Central Community Hall',
-    featured: true,
-  },
-  {
-    id: 'ws-2',
-    title: 'Resume & LinkedIn Basics',
-    description: 'Build a compelling resume and digital presence from scratch.',
-    date: 'Nov 4',
-    time: '10:00 – 11:30 AM',
-    location: 'Hartford Workforce Center',
-    featured: false,
-  },
-];
+import { MOCK_EMPLOYMENT_DOCS, MOCK_WORKSHOPS } from '@/fixtures/mockData';
 
 export function EmploymentPage() {
   const jobs = useJobStore((s) => s.jobs);
@@ -90,7 +43,7 @@ export function EmploymentPage() {
           </div>
 
           <div className="space-y-3">
-            {documents.map((doc) => (
+            {MOCK_EMPLOYMENT_DOCS.map((doc) => (
               <div
                 key={doc.id}
                 className="flex items-center gap-4 p-4 rounded-xl bg-surface-container-low hover:bg-surface-container-high transition-colors cursor-pointer group"
@@ -126,7 +79,7 @@ export function EmploymentPage() {
 
         {/* Career Workshops — col span 5 */}
         <div className="lg:col-span-5 flex flex-col gap-4">
-          {workshops.map((ws) =>
+          {MOCK_WORKSHOPS.map((ws) =>
             ws.featured ? (
               <div
                 key={ws.id}

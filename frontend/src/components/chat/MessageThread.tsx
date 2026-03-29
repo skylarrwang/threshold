@@ -36,7 +36,7 @@ function DateSeparator({ label }: { label: string }) {
 function TypingIndicator() {
   return (
     <div className="flex items-start gap-3 max-w-xs">
-      <Avatar name="Diana" size="sm" />
+      <Avatar name="Threshold" size="sm" />
       <div className="bg-surface-container-lowest rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm flex items-center gap-1.5">
         <span className="w-2 h-2 bg-outline rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
         <span className="w-2 h-2 bg-outline rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -47,10 +47,10 @@ function TypingIndicator() {
 }
 
 export function MessageThread() {
-  const { messages, activeConversationId, isTyping, streamingMessageId } = useChatStore();
+  const { messages, isTyping, streamingMessageId } = useChatStore();
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const threadMessages = messages.filter((m) => m.conversationId === activeConversationId);
+  const threadMessages = messages;
 
   const lastMessage = threadMessages[threadMessages.length - 1];
   const streamingContent = streamingMessageId ? lastMessage?.content : null;

@@ -1,3 +1,4 @@
+// STUB: placeholder page — not yet implemented. All data below is mock/demo only.
 import { useNavigate } from 'react-router-dom';
 import { useProfileStore } from '@/store/profileStore';
 import { StickyNote } from '@/components/shared/StickyNote';

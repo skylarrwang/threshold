@@ -9,8 +9,8 @@ const navItems = [
   { path: '/housing', icon: 'home', label: 'Housing' },
   { path: '/benefits', icon: 'payments', label: 'Benefits' },
   { path: '/documents', icon: 'folder_open', label: 'Documents' },
-  { path: '/ai-applications', icon: 'smart_toy', label: 'AI Apps' },
-  { path: '/resources', icon: 'people', label: 'Resources' },
+  { path: '/ai-applications', icon: 'smart_toy', label: 'AI Apps', demo: true },
+  { path: '/resources', icon: 'people', label: 'Resources', demo: true },
   { path: '/settings', icon: 'settings', label: 'Settings' },
 ];
 
@@ -47,7 +47,12 @@ export function SideNav() {
                 >
                   {item.icon}
                 </span>
-                <span>{item.label}</span>
+                <span className="flex-1">{item.label}</span>
+                {'demo' in item && item.demo && (
+                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-tertiary-fixed text-on-tertiary-fixed-variant rounded-full leading-none">
+                    Demo
+                  </span>
+                )}
               </>
             )}
           </NavLink>

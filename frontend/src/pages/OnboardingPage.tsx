@@ -1,3 +1,9 @@
+// STUB: onboarding is a landing page only — not yet wired to PATCH /api/profile.
+// When the 3-screen intake is implemented, section names must be:
+//   Screen 1 → updateProfile('identity', { legal_name, state_of_release })
+//   Screen 2 → updateProfile('housing', { housing_status })
+//            → updateProfile('supervision', { supervision_type })
+//   Screen 3 → immediate_needs has no backend field; skip the API call.
 import { useNavigate } from 'react-router-dom';
 
 const steps = [

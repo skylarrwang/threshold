@@ -232,7 +232,7 @@ export function DocumentsPage() {
                 </div>
               </div>
 
-              {uploadResult.mapped_fields && typeof uploadResult.mapped_fields === 'object' && (
+              {!!(uploadResult.mapped_fields && typeof uploadResult.mapped_fields === 'object') && (
                 <div className="space-y-3">
                   {Object.entries(uploadResult.mapped_fields as Record<string, Record<string, unknown>>).map(([section, fields]) => (
                     <div key={section}>

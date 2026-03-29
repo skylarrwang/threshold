@@ -1,3 +1,4 @@
+// STUB: placeholder page — not yet implemented. All data below is mock/demo only.
 import { ProgressBar } from '@/components/shared/ProgressBar';
 import { StatusDot } from '@/components/shared/StatusDot';
 import type { AgentStatus } from '@/types';

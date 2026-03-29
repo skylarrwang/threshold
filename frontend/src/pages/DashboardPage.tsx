@@ -5,62 +5,7 @@ import { ProgressBar } from '@/components/shared/ProgressBar';
 import { ActionPlanCard } from '@/components/dashboard/ActionPlanCard';
 import { AppointmentCard } from '@/components/dashboard/AppointmentCard';
 import { MilestonesStepper } from '@/components/dashboard/MilestonesStepper';
-import type { ActionPlanItem, Appointment, Milestone } from '@/types';
-
-const actionItems: ActionPlanItem[] = [
-  {
-    id: 'resume',
-    title: 'Update Professional Resume',
-    description:
-      'Integrate your recent vocational training certifications into your standard employment profile.',
-    status: 'in_progress',
-    icon: 'assignment_ind',
-    category: 'employment',
-  },
-  {
-    id: 'health-insurance',
-    title: 'Health Insurance Application',
-    description:
-      'Complete the enrollment form for state-provided health benefits and schedule your physical.',
-    status: 'pending',
-    icon: 'medical_services',
-    category: 'health',
-  },
-  {
-    id: 'state-id',
-    title: 'State ID Pickup',
-    description: 'Official identification card retrieved from the DMV office on Oct 12th.',
-    status: 'done',
-    icon: 'check_circle',
-    category: 'identity',
-  },
-];
-
-const appointments: Appointment[] = [
-  {
-    id: 'appt-1',
-    title: 'Career Workshop',
-    date: '2026-10-24',
-    time: '10:00 AM',
-    location: 'Community Center',
-    type: 'employment',
-  },
-  {
-    id: 'appt-2',
-    title: 'Counseling Review',
-    date: '2026-10-27',
-    time: '02:30 PM',
-    location: 'Virtual Call',
-    type: 'counseling',
-  },
-];
-
-const milestones: Milestone[] = [
-  { id: 'm-1', label: 'Identity Docs', status: 'completed' },
-  { id: 'm-2', label: 'Stabilization Housing', status: 'completed' },
-  { id: 'm-3', label: 'Employment Search', status: 'active' },
-  { id: 'm-4', label: 'Financial Literacy', status: 'pending' },
-];
+import { MOCK_ACTION_ITEMS, MOCK_APPOINTMENTS, MOCK_MILESTONES } from '@/fixtures/mockData';
 
 export function DashboardPage() {
   const navigate = useNavigate();
@@ -123,7 +68,7 @@ export function DashboardPage() {
           </div>
 
           <div className="space-y-4">
-            {actionItems.map((item) => (
+            {MOCK_ACTION_ITEMS.map((item) => (
               <ActionPlanCard key={item.id} item={item} />
             ))}
           </div>
@@ -137,7 +82,7 @@ export function DashboardPage() {
               Upcoming Appointments
             </h3>
             <div className="space-y-6">
-              {appointments.map((appt) => (
+              {MOCK_APPOINTMENTS.map((appt) => (
                 <AppointmentCard key={appt.id} appointment={appt} />
               ))}
             </div>
@@ -148,7 +93,7 @@ export function DashboardPage() {
             <h3 className="text-base font-headline font-bold text-on-surface mb-6">
               Milestone Path
             </h3>
-            <MilestonesStepper milestones={milestones} />
+            <MilestonesStepper milestones={MOCK_MILESTONES} />
           </div>
         </div>
       </div>

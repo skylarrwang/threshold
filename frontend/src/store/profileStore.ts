@@ -1,55 +1,19 @@
+// ─────────────────────────────────────────────────────────
+// ⚠️  STUB STORE — all data is mock / hardcoded
+//    Backend API exists but is not yet wired to this store.
+//    See: TODO.md item #10 and src/fixtures/mockData.ts
+// ─────────────────────────────────────────────────────────
+
 import { create } from 'zustand';
 import type { UserProfile } from '@/types';
+import { MOCK_PROFILE, MOCK_OVERALL_PROGRESS } from '@/fixtures/mockData';
 
 interface ProfileState {
   profile: UserProfile;
   overallProgress: number;
 }
 
-const mockProfile: UserProfile = {
-  user_id: 'tyler-001',
-  created_at: '2024-08-15T10:00:00Z',
-  last_updated: '2024-10-20T14:30:00Z',
-  personal: {
-    name: 'Tyler Chen',
-    age_range: '30-35',
-    gender_identity: 'male',
-    home_state: 'Connecticut',
-    release_date: '2024-08-01',
-    time_served: '3 years',
-    offense_category: 'non-violent',
-    comfort_with_technology: 'moderate',
-  },
-  situation: {
-    housing_status: 'shelter',
-    employment_status: 'job searching',
-    benefits_enrolled: ['SNAP', 'Medicaid'],
-    supervision_type: 'parole',
-    supervision_end_date: '2026-08-01',
-    immediate_needs: ['employment', 'permanent housing', 'transportation'],
-  },
-  goals: {
-    short_term_goals: ['Get state ID', 'Find stable housing', 'Complete Ready-to-Work cert'],
-    long_term_goals: ['Secure full-time employment', 'Financial independence', 'Reunite with family'],
-    values: ['family', 'honesty', 'self-improvement'],
-    strengths: ['resilience', 'communication', 'cooking skills'],
-    concerns: ['employment gaps on resume', 'housing costs'],
-  },
-  support: {
-    has_case_worker: true,
-    case_worker_name: 'Diana',
-    support_contacts: ['Diana (Counselor)', 'James Chen (Brother)'],
-    trusted_people: ['James Chen'],
-  },
-  preferences: {
-    communication_style: 'direct',
-    check_in_frequency: 'weekly',
-    wants_reminders: true,
-    privacy_level: 'high',
-  },
-};
-
 export const useProfileStore = create<ProfileState>()(() => ({
-  profile: mockProfile,
-  overallProgress: 64,
+  profile: MOCK_PROFILE,
+  overallProgress: MOCK_OVERALL_PROGRESS,
 }));
