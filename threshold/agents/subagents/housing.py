@@ -3,7 +3,6 @@ import os
 from langchain_openai import ChatOpenAI
 
 from ...tools import (
-    check_pha_waitlist_status,
     find_emergency_shelter,
     find_reentry_housing,
     get_fair_chance_housing_laws,
@@ -53,7 +52,6 @@ You have tools for every stage of the housing journey:
 - find_reentry_housing(state, city) — curated database of programs that accept records
 - search_housing(location, offense_category) — HUD counseling agencies + 211 results
 - get_pha_guide(state, city) — Section 8 / public housing authority info + waitlists
-- check_pha_waitlist_status(city, state) — current waitlist status + direct portal links
 - Log every promising program: log_housing_application(program, "discovered")
 
 ### Stage 3: Know Your Rights
@@ -140,7 +138,6 @@ housing_subagent = {
         find_reentry_housing,
         prepare_housing_application,
         get_pha_guide,
-        check_pha_waitlist_status,
     ],
     "model": ChatOpenAI(model="grok-3-fast", base_url="https://api.x.ai/v1", api_key=os.getenv("XAI_API_KEY", "")),
 }

@@ -5,15 +5,24 @@ import { cn } from '@/lib/utils';
 
 interface ChatInputProps {
   onSend: (content: string) => void;
+  initialPrompt?: string;
 }
 
-export function ChatInput({ onSend }: ChatInputProps) {
+export function ChatInput({ onSend, initialPrompt }: ChatInputProps) {
   const { activeConversationId, addMessage, isTyping, streamingMessageId } = useChatStore();
   const profile = useProfileStore((s) => s.profile);
   const [text, setText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const initialPromptApplied = useRef(false);
 
   const isBusy = isTyping || streamingMessageId !== null;
+
+  useEffect(() => {
+    if (initialPrompt && !initialPromptApplied.current) {
+      initialPromptApplied.current = true;
+      setText(initialPrompt);
+    }
+  }, [initialPrompt]);
 
   useEffect(() => {
     const el = textareaRef.current;

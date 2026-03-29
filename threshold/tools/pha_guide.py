@@ -7,7 +7,6 @@ people with criminal records.
 
 from __future__ import annotations
 
-import httpx
 from langchain_core.tools import tool
 
 
@@ -225,57 +224,3 @@ def get_pha_guide(state: str = "CT", city: str = "") -> str:
     return "\n".join(lines)
 
 
-@tool
-def check_pha_waitlist_status(city: str = "", state: str = "CT") -> str:
-    """Check the latest known waitlist status for Public Housing Authorities.
-
-    Returns stored status, direct links to verify online, and phone numbers.
-    PHA waitlists change frequently — always verify by calling or checking their website.
-
-    Args:
-        city: Optional city to filter (e.g. "Hartford")
-        state: Two-letter state code (default "CT")
-    """
-    state_upper = state.upper().strip()
-    matches = [p for p in _PHA_DATABASE if p["state"] == state_upper]
-
-    if city:
-        city_lower = city.lower().strip()
-        city_matches = [p for p in matches if city_lower in p["city"].lower()]
-        if city_matches:
-            matches = city_matches
-
-    if not matches:
-        return (
-            f"*No PHA waitlist data for {state_upper}"
-            + (f" / {city}" if city else "")
-            + " in the database.*\n\n"
-            "Find your local PHA:\n"
-            "- HUD directory: https://www.hud.gov/program_offices/public_indian_housing/pha/contacts\n"
-            "- Call **211** and ask for 'Section 8 waitlist status'\n"
-        )
-
-    lines = [f"## PHA Waitlist Status — {state_upper}"]
-    if city:
-        lines[0] += f" ({city})"
-    lines.append("")
-
-    for pha in matches:
-        lines.append(f"### {pha['name']}")
-        lines.append(f"**Section 8 (Housing Choice Voucher):** {pha['section_8_status']}")
-        lines.append(f"**Public Housing:** {pha['public_housing_status']}")
-        if pha.get("waitlist_check_url"):
-            lines.append(f"**Check current status online:** {pha['waitlist_check_url']}")
-        if pha.get("phone"):
-            lines.append(f"**Call to verify:** {pha['phone']}")
-        if pha.get("last_verified"):
-            lines.append(f"**Data last verified:** {pha['last_verified']}")
-        lines.append("")
-
-    lines.append("---")
-    lines.append(
-        "*Waitlist status changes frequently. This information was last verified on the "
-        "dates shown above. Always call or check the website before making decisions "
-        "based on waitlist status.*"
-    )
-    return "\n".join(lines)
