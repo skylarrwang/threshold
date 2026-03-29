@@ -202,10 +202,14 @@ No markdown, no explanation, no code fences.
 
 
 def _get_client() -> genai.Client:
-    api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+    api_key = (
+        os.getenv("GOOGLE_API_KEY")
+        or os.getenv("GEMINI_API_KEY")
+        or os.getenv("VERTEX_API_KEY")
+    )
     if not api_key:
         raise RuntimeError(
-            "GOOGLE_API_KEY or GEMINI_API_KEY must be set. "
+            "GOOGLE_API_KEY, GEMINI_API_KEY, or VERTEX_API_KEY must be set. "
             "Get one at https://aistudio.google.com/apikey"
         )
     return genai.Client(api_key=api_key)
