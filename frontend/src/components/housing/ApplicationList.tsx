@@ -3,24 +3,36 @@ import { ApplicationCard } from './ApplicationCard';
 
 const STAGE_ORDER: HousingPipelineStage[] = [
   'interview_scheduled',
+  'screening',
   'applied',
+  'voucher_issued',
+  'unit_search',
   'waitlisted',
-  'documents_ready',
+  'lease_review',
+  'documents_gathering',
+  'contacted',
   'discovered',
   'approved',
   'moved_in',
   'denied',
+  'appeal_filed',
 ];
 
 const STAGE_LABELS: Record<string, string> = {
   discovered: 'Found Programs',
-  documents_ready: 'Documents Ready',
+  contacted: 'Contacted Intake',
+  documents_gathering: 'Gathering Documents',
   applied: 'Applied',
+  screening: 'Background Screening',
   waitlisted: 'On Waitlist',
-  interview_scheduled: 'Interview Scheduled',
+  voucher_issued: 'Voucher Issued',
+  unit_search: 'Searching for Unit',
+  interview_scheduled: 'Interview / Viewing Set',
   approved: 'Approved',
-  denied: 'Denied',
+  lease_review: 'Reviewing Lease',
   moved_in: 'Moved In',
+  denied: 'Denied',
+  appeal_filed: 'Appeal Filed',
 };
 
 interface ApplicationListProps {

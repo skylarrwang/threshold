@@ -218,7 +218,10 @@ async def upload_document(file: UploadFile = File(...)):
 HOUSING_APPS_LOG = DATA_DIR / "tracking" / "housing_applications.json"
 
 # Import fair chance laws data from the housing tools
-from threshold.tools.housing_search import _FAIR_CHANCE_LAWS, _PIPELINE_STAGES, _STAGE_LABELS, _NEXT_ACTIONS
+from threshold.tools.housing_search import (
+    _FAIR_CHANCE_LAWS, _PIPELINE_STAGES, _STAGE_LABELS, _NEXT_ACTIONS,
+    _TERMINAL_STATUSES, get_pending_follow_ups,
+)
 
 
 def _read_housing_apps() -> list[dict]:
@@ -235,7 +238,7 @@ def _read_housing_apps() -> list[dict]:
 async def housing_pipeline():
     """Return the full housing application pipeline as structured JSON."""
     apps = _read_housing_apps()
-    active = [a for a in apps if a.get("status") not in ("denied", "moved_in")]
+    active = [a for a in apps if a.get("status") not in _TERMINAL_STATUSES]
     approved = [a for a in apps if a.get("status") in ("approved", "moved_in")]
 
     # Find next follow-up
@@ -265,6 +268,12 @@ async def housing_pipeline():
     }
 
 
+@app.get("/api/housing/alerts")
+async def housing_alerts():
+    """Return pending follow-ups, upcoming interviews, and approaching deadlines."""
+    return get_pending_follow_ups()
+
+
 class HousingApplicationCreate(BaseModel):
     program: str
     status: str
@@ -272,6 +281,14 @@ class HousingApplicationCreate(BaseModel):
     follow_up_date: str = ""
     contact_name: str = ""
     contact_phone: str = ""
+    application_url: str = ""
+    deadline: str = ""
+    interview_date: str = ""
+    interview_time: str = ""
+    interview_location: str = ""
+    denial_reason: str = ""
+    documents_submitted: str = ""
+    housing_type: str = ""
 
 
 @app.post("/api/housing/applications")
@@ -289,6 +306,21 @@ async def create_housing_application(body: HousingApplicationCreate):
 
     now = datetime.now().isoformat()
 
+    # Fields that get set/updated when provided
+    _optional_fields = {
+        "follow_up_date": body.follow_up_date,
+        "contact_name": body.contact_name,
+        "contact_phone": body.contact_phone,
+        "application_url": body.application_url,
+        "deadline": body.deadline,
+        "interview_date": body.interview_date,
+        "interview_time": body.interview_time,
+        "interview_location": body.interview_location,
+        "denial_reason": body.denial_reason,
+        "documents_submitted": body.documents_submitted,
+        "housing_type": body.housing_type,
+    }
+
     if existing:
         old_status = existing.get("status", "")
         existing["status"] = body.status
@@ -297,12 +329,9 @@ async def create_housing_application(body: HousingApplicationCreate):
             history = existing.get("history", [])
             history.append({"status": old_status, "notes": body.notes, "date": now})
             existing["history"] = history
-        if body.follow_up_date:
-            existing["follow_up_date"] = body.follow_up_date
-        if body.contact_name:
-            existing["contact_name"] = body.contact_name
-        if body.contact_phone:
-            existing["contact_phone"] = body.contact_phone
+        for key, value in _optional_fields.items():
+            if value:
+                existing[key] = value
         result = existing
     else:
         entry = {
@@ -314,12 +343,9 @@ async def create_housing_application(body: HousingApplicationCreate):
             "updated_at": now,
             "history": [],
         }
-        if body.follow_up_date:
-            entry["follow_up_date"] = body.follow_up_date
-        if body.contact_name:
-            entry["contact_name"] = body.contact_name
-        if body.contact_phone:
-            entry["contact_phone"] = body.contact_phone
+        for key, value in _optional_fields.items():
+            if value:
+                entry[key] = value
         apps.append(entry)
         result = entry
 

@@ -127,9 +127,70 @@ def format_release_date(release_date: str) -> str:
         return release_date
 
 
+def _format_housing_alerts(alerts: dict) -> str:
+    """Format pending housing follow-ups into a system prompt section."""
+    sections: list[str] = []
+
+    if alerts.get("overdue"):
+        lines = ["OVERDUE (action needed NOW):"]
+        for a in alerts["overdue"]:
+            line = (
+                f"- {a['program']}: follow-up was due {a['follow_up_date']} "
+                f"({a['days_overdue']} days overdue). Status: {a['status']}."
+            )
+            if a.get("contact_phone"):
+                line += f" Call {a['contact_phone']}."
+            lines.append(line)
+        sections.append("\n".join(lines))
+
+    if alerts.get("upcoming_7_days"):
+        lines = ["UPCOMING THIS WEEK:"]
+        for a in alerts["upcoming_7_days"]:
+            lines.append(
+                f"- {a['program']}: follow-up due {a['follow_up_date']}. "
+                f"Status: {a['status']}."
+            )
+        sections.append("\n".join(lines))
+
+    if alerts.get("interviews_upcoming"):
+        lines = ["UPCOMING INTERVIEWS:"]
+        for a in alerts["interviews_upcoming"]:
+            line = f"- {a['program']}: interview on {a['interview_date']}"
+            if a.get("interview_time"):
+                line += f" at {a['interview_time']}"
+            if a.get("interview_location"):
+                line += f" — {a['interview_location']}"
+            lines.append(line)
+        sections.append("\n".join(lines))
+
+    if alerts.get("deadlines_soon"):
+        lines = ["DEADLINES APPROACHING:"]
+        for a in alerts["deadlines_soon"]:
+            if a["days_left"] < 0:
+                lines.append(f"- {a['program']}: deadline PASSED on {a['deadline']}!")
+            else:
+                lines.append(
+                    f"- {a['program']}: deadline {a['deadline']} "
+                    f"({a['days_left']} days left). Status: {a['status']}."
+                )
+        sections.append("\n".join(lines))
+
+    if not sections:
+        return ""
+
+    return (
+        "\n\n## Housing Follow-Up Alerts\n\n"
+        + "\n\n".join(sections)
+        + "\n\nMention overdue items naturally in your first response. "
+        "For upcoming interviews, offer to help prepare. "
+        "Prioritize the most urgent — don't dump all alerts at once."
+    )
+
+
 def build_system_prompt() -> str:
     from ..memory.profile import load_profile
     from ..memory.reflection import build_memory_context
+    from ..tools.housing_search import get_pending_follow_ups
 
     profile = load_profile()
     if profile is None:
@@ -139,11 +200,24 @@ def build_system_prompt() -> str:
     name = profile.personal.name or "someone"
     release = profile.personal.release_date
 
-    return SYSTEM_PROMPT_TEMPLATE.format(
+    prompt = SYSTEM_PROMPT_TEMPLATE.format(
         name=name,
         release_date_relative=format_release_date(release),
         memory_context=memory_context,
     )
+
+    # Inject housing follow-up alerts if user wants reminders
+    wants_reminders = True
+    if hasattr(profile, "preferences") and profile.preferences:
+        wants_reminders = getattr(profile.preferences, "wants_reminders", True)
+
+    if wants_reminders:
+        alerts = get_pending_follow_ups()
+        alerts_text = _format_housing_alerts(alerts)
+        if alerts_text:
+            prompt += alerts_text
+
+    return prompt
 
 
 def create_orchestrator(**kwargs):

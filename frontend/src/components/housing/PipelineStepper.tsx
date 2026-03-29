@@ -3,11 +3,14 @@ import type { HousingPipelineStage, HousingApplication } from '@/types';
 
 const STAGES: { key: HousingPipelineStage; label: string; icon: string }[] = [
   { key: 'discovered', label: 'Found', icon: 'search' },
-  { key: 'documents_ready', label: 'Docs Ready', icon: 'description' },
+  { key: 'contacted', label: 'Contacted', icon: 'call' },
+  { key: 'documents_gathering', label: 'Docs', icon: 'description' },
   { key: 'applied', label: 'Applied', icon: 'send' },
+  { key: 'screening', label: 'Screening', icon: 'fact_check' },
   { key: 'waitlisted', label: 'Waitlist', icon: 'hourglass_top' },
   { key: 'interview_scheduled', label: 'Interview', icon: 'event' },
   { key: 'approved', label: 'Approved', icon: 'check_circle' },
+  { key: 'lease_review', label: 'Lease', icon: 'contract' },
   { key: 'moved_in', label: 'Moved In', icon: 'home' },
 ];
 
@@ -26,7 +29,7 @@ export function PipelineStepper({ applications }: PipelineStepperProps) {
   const stageOrder = STAGES.map((s) => s.key);
   let furthestIndex = -1;
   for (const app of applications) {
-    if (app.status === 'denied') continue;
+    if (app.status === 'denied' || app.status === 'appeal_filed') continue;
     const idx = stageOrder.indexOf(app.status);
     if (idx > furthestIndex) furthestIndex = idx;
   }

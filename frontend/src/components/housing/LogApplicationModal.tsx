@@ -5,13 +5,19 @@ import type { HousingPipelineStage } from '@/types';
 
 const STAGE_OPTIONS: { value: HousingPipelineStage; label: string }[] = [
   { value: 'discovered', label: 'Found Program' },
-  { value: 'documents_ready', label: 'Documents Ready' },
-  { value: 'applied', label: 'Applied' },
+  { value: 'contacted', label: 'Contacted Intake' },
+  { value: 'documents_gathering', label: 'Gathering Documents' },
+  { value: 'applied', label: 'Application Submitted' },
+  { value: 'screening', label: 'Background Screening' },
   { value: 'waitlisted', label: 'On Waitlist' },
-  { value: 'interview_scheduled', label: 'Interview Scheduled' },
-  { value: 'approved', label: 'Approved' },
-  { value: 'denied', label: 'Denied' },
+  { value: 'voucher_issued', label: 'Voucher Issued' },
+  { value: 'unit_search', label: 'Searching for Unit' },
+  { value: 'interview_scheduled', label: 'Interview / Viewing Set' },
+  { value: 'approved', label: 'Approved / Accepted' },
+  { value: 'lease_review', label: 'Reviewing Lease' },
   { value: 'moved_in', label: 'Moved In' },
+  { value: 'denied', label: 'Denied' },
+  { value: 'appeal_filed', label: 'Appeal Filed' },
 ];
 
 export function LogApplicationModal() {

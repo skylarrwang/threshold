@@ -19,7 +19,7 @@ from .housing_search import (
 from .shelter_finder import find_emergency_shelter
 from .reentry_housing_db import find_reentry_housing
 from .housing_application_prep import prepare_housing_application
-from .pha_guide import get_pha_guide
+from .pha_guide import check_pha_waitlist_status, get_pha_guide
 
 __all__ = [
     "crisis_response",
@@ -47,4 +47,5 @@ __all__ = [
     "find_reentry_housing",
     "prepare_housing_application",
     "get_pha_guide",
+    "check_pha_waitlist_status",
 ]

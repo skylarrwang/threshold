@@ -3,13 +3,19 @@ import type { HousingApplication } from '@/types';
 
 const STATUS_BADGE_VARIANT: Record<string, 'active' | 'pending' | 'action' | 'error' | 'done' | 'default'> = {
   discovered: 'default',
-  documents_ready: 'pending',
+  contacted: 'default',
+  documents_gathering: 'pending',
   applied: 'active',
+  screening: 'pending',
   waitlisted: 'pending',
+  voucher_issued: 'action',
+  unit_search: 'action',
   interview_scheduled: 'action',
   approved: 'done',
-  denied: 'error',
+  lease_review: 'action',
   moved_in: 'done',
+  denied: 'error',
+  appeal_filed: 'action',
 };
 
 interface ApplicationCardProps {
