@@ -4,7 +4,7 @@ from langchain_openai import ChatOpenAI
 
 from ...tools import (
     autofill_job_application,
-    log_event,
+    log_employment_event,
     log_job_application,
     read_user_memory,
     search_jobs,
@@ -38,8 +38,14 @@ unless they came from **search_jobs()** output (or the user pasted them).
   or "entry level general labor"). If you still have nothing, use **"entry level"** as the query.
 - **location** argument: use city/state if the user said it; otherwise pass **""** so the tool uses
   **personal.home_state** from the profile when available.
-- If **search_jobs** returns an error (e.g. missing API credentials) or no results, say that clearly
-  and suggest next steps — **never** substitute a fake job list.
+- If **search_jobs** returns an error (e.g. missing API credentials), say that clearly — **never**
+  substitute a fake job list.
+- If it returns **no results**, the tool already retries with simpler keywords and (when you passed a
+  city) state-wide location. Read the tool message: it lists what was tried and says **what to do next**.
+  **Immediately call search_jobs again** with that guidance (e.g. 1–2 shorter terms like `warehouse` or
+  `forklift`, or a different `location`). Repeat until you get listings or you have tried 2–3 distinct
+  short queries; then summarize honestly that nothing turned up and suggest other steps (nearby cities,
+  staffing agencies, in-person boards).
 - In your reply, summarize and highlight listings from the tool; keep facts aligned with the tool
   output (titles, companies, Apply links, fair-chance badges).
 
@@ -49,7 +55,14 @@ To help apply, use autofill_job_application() with the listing's apply URL: firs
 user_confirmed=False to explain what will happen; only after the user clearly agrees, call
 again with user_confirmed=True. It opens a visible browser, summarizes the page, fills safe
 contact fields only, and never submits — the user submits themselves.
-Log every application and milestone with log_event().
+
+## Logging
+- **Applications:** Use **log_job_application(company, position, status, notes)** whenever the user
+  applied, has an interview, or changes status — this updates `data/tracking/job_applications.json`
+  and the observation stream under agent **employment**.
+- **Other milestones** (drafted resume/cover letter, completed search, interview prep): use
+  **log_employment_event(event_type, content, tags)** — same observation stream as the main
+  **log_event** tool, but attributed to **employment**.
 Save all generated documents to data/documents/ using write_file().
 
 Be practical. The user needs real jobs they can actually get, not aspirational suggestions.
@@ -68,7 +81,7 @@ employment_subagent = {
     "system_prompt": EMPLOYMENT_SYSTEM_PROMPT,
     "tools": [
         read_user_memory,
-        log_event,
+        log_employment_event,
         search_jobs,
         autofill_job_application,
         log_job_application,

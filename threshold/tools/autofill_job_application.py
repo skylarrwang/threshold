@@ -43,6 +43,126 @@ _BOT_CHECK_HINTS = (
 )
 
 
+def _is_adzuna_url(url: str) -> bool:
+    try:
+        host = (urlparse(url).netloc or "").lower()
+    except Exception:
+        return False
+    return host == "adzuna.com" or host.endswith(".adzuna.com")
+
+
+def _dismiss_adzuna_email_alert(page: Page) -> bool:
+    """Close the 'similar jobs' email modal (best-effort)."""
+    for _ in range(2):
+        for getter in (
+            lambda: page.get_by_role("button", name=re.compile(r"no,?\s*thanks", re.I)),
+            lambda: page.get_by_role("link", name=re.compile(r"no,?\s*thanks", re.I)),
+        ):
+            try:
+                loc = getter()
+                if loc.count() > 0:
+                    first = loc.first
+                    if first.is_visible():
+                        first.click(timeout=3_000)
+                        return True
+            except Exception:
+                pass
+        try:
+            t = page.get_by_text(re.compile(r"^no,?\s*thanks\.?$", re.I))
+            if t.count() > 0 and t.first.is_visible():
+                t.first.click(timeout=2_000)
+                return True
+        except Exception:
+            pass
+        try:
+            page.keyboard.press("Escape")
+            time.sleep(0.25)
+        except Exception:
+            pass
+    return False
+
+
+def _adzuna_apply_locator(page: Page):
+    """Primary CTA on listing pages: green Apply for this job."""
+    btn = page.get_by_role("button", name=re.compile(r"apply\s+for\s+this\s+job", re.I))
+    if btn.count() > 0:
+        return btn
+    return page.get_by_role("link", name=re.compile(r"apply\s+for\s+this\s+job", re.I))
+
+
+def _adzuna_click_apply_and_follow(page: Page) -> tuple[Page, bool]:
+    """Click Adzuna apply CTA; follow same-tab redirect or a new tab. Returns (page, clicked)."""
+    loc = _adzuna_apply_locator(page)
+    if loc.count() == 0:
+        return page, False
+    target = loc.first
+    if not target.is_visible():
+        return page, False
+
+    old_url = page.url
+    initial_pages = list(page.context.pages)
+
+    try:
+        target.click(timeout=8_000)
+    except Exception:
+        return page, False
+
+    deadline = time.time() + 20.0
+    while time.time() < deadline:
+        extras = [p for p in page.context.pages if p not in initial_pages]
+        if extras:
+            np = extras[-1]
+            try:
+                np.wait_for_load_state("domcontentloaded", timeout=15_000)
+            except Exception:
+                pass
+            try:
+                np.bring_to_front()
+            except Exception:
+                pass
+            return np, True
+        try:
+            if page.url != old_url:
+                try:
+                    page.wait_for_load_state("domcontentloaded", timeout=8_000)
+                except Exception:
+                    pass
+                return page, True
+        except Exception:
+            pass
+        time.sleep(0.12)
+
+    return page, True
+
+
+def _prepare_adzuna_listing_if_needed(page: Page) -> tuple[Page, list[str]]:
+    """On Adzuna listing pages: dismiss email modal, click through to employer apply flow."""
+    notes: list[str] = []
+    try:
+        url = page.url
+    except Exception:
+        return page, notes
+    if not _is_adzuna_url(url):
+        return page, notes
+
+    if _dismiss_adzuna_email_alert(page):
+        notes.append("Closed the Adzuna email-alert popup (No, thanks).")
+        time.sleep(0.35)
+
+    new_page, clicked = _adzuna_click_apply_and_follow(page)
+    if clicked:
+        notes.append(
+            "Clicked **Apply for this job** and moved to the next page (employer or ATS). "
+            "Autofill below targets that page."
+        )
+    else:
+        notes.append(
+            "Could not find a visible **Apply for this job** control on this Adzuna page — "
+            "continuing orientation/autofill on the listing page."
+        )
+    return new_page, notes
+
+
 def _validate_apply_url(url: str) -> str | None:
     url = (url or "").strip()
     if not url:
@@ -276,7 +396,10 @@ def autofill_job_application(
     """Open a job application URL in a visible browser, summarize the page (phase A),
     then fill only safe contact/location fields from the profile and provided details (phase B).
 
-    Never clicks Apply/Submit — the user must review and submit themselves.
+    On **Adzuna** listing pages, dismisses the email-alert popup and clicks **Apply for this job**
+    so the headed browser reaches the employer/ATS page before orientation and fill.
+
+    Never submits the final application — the user must review and submit themselves.
 
     Args:
         apply_url: Listing or apply URL (e.g. Adzuna redirect_url).
@@ -322,6 +445,8 @@ def autofill_job_application(
         )
         page.goto(apply_url, wait_until="domcontentloaded", timeout=30_000)
         time.sleep(1)
+        page, adzuna_notes = _prepare_adzuna_listing_if_needed(page)
+        time.sleep(0.5)
     except Exception as e:
         try:
             if browser is not None:
@@ -340,12 +465,21 @@ def autofill_job_application(
     lines: list[str] = [
         "## Job application assist",
         "",
-        "### Phase A — Page orientation",
-        f"- **Title:** {phase_a['title'] or '(none)'}",
-        f"- **Current URL:** {phase_a['url']}",
-        f"- **Visible inputs / textareas / selects (approx.):** {phase_a['visible_field_count']}",
-        "",
     ]
+    if adzuna_notes:
+        lines.append("### Adzuna listing")
+        for n in adzuna_notes:
+            lines.append(f"- {n}")
+        lines.append("")
+    lines.extend(
+        [
+            "### Phase A — Page orientation",
+            f"- **Title:** {phase_a['title'] or '(none)'}",
+            f"- **Current URL:** {phase_a['url']}",
+            f"- **Visible inputs / textareas / selects (approx.):** {phase_a['visible_field_count']}",
+            "",
+        ]
+    )
     if warnings:
         lines.append("**Warnings:**")
         for w in warnings:

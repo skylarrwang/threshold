@@ -21,6 +21,83 @@ APPLICATIONS_LOG = DATA_DIR / "tracking" / "job_applications.json"
 
 ADZUNA_SEARCH_URL = "https://api.adzuna.com/v1/api/jobs/us/search/1"
 
+# Stop words when deriving shorter retry queries (avoid over-narrow AND semantics).
+_QUERY_STOP_WORDS = frozenset(
+    {
+        "a",
+        "an",
+        "and",
+        "at",
+        "for",
+        "in",
+        "near",
+        "of",
+        "or",
+        "the",
+        "to",
+        "with",
+    }
+)
+
+
+def _derive_narrower_queries(query: str) -> list[str]:
+    """Return broader/shorter keyword strings to retry when the full query returns nothing."""
+    raw = (query or "").strip()
+    if not raw:
+        return []
+    words = [w for w in re.split(r"\s+", raw) if w]
+    sig = [w for w in words if w.lower() not in _QUERY_STOP_WORDS and len(w) > 1]
+    if not sig:
+        sig = words
+    out: list[str] = []
+    seen: set[str] = {raw.lower()}
+    for n in (4, 3, 2, 1):
+        if len(sig) >= n:
+            s = " ".join(sig[:n])
+            key = s.lower()
+            if key not in seen:
+                out.append(s)
+                seen.add(key)
+    return out
+
+
+def _location_fallback(where: str) -> str | None:
+    """If `where` looks like City, ST, return two-letter state for a wider search."""
+    w = (where or "").strip()
+    if not w or "," not in w:
+        return None
+    st = _infer_state_code(w)
+    if not st:
+        return None
+    if w.upper().replace(" ", "") == st.upper():
+        return None
+    return st
+
+
+def _fetch_adzuna_results(
+    *,
+    what: str,
+    where: str,
+    app_id: str,
+    app_key: str,
+) -> list[dict]:
+    params: dict[str, str | int] = {
+        "app_id": app_id,
+        "app_key": app_key,
+        "what": what,
+        "results_per_page": 10,
+        "content-type": "application/json",
+    }
+    if where:
+        params["where"] = where
+    resp = httpx.get(ADZUNA_SEARCH_URL, params=params, timeout=30.0)
+    resp.raise_for_status()
+    payload = resp.json()
+    raw_results = payload.get("results") if isinstance(payload, dict) else None
+    if not isinstance(raw_results, list):
+        return []
+    return [j for j in raw_results if isinstance(j, dict)]
+
 FAIR_CHANCE_EMPLOYERS = frozenset(
     {
         "amazon",
@@ -215,20 +292,44 @@ def search_jobs(query: str, location: str = "") -> str:
             "`ADZUNA_APP_KEY` to your environment (e.g. `.env`), then try again."
         )
 
-    params: dict[str, str | int] = {
-        "app_id": app_id,
-        "app_key": app_key,
-        "what": query,
-        "results_per_page": 10,
-        "content-type": "application/json",
-    }
-    if where:
-        params["where"] = where
+    # Build ordered retry attempts: original query, then shorter keyword sets, then state-only location.
+    narrow = _derive_narrower_queries(query)
+    attempt_specs: list[tuple[str, str]] = [(query, where)]
+    for q in narrow:
+        if q.lower() != query.strip().lower():
+            attempt_specs.append((q, where))
+    state_only = _location_fallback(where)
+    if state_only:
+        for q in (query, *narrow):
+            attempt_specs.append((q, state_only))
+
+    seen_attempt: set[tuple[str, str]] = set()
+    ordered: list[tuple[str, str]] = []
+    for what, loc in attempt_specs:
+        key = (what.strip().lower(), loc.strip().lower() if loc else "")
+        if key in seen_attempt:
+            continue
+        seen_attempt.add(key)
+        ordered.append((what, loc))
+
+    raw_results: list[dict] = []
+    used_what = query
+    used_where = where
+    attempts_tried: list[str] = []
 
     try:
-        resp = httpx.get(ADZUNA_SEARCH_URL, params=params, timeout=30.0)
-        resp.raise_for_status()
-        payload = resp.json()
+        for what, loc in ordered:
+            attempts_tried.append(f"*\"{what}\"*{f' near *{loc}*' if loc else ''}")
+            raw_results = _fetch_adzuna_results(
+                what=what,
+                where=loc,
+                app_id=app_id,
+                app_key=app_key,
+            )
+            if raw_results:
+                used_what = what
+                used_where = loc
+                break
     except httpx.HTTPStatusError as e:
         return (
             "**Job search failed** (API error).\n\n"
@@ -237,12 +338,29 @@ def search_jobs(query: str, location: str = "") -> str:
     except (httpx.RequestError, json.JSONDecodeError, ValueError) as e:
         return f"**Job search failed.**\n\n{type(e).__name__}: {e}"
 
-    raw_results = payload.get("results") if isinstance(payload, dict) else None
-    if not isinstance(raw_results, list) or not raw_results:
-        loc_note = f" near *{where}*" if where else ""
+    if not raw_results:
+        tried_block = "\n".join(f"- {t}" for t in attempts_tried[:12])
+        if len(attempts_tried) > 12:
+            tried_block += f"\n- …and {len(attempts_tried) - 12} more variant(s)"
         return (
-            f"No job listings returned for *{query}*{loc_note}. "
-            "Try broader keywords or a different location."
+            "**No job listings** after automatic retries with simpler keywords and (if applicable) "
+            "state-wide location.\n\n"
+            "**Attempts tried:**\n"
+            f"{tried_block}\n\n"
+            "**What you should do next:** Call **search_jobs** again with a **shorter** query "
+            "(1–2 concrete terms, e.g. `warehouse`, `forklift`, `stock clerk`) and/or a **different** "
+            "`location` (another city or pass `\"\"` to use profile state only). Do not invent listings."
+        )
+
+    broadened_note = ""
+    if used_what.strip().lower() != query.strip().lower() or (
+        where and used_where.strip().lower() != where.strip().lower()
+    ):
+        loc_orig = f" near *{where}*" if where else ""
+        loc_used = f" near *{used_where}*" if used_where else ""
+        broadened_note = (
+            f"*Search was broadened automatically.* You asked for *{query}*{loc_orig}; "
+            f"these results use *{used_what}*{loc_used}."
         )
 
     scored: list[tuple[int, dict]] = []
@@ -256,6 +374,9 @@ def search_jobs(query: str, location: str = "") -> str:
     top = scored[:10]
 
     lines: list[str] = []
+    if broadened_note:
+        lines.append(broadened_note)
+        lines.append("")
 
     if user_state and user_state in ban_the_box_states:
         lines.append(
@@ -264,9 +385,9 @@ def search_jobs(query: str, location: str = "") -> str:
             "employer size). Confirm current rules with official sources.\n"
         )
 
-    loc_label = where if where else "your area"
+    loc_label = used_where if used_where else "your area"
     lines.append(
-        f"**Job search results for** *{query}* **near** *{loc_label}* "
+        f"**Job search results for** *{used_what}* **near** *{loc_label}* "
         f"(top {len(top)} by relevance score):\n"
     )
 
@@ -333,3 +454,26 @@ def log_job_application(company: str, position: str, status: str, notes: str = "
         tags=["job_search", "application"],
     )
     return f"Application logged: {position} at {company} ({status})"
+
+
+@tool
+def log_employment_event(event_type: str, content: str, tags: list[str]) -> str:
+    """Log a non-application employment milestone to the observation stream (agent=employment).
+
+    Use for drafted resumes/cover letters, completed job searches, interview prep, etc.
+    For submitted applications and status changes, prefer log_job_application().
+
+    Args:
+        event_type: One of: user_message, tool_result, milestone, check_in, reflection
+        content: Plain text description of what happened
+        tags: Topic tags e.g. ["job_search", "cover_letter", "resume"]
+    """
+    from ..memory.observation_stream import log_observation
+
+    log_observation(
+        agent="employment",
+        event_type=event_type,
+        content=content,
+        tags=tags,
+    )
+    return "Logged."
