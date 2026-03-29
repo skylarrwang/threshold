@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 
 const TOOL_ICONS: Record<string, string> = {
   search_jobs: 'work',
+  autofill_job_application: 'open_in_browser',
   search_housing: 'home',
   subagent: 'smart_toy',
 };

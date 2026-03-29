@@ -21,6 +21,7 @@ let reconnectDelay = 1000;
 
 const TOOL_LABELS: Record<string, string> = {
   search_jobs: 'Searching for jobs near you...',
+  autofill_job_application: 'Opening application page in browser...',
   search_housing: 'Finding housing options...',
 };
 
