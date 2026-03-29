@@ -25,8 +25,8 @@ export function useProgressSummary(): ProgressSummary {
   const activeJobs = jobs.filter((j) => j.status === 'offer' || j.status === 'interviewing').length;
   const employment = jobs.length > 0 ? Math.round((activeJobs / jobs.length) * 100) : 0;
 
-  const activeBenefits = benefits.filter((b) => b.status === 'active').length;
-  const benefitsPercent = benefits.length > 0 ? Math.round((activeBenefits / benefits.length) * 100) : 0;
+  const enrolledBenefits = benefits.filter((b) => b.status === 'enrolled').length;
+  const benefitsPercent = benefits.length > 0 ? Math.round((enrolledBenefits / benefits.length) * 100) : 0;
 
   return { housing, employment, benefits: benefitsPercent, documents, overall };
 }

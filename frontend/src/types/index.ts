@@ -142,17 +142,17 @@ export interface FairChanceLaw {
   has_law: boolean;
 }
 
-export type BenefitStatus = 'active' | 'pending' | 'action_needed' | 'expired';
+export type BenefitProgram = 'SNAP' | 'Medicaid' | 'MSP';
+export type BenefitStatus = 'enrolled' | 'applied' | 'not_started';
 
-export interface BenefitApplication {
+export interface BenefitInfo {
   id: string;
+  program: BenefitProgram;
   name: string;
   description: string;
   status: BenefitStatus;
-  monthlyAmount?: number;
-  nextReviewDate?: string;
-  nextSteps?: string[];
   icon: string;
+  chatPrefill: string;
 }
 
 export interface Message {

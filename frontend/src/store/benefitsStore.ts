@@ -1,49 +1,73 @@
 import { create } from 'zustand';
-import type { BenefitApplication } from '@/types';
+import type { BenefitInfo, BenefitProgram, BenefitStatus } from '@/types';
 
-interface BenefitsState {
-  benefits: BenefitApplication[];
-  totalMonthly: number;
+const PROGRAMS: Omit<BenefitInfo, 'status'>[] = [
+  {
+    id: 'snap',
+    program: 'SNAP',
+    name: 'SNAP (Food Assistance)',
+    description: 'Supplemental Nutrition Assistance Program — monthly food benefits based on household size and income.',
+    icon: 'restaurant',
+    chatPrefill: 'Can you check my SNAP eligibility?',
+  },
+  {
+    id: 'medicaid',
+    program: 'Medicaid',
+    name: 'Medicaid / HUSKY',
+    description: 'Connecticut state health insurance covering medical, dental, and behavioral health services.',
+    icon: 'health_and_safety',
+    chatPrefill: 'Can you check my Medicaid eligibility?',
+  },
+  {
+    id: 'msp',
+    program: 'MSP',
+    name: 'Medicare Savings Program',
+    description: 'Helps pay Medicare premiums, deductibles, and copays for eligible CT residents.',
+    icon: 'savings',
+    chatPrefill: 'Can you check my Medicare Savings Program eligibility?',
+  },
+];
+
+function deriveStatus(
+  program: BenefitProgram,
+  enrolled: string[],
+  pending: string[],
+): BenefitStatus {
+  if (enrolled.some((e) => e.toUpperCase() === program.toUpperCase())) return 'enrolled';
+  if (pending.some((p) => p.toUpperCase() === program.toUpperCase())) return 'applied';
+  return 'not_started';
 }
 
-export const useBenefitsStore = create<BenefitsState>()(() => ({
-  benefits: [
-    {
-      id: 'ben-001',
-      name: 'SNAP',
-      description: 'Supplemental Nutrition Assistance Program',
-      status: 'active',
-      monthlyAmount: 281,
-      nextReviewDate: '2025-02-01',
-      nextSteps: ['Recertification due Feb 2025'],
-      icon: 'restaurant',
-    },
-    {
-      id: 'ben-002',
-      name: 'Medicaid',
-      description: 'State Health Insurance Program',
-      status: 'pending',
-      nextReviewDate: '2024-11-05',
-      nextSteps: ['Attend eligibility interview Nov 5', 'Bring ID and proof of residence'],
-      icon: 'health_and_safety',
-    },
-    {
-      id: 'ben-003',
-      name: 'TANF Re-Entry',
-      description: 'Transitional Assistance for Needy Families',
-      status: 'action_needed',
-      monthlyAmount: 450,
-      nextSteps: ['Submit 30-day employment plan', 'Contact case worker within 5 days'],
-      icon: 'support_agent',
-    },
-    {
-      id: 'ben-004',
-      name: 'LIHEAP',
-      description: 'Low Income Home Energy Assistance',
-      status: 'action_needed',
-      nextSteps: ['Apply before Nov 30 deadline', 'Proof of energy bills required'],
-      icon: 'bolt',
-    },
-  ],
-  totalMonthly: 731,
+interface BenefitsState {
+  benefits: BenefitInfo[];
+  loading: boolean;
+  fetchBenefits: () => Promise<void>;
+}
+
+export const useBenefitsStore = create<BenefitsState>()((set) => ({
+  benefits: PROGRAMS.map((p) => ({ ...p, status: 'not_started' as BenefitStatus })),
+  loading: false,
+
+  fetchBenefits: async () => {
+    set({ loading: true });
+    try {
+      const res = await fetch('/api/profile');
+      if (!res.ok) throw new Error('Failed to fetch profile');
+      const data = await res.json();
+      const benefitsSection = data.profile?.benefits ?? {};
+      const enrolled: string[] = benefitsSection.benefits_enrolled ?? [];
+      const pending: string[] = benefitsSection.benefits_applied_pending ?? [];
+
+      set({
+        benefits: PROGRAMS.map((p) => ({
+          ...p,
+          status: deriveStatus(p.program, enrolled, pending),
+        })),
+      });
+    } catch {
+      // Keep defaults (all not_started) if backend is unreachable
+    } finally {
+      set({ loading: false });
+    }
+  },
 }));
