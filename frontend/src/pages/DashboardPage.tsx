@@ -1,10 +1,12 @@
-import { useNavigate } from 'react-router-dom';
 import { useProfileStore } from '@/store/profileStore';
-import { StickyNote } from '@/components/shared/StickyNote';
+import { useChatStore } from '@/store/chatStore';
+import { useChatSocket } from '@/lib/websocket';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 import { ActionPlanCard } from '@/components/dashboard/ActionPlanCard';
 import { AppointmentCard } from '@/components/dashboard/AppointmentCard';
 import { MilestonesStepper } from '@/components/dashboard/MilestonesStepper';
+import { MessageThread } from '@/components/chat/MessageThread';
+import { ChatInput } from '@/components/chat/ChatInput';
 import type { ActionPlanItem, Appointment, Milestone } from '@/types';
 
 const actionItems: ActionPlanItem[] = [
@@ -63,8 +65,15 @@ const milestones: Milestone[] = [
 ];
 
 export function DashboardPage() {
-  const navigate = useNavigate();
   const { profile, overallProgress } = useProfileStore();
+  const { setActiveConversation } = useChatStore();
+  const { sendMessage } = useChatSocket();
+
+  // Ensure AI conversation is active for the embedded chat
+  const handleChatSend = (content: string) => {
+    setActiveConversation('conv-002');
+    sendMessage(content);
+  };
 
   return (
     <div className="px-8 md:px-12 py-10 relative">
@@ -79,8 +88,7 @@ export function DashboardPage() {
               Hello, {profile.personal.name}
             </h1>
             <p className="text-on-surface-variant max-w-lg font-body leading-relaxed">
-              You're making steady progress on your reentry journey. Your counselor has updated
-              your action plan for this week.
+              You're making steady progress on your reentry journey.
             </p>
           </div>
 
@@ -100,67 +108,76 @@ export function DashboardPage() {
         </div>
       </section>
 
-      {/* Counselor Sticky Note */}
-      <div className="mb-10">
-        <StickyNote author={`${profile.support.case_worker_name ?? 'Sarah'} (Counselor)`}>
-          "Tyler, great job securing your primary ID documents last week. Let's focus our energy
-          on the 'Ready-to-Work' certification today. You're closer than you think."
-        </StickyNote>
-      </div>
+      {/* Embedded Chat */}
+      <section className="mb-10">
+        <div className="bg-surface-container-lowest rounded-xl shadow-[0_2px_8px_rgba(26,28,28,0.06)] overflow-hidden flex flex-col h-[400px]">
+          <div className="flex items-center gap-3 px-5 py-3 border-b border-outline-variant/10">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+              <span
+                className="material-symbols-outlined text-on-primary text-base"
+                style={{ fontVariationSettings: "'FILL' 1" }}
+              >
+                support_agent
+              </span>
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-on-surface">Threshold AI</h3>
+              <span className="text-[10px] text-primary font-bold flex items-center gap-1">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
+                </span>
+                Active now
+              </span>
+            </div>
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <MessageThread />
+          </div>
+          <ChatInput onSend={handleChatSend} />
+        </div>
+      </section>
 
-      {/* Bento Grid */}
+      {/* Three-column grid: Appointments | Action Plan | Milestones */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Action Plan — spans 2 columns */}
-        <div className="md:col-span-2 space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-headline font-bold text-on-surface">
-              Action Plan: Step by Step
-            </h2>
-            <button className="text-sm text-primary font-bold flex items-center gap-1 hover:underline">
-              <span>View All Tasks</span>
-              <span className="material-symbols-outlined text-base">chevron_right</span>
+        {/* Upcoming Appointments */}
+        <div className="bg-surface-container-lowest p-6 rounded-xl shadow-[0_2px_8px_rgba(26,28,28,0.06)]">
+          <h3 className="text-base font-headline font-bold text-on-surface mb-6">
+            Upcoming
+          </h3>
+          <div className="space-y-6">
+            {appointments.map((appt) => (
+              <AppointmentCard key={appt.id} appointment={appt} />
+            ))}
+          </div>
+        </div>
+
+        {/* Action Plan */}
+        <div className="bg-surface-container-lowest p-6 rounded-xl shadow-[0_2px_8px_rgba(26,28,28,0.06)]">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-base font-headline font-bold text-on-surface">
+              Action Plan
+            </h3>
+            <button className="text-xs text-primary font-bold flex items-center gap-0.5 hover:underline">
+              <span>All</span>
+              <span className="material-symbols-outlined text-sm">chevron_right</span>
             </button>
           </div>
-
-          <div className="space-y-4">
+          <div className="space-y-3">
             {actionItems.map((item) => (
               <ActionPlanCard key={item.id} item={item} />
             ))}
           </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-8">
-          {/* Upcoming Appointments */}
-          <div className="bg-surface-container-lowest p-6 rounded-xl shadow-[0_2px_8px_rgba(26,28,28,0.06)]">
-            <h3 className="text-base font-headline font-bold text-on-surface mb-6">
-              Upcoming Appointments
-            </h3>
-            <div className="space-y-6">
-              {appointments.map((appt) => (
-                <AppointmentCard key={appt.id} appointment={appt} />
-              ))}
-            </div>
-          </div>
-
-          {/* Milestone Path */}
-          <div className="bg-surface-container-lowest p-6 rounded-xl shadow-[0_2px_8px_rgba(26,28,28,0.06)] overflow-hidden relative">
-            <h3 className="text-base font-headline font-bold text-on-surface mb-6">
-              Milestone Path
-            </h3>
-            <MilestonesStepper milestones={milestones} />
-          </div>
+        {/* Milestone Path */}
+        <div className="bg-surface-container-lowest p-6 rounded-xl shadow-[0_2px_8px_rgba(26,28,28,0.06)] overflow-hidden relative">
+          <h3 className="text-base font-headline font-bold text-on-surface mb-6">
+            Milestone Path
+          </h3>
+          <MilestonesStepper milestones={milestones} />
         </div>
       </div>
-
-      {/* Floating Action Button */}
-      <button
-        onClick={() => navigate('/chat')}
-        className="fixed bottom-10 right-10 w-16 h-16 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-lg hover:bg-primary-container hover:scale-110 transition-all z-50"
-        aria-label="Open AI support chat"
-      >
-        <span className="material-symbols-outlined text-3xl">support_agent</span>
-      </button>
     </div>
   );
 }

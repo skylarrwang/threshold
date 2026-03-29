@@ -1,59 +1,107 @@
 import { create } from 'zustand';
 import type { Conversation, Message } from '@/types';
-import { createChatSocket, type WsMessage } from '@/lib/api';
+
+export type WsStatus = 'connecting' | 'connected' | 'disconnected';
 
 interface ChatState {
   conversations: Conversation[];
   activeConversationId: string;
   messages: Message[];
   isTyping: boolean;
-  isConnected: boolean;
+  wsStatus: WsStatus;
   streamingMessageId: string | null;
-
+  activeToolCall: { tool: string; label: string } | null;
+  isCrisisMode: boolean;
   setActiveConversation: (id: string) => void;
   addMessage: (message: Message) => void;
   setTyping: (typing: boolean) => void;
-  sendMessage: (content: string) => void;
-  initSocket: () => void;
-  disconnectSocket: () => void;
+  appendToken: (token: string) => void;
+  setStreamingMessageId: (id: string | null) => void;
+  setToolCall: (call: { tool: string; label: string } | null) => void;
+  setCrisisMode: (on: boolean) => void;
+  setWsStatus: (s: WsStatus) => void;
+  dismissCrisis: () => void;
 }
 
-const AI_CONVERSATION_ID = 'conv-ai';
-const AI_SENDER_ID = 'threshold-ai';
-const AI_SENDER_NAME = 'Threshold';
-const USER_SENDER_ID = 'user';
-const USER_SENDER_NAME = 'You';
+const mockConversations: Conversation[] = [
+  {
+    id: 'conv-001',
+    participantName: 'Diana',
+    participantType: 'counselor',
+    lastMessage: "Great progress on your ID documents! Let's focus on the Ready-to-Work cert next.",
+    lastTimestamp: '2024-10-20T14:30:00Z',
+    unreadCount: 1,
+    isOnline: true,
+  },
+  {
+    id: 'conv-002',
+    participantName: 'Threshold AI',
+    participantType: 'ai',
+    lastMessage: "I found 3 job listings matching your skills in the Hartford area.",
+    lastTimestamp: '2024-10-20T10:15:00Z',
+    unreadCount: 0,
+    isOnline: true,
+  },
+  {
+    id: 'conv-003',
+    participantName: 'Resource Center',
+    participantType: 'resource',
+    lastMessage: 'Your housing application has been received.',
+    lastTimestamp: '2024-10-19T16:00:00Z',
+    unreadCount: 0,
+    isOnline: false,
+  },
+];
 
-let socket: ReturnType<typeof createChatSocket> | null = null;
+const mockMessages: Message[] = [
+  {
+    id: 'msg-001',
+    conversationId: 'conv-001',
+    senderId: 'counselor-diana',
+    senderName: 'Diana',
+    content: "Hi Tyler! I saw you picked up your State ID last week — that's a huge step. Really proud of your progress.",
+    timestamp: '2024-10-18T09:00:00Z',
+    isRead: true,
+  },
+  {
+    id: 'msg-002',
+    conversationId: 'conv-001',
+    senderId: 'tyler-001',
+    senderName: 'Tyler Chen',
+    content: "Thanks Diana! It feels good to have that checked off. What should I focus on next?",
+    timestamp: '2024-10-18T09:15:00Z',
+    isRead: true,
+  },
+  {
+    id: 'msg-003',
+    conversationId: 'conv-001',
+    senderId: 'counselor-diana',
+    senderName: 'Diana',
+    content: "Let's work on the Ready-to-Work certification. I've enrolled you in a program starting Oct 28. Also, the Metro Transit Authority has sent you an offer — please review it carefully.",
+    timestamp: '2024-10-18T09:20:00Z',
+    isRead: true,
+  },
+  {
+    id: 'msg-ai-001',
+    conversationId: 'conv-002',
+    senderId: 'ai-threshold',
+    senderName: 'Threshold AI',
+    content: "Hi Tyler! I'm here to help you navigate re-entry. I can search for jobs, housing, check your benefits eligibility, and more. What would you like to work on today?",
+    timestamp: '2024-10-20T10:15:00Z',
+    isRead: true,
+    isAI: true,
+  },
+];
 
-export const useChatStore = create<ChatState>()((set, get) => ({
-  conversations: [
-    {
-      id: AI_CONVERSATION_ID,
-      participantName: 'Threshold AI',
-      participantType: 'ai',
-      lastMessage: 'How can I help you today?',
-      lastTimestamp: new Date().toISOString(),
-      unreadCount: 0,
-      isOnline: true,
-    },
-  ],
-  activeConversationId: AI_CONVERSATION_ID,
-  messages: [
-    {
-      id: 'msg-welcome',
-      conversationId: AI_CONVERSATION_ID,
-      senderId: AI_SENDER_ID,
-      senderName: AI_SENDER_NAME,
-      content: "Hey — I'm Threshold, your re-entry assistant. I can help with jobs, housing, benefits, supervision, documents, and more. What's on your mind?",
-      timestamp: new Date().toISOString(),
-      isRead: true,
-      isAI: true,
-    },
-  ],
+export const useChatStore = create<ChatState>()((set) => ({
+  conversations: mockConversations,
+  activeConversationId: 'conv-002',
+  messages: mockMessages,
   isTyping: false,
-  isConnected: false,
+  wsStatus: 'disconnected',
   streamingMessageId: null,
+  activeToolCall: null,
+  isCrisisMode: false,
 
   setActiveConversation: (id) => set({ activeConversationId: id }),
 
@@ -69,125 +117,18 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
   setTyping: (typing) => set({ isTyping: typing }),
 
-  sendMessage: (content: string) => {
-    const trimmed = content.trim();
-    if (!trimmed) return;
-
-    const state = get();
-
-    // Add user message to store
-    const userMsg: Message = {
-      id: `msg-user-${Date.now()}`,
-      conversationId: state.activeConversationId,
-      senderId: USER_SENDER_ID,
-      senderName: USER_SENDER_NAME,
-      content: trimmed,
-      timestamp: new Date().toISOString(),
-      isRead: false,
-    };
-    state.addMessage(userMsg);
-
-    // Send via WebSocket
-    if (socket?.connected) {
-      socket.sendMessage(trimmed);
-    } else {
-      // Auto-connect if not connected
-      state.initSocket();
-      setTimeout(() => {
-        socket?.sendMessage(trimmed);
-      }, 500);
-    }
-  },
-
-  initSocket: () => {
-    if (socket) return;
-
-    socket = createChatSocket((msg: WsMessage) => {
-      const state = get();
-
-      switch (msg.type) {
-        case 'thinking': {
-          set({ isTyping: true });
-          break;
-        }
-
-        case 'token': {
-          const { streamingMessageId } = state;
-
-          if (!streamingMessageId) {
-            // First token — create the AI message
-            set({ isTyping: false });
-            const aiMsgId = `msg-ai-${Date.now()}`;
-            const aiMsg: Message = {
-              id: aiMsgId,
-              conversationId: state.activeConversationId,
-              senderId: AI_SENDER_ID,
-              senderName: AI_SENDER_NAME,
-              content: msg.content || '',
-              timestamp: new Date().toISOString(),
-              isRead: true,
-              isAI: true,
-            };
-            set((s) => ({
-              messages: [...s.messages, aiMsg],
-              streamingMessageId: aiMsgId,
-            }));
-          } else {
-            // Append token to existing message
-            set((s) => ({
-              messages: s.messages.map((m) =>
-                m.id === streamingMessageId
-                  ? { ...m, content: m.content + (msg.content || '') }
-                  : m
-              ),
-            }));
-          }
-          break;
-        }
-
-        case 'message_complete': {
-          const { streamingMessageId: completedId } = get();
-          // Update the conversation's lastMessage
-          if (completedId) {
-            const completedMsg = get().messages.find((m) => m.id === completedId);
-            if (completedMsg) {
-              set((s) => ({
-                conversations: s.conversations.map((c) =>
-                  c.id === completedMsg.conversationId
-                    ? { ...c, lastMessage: completedMsg.content, lastTimestamp: completedMsg.timestamp }
-                    : c
-                ),
-              }));
-            }
-          }
-          set({ streamingMessageId: null, isTyping: false });
-          break;
-        }
-
-        case 'error': {
-          set({ isTyping: false, streamingMessageId: null });
-          const errorMsg: Message = {
-            id: `msg-error-${Date.now()}`,
-            conversationId: state.activeConversationId,
-            senderId: AI_SENDER_ID,
-            senderName: AI_SENDER_NAME,
-            content: `Something went wrong: ${msg.message || 'Unknown error'}. Please try again.`,
-            timestamp: new Date().toISOString(),
-            isRead: true,
-            isAI: true,
-          };
-          set((s) => ({ messages: [...s.messages, errorMsg] }));
-          break;
-        }
-      }
-    });
-
-    set({ isConnected: true });
-  },
-
-  disconnectSocket: () => {
-    socket?.close();
-    socket = null;
-    set({ isConnected: false });
-  },
+  appendToken: (token) =>
+    set((state) => {
+      if (!state.streamingMessageId) return state;
+      return {
+        messages: state.messages.map((m) =>
+          m.id === state.streamingMessageId ? { ...m, content: m.content + token } : m
+        ),
+      };
+    }),
+  setStreamingMessageId: (id) => set({ streamingMessageId: id }),
+  setToolCall: (call) => set({ activeToolCall: call }),
+  setCrisisMode: (on) => set({ isCrisisMode: on }),
+  setWsStatus: (s) => set({ wsStatus: s }),
+  dismissCrisis: () => set({ isCrisisMode: false }),
 }));

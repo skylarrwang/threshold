@@ -10,7 +10,7 @@ Threshold is a local-first, trauma-informed AI assistant for people navigating r
 
 ```bash
 uv sync                        # Install dependencies
-uv run python main.py seed     # Create test profile (generates encryption key + demo user "Marcus")
+uv run python main.py seed     # Create test profile (generates encryption key + demo user "Tyler")
 uv run python main.py chat     # Start interactive chat
 uv run python main.py profile  # View current profile
 langgraph dev                  # Run with LangGraph Studio visual debugger

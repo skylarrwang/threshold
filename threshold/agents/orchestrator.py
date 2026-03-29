@@ -62,6 +62,7 @@ workflow file and follow it. Workflow files are in workflows/:
 - workflows/cover_letter.md
 - workflows/resume.md
 - workflows/housing_application_letter.md
+- workflows/housing_pipeline.md
 - workflows/legal_letter.md
 - workflows/community_resource_search.md
 

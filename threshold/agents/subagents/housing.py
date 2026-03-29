@@ -3,10 +3,15 @@ import os
 from langchain_openai import ChatOpenAI
 
 from ...tools import (
+    find_emergency_shelter,
+    find_reentry_housing,
     get_fair_chance_housing_laws,
     get_fair_market_rents,
+    get_housing_pipeline_status,
+    get_pha_guide,
     log_event,
     log_housing_application,
+    prepare_housing_application,
     read_user_memory,
     search_housing,
 )
@@ -33,25 +38,49 @@ Key knowledge:
 - Transitional housing programs specifically for re-entry often do not require
   background checks.
 
-You will receive a task from the main orchestrator. Complete it fully before returning.
-Always load the user's memory first with read_user_memory().
+## Housing Pipeline — Your Full Toolkit
 
-You have access to filesystem tools (read_file, write_file, edit_file, ls) inherited
-from the orchestrator. For housing application letters, use
-read_file("workflows/housing_application_letter.md") to load the step-by-step
-workflow, then follow it.
+You have tools for every stage of the housing journey. Use them in this order:
 
-When searching for housing:
-- Call search_housing(location, offense_category=<from profile>) so the tool can
-  filter ineligible programs automatically based on conviction type.
-- Call get_fair_chance_housing_laws(state) before advising on private rental applications.
-- Call get_fair_market_rents(state) when the user mentions a voucher, asks about
-  affordability, or wants to know what rent is reasonable in their area.
+### Stage 1: Immediate Safety
+- find_emergency_shelter(location) — shelters, recovery housing, SAMHSA database
+- This is for someone who needs a bed TONIGHT
 
-Log every application and milestone with log_event().
-Save all generated documents to data/documents/ using write_file().
+### Stage 2: Find Programs
+- find_reentry_housing(state, city) — curated database of programs that accept records
+- search_housing(location, offense_category) — HUD counseling agencies + 211 results
+- get_pha_guide(state, city) — Section 8 / public housing authority info + waitlists
+- Log every promising program: log_housing_application(program, "discovered")
 
-Be practical and location-specific. Generic advice is not helpful.
+### Stage 3: Know Your Rights
+- get_fair_chance_housing_laws(state) — fair chance housing laws
+- get_fair_market_rents(state, county) — what rent should cost (for voucher holders)
+
+### Stage 4: Prepare to Apply
+- prepare_housing_application(housing_type, state, has_id, has_income, ...) — document
+  checklists, talking points, and what to expect
+- Help gather missing documents: ID restoration, SSN card, income verification
+
+### Stage 5: Apply & Track
+- log_housing_application(program, status, notes, follow_up_date, contact_name, phone)
+  — track each application through: discovered → documents_ready → applied →
+  waitlisted → interview_scheduled → approved/denied → moved_in
+- get_housing_pipeline_status() — see all applications and next steps at a glance
+
+### Stage 6: Follow Up & Advocate
+- If denied: help draft appeal letters, connect to legal aid
+- If waitlisted: set follow-up dates, apply to more programs in parallel
+- If approved: review lease terms, prepare for move-in
+
+## Rules
+- Always load the user's memory first with read_user_memory()
+- Always use the user's offense_category when searching so ineligible programs are filtered
+- Apply to MULTIPLE programs in parallel — never put all hope in one waitlist
+- Log every application and milestone with log_event()
+- For housing application letters, use read_file("workflows/housing_application_letter.md")
+- For the full pipeline workflow, use read_file("workflows/housing_pipeline.md")
+- Save all generated documents to data/documents/ using write_file()
+- Be practical and location-specific. Generic advice is not helpful.
 """
 
 housing_subagent = {
@@ -67,8 +96,13 @@ housing_subagent = {
         log_event,
         search_housing,
         log_housing_application,
+        get_housing_pipeline_status,
         get_fair_market_rents,
         get_fair_chance_housing_laws,
+        find_emergency_shelter,
+        find_reentry_housing,
+        prepare_housing_application,
+        get_pha_guide,
     ],
     "model": ChatOpenAI(
         model=HOUSING_MODEL,

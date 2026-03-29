@@ -27,7 +27,7 @@ async function patch<T = unknown>(path: string, body: unknown): Promise<T> {
   return res.json();
 }
 
-async function post<T = unknown>(path: string, body?: unknown): Promise<T> {
+export async function post<T = unknown>(path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'POST',
     headers: body ? { 'Content-Type': 'application/json' } : {},
@@ -95,6 +95,14 @@ export async function healthCheck() {
 }
 
 // ---------------------------------------------------------------------------
+// Documents
+// ---------------------------------------------------------------------------
+
+export async function fetchGeneratedDocuments() {
+  return get<import('@/types').GeneratedDocument[]>('/documents');
+}
+
+// ---------------------------------------------------------------------------
 // WebSocket
 // ---------------------------------------------------------------------------
 
@@ -105,6 +113,8 @@ export type WsMessageType =
   | 'tool_start'
   | 'tool_end'
   | 'crisis_response'
+  | 'subagent_start'
+  | 'subagent_end'
   | 'error'
   | 'pong';
 

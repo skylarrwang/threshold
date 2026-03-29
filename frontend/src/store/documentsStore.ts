@@ -1,12 +1,15 @@
 import { create } from 'zustand';
-import type { Document } from '@/types';
+import type { Document, GeneratedDocument } from '@/types';
+import { fetchGeneratedDocuments as apiFetchGeneratedDocuments } from '@/lib/api';
 
 interface DocumentsState {
   documents: Document[];
   completionPercent: number;
+  generatedDocuments: GeneratedDocument[];
+  fetchGeneratedDocuments: () => Promise<void>;
 }
 
-export const useDocumentsStore = create<DocumentsState>()(() => ({
+export const useDocumentsStore = create<DocumentsState>()((set) => ({
   documents: [
     {
       id: 'doc-001',
@@ -61,4 +64,13 @@ export const useDocumentsStore = create<DocumentsState>()(() => ({
     },
   ],
   completionPercent: 57,
+  generatedDocuments: [],
+  fetchGeneratedDocuments: async () => {
+    try {
+      const docs = await apiFetchGeneratedDocuments();
+      set({ generatedDocuments: docs });
+    } catch {
+      // Backend not available yet — silently ignore
+    }
+  },
 }));

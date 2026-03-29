@@ -57,12 +57,12 @@ Threshold's users are navigating one of the hardest transitions a person can fac
 
 ### 2.1 User Profiles
 
-| Profile | Device | Context | Tech Comfort |
-|---------|--------|---------|-------------|
-| Recently released, has a smartphone | Android phone (budget, likely 2-3 years old) with prepaid data plan | Using the app on a bus, in a shelter, waiting at a parole office | Low-to-medium. Knows texting, basic apps. |
-| Released 6+ months ago, rebuilding | Shared laptop or library computer | Using the app in focused sessions, applying for jobs | Medium. Can navigate web apps. |
-| Re-entering with support | Case worker's tablet or borrowed device | Someone else may have set this up for them | Very low. May need the interview to teach them how to interact. |
-| Tech-comfortable, longer post-release | Personal laptop or recent phone | Independent use, potentially daily | High. Expects modern UX. |
+| Profile                               | Device                                                              | Context                                                          | Tech Comfort                                                    |
+| ------------------------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------- |
+| Recently released, has a smartphone   | Android phone (budget, likely 2-3 years old) with prepaid data plan | Using the app on a bus, in a shelter, waiting at a parole office | Low-to-medium. Knows texting, basic apps.                       |
+| Released 6+ months ago, rebuilding    | Shared laptop or library computer                                   | Using the app in focused sessions, applying for jobs             | Medium. Can navigate web apps.                                  |
+| Re-entering with support              | Case worker's tablet or borrowed device                             | Someone else may have set this up for them                       | Very low. May need the interview to teach them how to interact. |
+| Tech-comfortable, longer post-release | Personal laptop or recent phone                                     | Independent use, potentially daily                               | High. Expects modern UX.                                        |
 
 ### 2.2 Device Constraints
 
@@ -227,44 +227,44 @@ The overall aesthetic is "calm productivity." Think: a well-organized notebook o
 
 **Core Palette**
 
-| Token | Hex | Role |
-|-------|-----|------|
-| `sand-50` | `#FAF7F2` | Primary background (light mode) |
-| `sand-100` | `#F0EBE3` | Card backgrounds, input fields |
-| `sand-200` | `#E0D8CC` | Borders, dividers |
-| `sand-300` | `#C4B8A8` | Placeholder text |
-| `clay-500` | `#C4775B` | Primary accent — buttons, links, active states |
-| `clay-600` | `#A85D43` | Primary accent hover/pressed |
-| `clay-700` | `#8B4A34` | Primary accent text on light backgrounds |
-| `bark-800` | `#3D3129` | Primary text |
-| `bark-900` | `#2A211A` | Headings, high emphasis text |
-| `sage-400` | `#8FAE8B` | Success, positive states, milestones |
-| `sage-500` | `#6B9467` | Success text, completed indicators |
-| `amber-400` | `#E5A84B` | Warnings, upcoming deadlines (NOT red) |
-| `amber-500` | `#CC8F2D` | Warning text |
-| `sky-400` | `#7AABCF` | Informational, links to external resources |
-| `sky-500` | `#5B8FAF` | Informational text |
+| Token       | Hex       | Role                                           |
+| ----------- | --------- | ---------------------------------------------- |
+| `sand-50`   | `#FAF7F2` | Primary background (light mode)                |
+| `sand-100`  | `#F0EBE3` | Card backgrounds, input fields                 |
+| `sand-200`  | `#E0D8CC` | Borders, dividers                              |
+| `sand-300`  | `#C4B8A8` | Placeholder text                               |
+| `clay-500`  | `#C4775B` | Primary accent — buttons, links, active states |
+| `clay-600`  | `#A85D43` | Primary accent hover/pressed                   |
+| `clay-700`  | `#8B4A34` | Primary accent text on light backgrounds       |
+| `bark-800`  | `#3D3129` | Primary text                                   |
+| `bark-900`  | `#2A211A` | Headings, high emphasis text                   |
+| `sage-400`  | `#8FAE8B` | Success, positive states, milestones           |
+| `sage-500`  | `#6B9467` | Success text, completed indicators             |
+| `amber-400` | `#E5A84B` | Warnings, upcoming deadlines (NOT red)         |
+| `amber-500` | `#CC8F2D` | Warning text                                   |
+| `sky-400`   | `#7AABCF` | Informational, links to external resources     |
+| `sky-500`   | `#5B8FAF` | Informational text                             |
 
 **Dark Mode Palette** (auto-detected from OS, user-overridable)
 
-| Token | Hex | Role |
-|-------|-----|------|
-| `night-900` | `#1A1612` | Primary background |
-| `night-800` | `#262119` | Card backgrounds |
-| `night-700` | `#342D23` | Borders, dividers |
-| `night-600` | `#4A4035` | Subtle text, placeholders |
-| `clay-400` | `#D4896F` | Primary accent (slightly lighter for contrast) |
-| `sand-200` | `#E0D8CC` | Primary text |
-| `sand-100` | `#F0EBE3` | Headings |
+| Token       | Hex       | Role                                           |
+| ----------- | --------- | ---------------------------------------------- |
+| `night-900` | `#1A1612` | Primary background                             |
+| `night-800` | `#262119` | Card backgrounds                               |
+| `night-700` | `#342D23` | Borders, dividers                              |
+| `night-600` | `#4A4035` | Subtle text, placeholders                      |
+| `clay-400`  | `#D4896F` | Primary accent (slightly lighter for contrast) |
+| `sand-200`  | `#E0D8CC` | Primary text                                   |
+| `sand-100`  | `#F0EBE3` | Headings                                       |
 
 **Crisis Mode Palette** (see Section 7)
 
-| Token | Hex | Role |
-|-------|-----|------|
-| `calm-bg` | `#F5F0EB` | Softened background |
-| `calm-text` | `#4A3F35` | Reduced contrast text |
+| Token         | Hex       | Role                                                    |
+| ------------- | --------- | ------------------------------------------------------- |
+| `calm-bg`     | `#F5F0EB` | Softened background                                     |
+| `calm-text`   | `#4A3F35` | Reduced contrast text                                   |
 | `calm-accent` | `#7AABCF` | Crisis links and phone numbers (sky blue — trustworthy) |
-| `calm-card` | `#FFFFFF` | Crisis resource cards |
+| `calm-card`   | `#FFFFFF` | Crisis resource cards                                   |
 
 **Intentional omissions:** There is no pure red (`#FF0000` or `#EF4444`) anywhere in the palette. Red evokes violations, stops, danger, and failure — all loaded concepts for this user base. Warnings use amber. Errors use amber with clear language. The closest to red is the clay accent, which reads as terracotta, not alarm.
 
@@ -273,24 +273,25 @@ The overall aesthetic is "calm productivity." Think: a well-organized notebook o
 **Font Stack:**
 
 ```css
---font-body: 'Inter', 'SF Pro Text', -apple-system, BlinkMacSystemFont,
-             'Segoe UI', system-ui, sans-serif;
---font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', monospace;
+--font-body:
+  "Inter", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI",
+  system-ui, sans-serif;
+--font-mono: "JetBrains Mono", "SF Mono", "Cascadia Code", monospace;
 ```
 
 Inter is loaded as a variable font (single file, ~100KB) for weight flexibility. System fonts are the fallback. No other web fonts.
 
 **Type Scale:**
 
-| Token | Size | Weight | Line Height | Use |
-|-------|------|--------|-------------|-----|
-| `text-xs` | 13px | 400 | 1.4 | Timestamps, metadata |
-| `text-sm` | 15px | 400 | 1.5 | Secondary text, captions |
-| `text-base` | 18px | 400 | 1.6 | Body text, chat messages |
-| `text-lg` | 21px | 500 | 1.5 | Card titles, section headers |
-| `text-xl` | 26px | 600 | 1.3 | Page titles |
-| `text-2xl` | 32px | 700 | 1.2 | Greeting banner, onboarding headings |
-| `text-3xl` | 40px | 700 | 1.1 | Interview phase titles (mobile) |
+| Token       | Size | Weight | Line Height | Use                                  |
+| ----------- | ---- | ------ | ----------- | ------------------------------------ |
+| `text-xs`   | 13px | 400    | 1.4         | Timestamps, metadata                 |
+| `text-sm`   | 15px | 400    | 1.5         | Secondary text, captions             |
+| `text-base` | 18px | 400    | 1.6         | Body text, chat messages             |
+| `text-lg`   | 21px | 500    | 1.5         | Card titles, section headers         |
+| `text-xl`   | 26px | 600    | 1.3         | Page titles                          |
+| `text-2xl`  | 32px | 700    | 1.2         | Greeting banner, onboarding headings |
+| `text-3xl`  | 40px | 700    | 1.1         | Interview phase titles (mobile)      |
 
 Base size is 18px, not 16px. This is deliberate — readability is more important than information density for this audience.
 
@@ -298,17 +299,17 @@ Base size is 18px, not 16px. This is deliberate — readability is more importan
 
 Use a 4px base grid. Common values:
 
-| Token | Value | Use |
-|-------|-------|-----|
-| `space-1` | 4px | Inline icon gaps |
-| `space-2` | 8px | Tight padding (pills, badges) |
-| `space-3` | 12px | Input padding, small card padding |
-| `space-4` | 16px | Standard card padding, element gaps |
-| `space-5` | 20px | Section gaps |
-| `space-6` | 24px | Large card padding |
-| `space-8` | 32px | Section dividers |
-| `space-10` | 40px | Page-level vertical rhythm |
-| `space-16` | 64px | Major section breaks, onboarding breathing room |
+| Token      | Value | Use                                             |
+| ---------- | ----- | ----------------------------------------------- |
+| `space-1`  | 4px   | Inline icon gaps                                |
+| `space-2`  | 8px   | Tight padding (pills, badges)                   |
+| `space-3`  | 12px  | Input padding, small card padding               |
+| `space-4`  | 16px  | Standard card padding, element gaps             |
+| `space-5`  | 20px  | Section gaps                                    |
+| `space-6`  | 24px  | Large card padding                              |
+| `space-8`  | 32px  | Section dividers                                |
+| `space-10` | 40px  | Page-level vertical rhythm                      |
+| `space-16` | 64px  | Major section breaks, onboarding breathing room |
 
 ### 4.5 Component Library
 
@@ -316,11 +317,11 @@ Use a 4px base grid. Common values:
 
 Three variants, one size philosophy: big enough to tap without precision.
 
-| Variant | Appearance | Use |
-|---------|-----------|-----|
-| **Primary** | `clay-500` background, white text, 48px height, 16px horizontal padding, 12px border-radius | Main actions: "Send", "Save", "Get started" |
-| **Secondary** | `sand-100` background, `bark-800` text, 1px `sand-200` border, same dimensions | Alternative actions: "Skip", "Edit", "Cancel" |
-| **Ghost** | Transparent background, `clay-500` text, same height | Tertiary actions: "Learn more", "View all" |
+| Variant       | Appearance                                                                                  | Use                                           |
+| ------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| **Primary**   | `clay-500` background, white text, 48px height, 16px horizontal padding, 12px border-radius | Main actions: "Send", "Save", "Get started"   |
+| **Secondary** | `sand-100` background, `bark-800` text, 1px `sand-200` border, same dimensions              | Alternative actions: "Skip", "Edit", "Cancel" |
+| **Ghost**     | Transparent background, `clay-500` text, same height                                        | Tertiary actions: "Learn more", "View all"    |
 
 All buttons have a 200ms ease-out press animation (scale to 0.97). No outline-on-focus that looks like a bug — use a visible 3px `clay-500` ring offset by 2px.
 
@@ -351,6 +352,7 @@ The primary content container. Used for: upcoming items, document previews, elig
 Not actually bubbles. Threshold messages and user messages have distinct visual treatments, but neither looks like a chat widget.
 
 **User messages:**
+
 - Right-aligned
 - `clay-500` background, white text
 - Border-radius: 20px top-left, 20px top-right, 4px bottom-right, 20px bottom-left
@@ -358,6 +360,7 @@ Not actually bubbles. Threshold messages and user messages have distinct visual 
 - No avatar
 
 **Threshold messages:**
+
 - Left-aligned, full width (no artificial max-width — these can be long)
 - No background color — text renders directly on the page background
 - A thin `sage-400` left border (3px) marks the start of each response
@@ -398,6 +401,7 @@ Horizontal scroll of pill-shaped buttons that appear above the input field. Cont
 Every view has a designed empty state. No blank pages, ever.
 
 Pattern:
+
 - A simple, warm illustration (abstract — e.g. an open doorway, a sunrise gradient, a path) at ~120px height
 - A short heading: "No documents yet"
 - A body line: "When you ask Threshold to write a cover letter or resume, it'll show up here."
@@ -408,6 +412,7 @@ Pattern:
 Use Lucide icons (open source, consistent, rounded style). 24px default size, 2px stroke. Icons are always paired with a text label — never icon-only except in the tab bar (where labels are still present below the icon).
 
 Tab bar icons:
+
 - Home: `House` (filled when active)
 - Chat: `MessageCircle` (filled when active)
 - Docs: `FileText` (filled when active)
@@ -418,6 +423,7 @@ Tab bar icons:
 All motion uses `ease-out` curves. Duration: 150-300ms for micro-interactions, 400ms for page transitions.
 
 Key motion principles:
+
 - **Enter from below:** New content slides up gently (chat messages, cards appearing)
 - **Exit to left:** Navigating deeper slides content left; going back slides right
 - **Scale on press:** Buttons and cards scale to 0.97 on press, return on release
@@ -469,6 +475,7 @@ The very first thing the user sees. It sets the emotional tone for the entire ex
 ```
 
 **Details:**
+
 - No progress bar yet. No countdown. No "step 1 of 7." Just a warm welcome.
 - The privacy card is not a checkbox — it's informational. There's no GDPR-style consent gate. The data never leaves the device, so there's nothing to consent to beyond understanding that.
 - "Get Started" begins the intake interview.
@@ -517,6 +524,7 @@ The intake interview is a 6-phase conversation that builds the user's profile. I
 ```
 
 **Question types:**
+
 - **Single-select cards** (like above): for categorical questions (housing status, supervision type, communication style). Each option is a full-width tappable card with an icon, a label, and optionally a sublabel. Tapping selects and auto-advances after a 400ms pause (so the user sees their selection register).
 - **Free text:** for open-ended questions (name, goals, strengths). A large text input, 18px, with a generous placeholder. A "Next" button appears when the user has typed something. The placeholder models the expected answer: "e.g., Find steady work, reconnect with my kids"
 - **Multi-select cards:** for lists (immediate needs, benefits enrolled). Same as single-select but with checkboxes. A "Next" button appears below when at least one is selected.
@@ -527,6 +535,7 @@ The intake interview is a 6-phase conversation that builds the user's profile. I
 **Skip is always visible.** The "Skip this question" link appears on every screen except Phase 1 (Welcome/Consent, which is not skippable). It never moves position. It is never grayed out. It is never hidden behind "are you sure?" confirmations.
 
 **Transition between phases:** When moving to a new phase, a brief interstitial appears (1.5 seconds, auto-advancing):
+
 - A warm full-screen gradient shift (subtle, from sand-50 to a slightly different warm tone)
 - A short message: "Nice. Let's talk about what you're working toward." or "Thanks. Just a few more things."
 - These interstitials humanize the process and give the user a mental break
@@ -545,7 +554,7 @@ The landing page after onboarding, and the default tab on return visits. It is a
 ┌─────────────────────────────────┐
 │  Threshold         [avatar ○]   │ ← top bar
 │                                 │
-│  Good morning, Marcus.          │ ← text-2xl, bark-900
+│  Good morning, Tyler.          │ ← text-2xl, bark-900
 │  Here's what's coming up.       │ ← text-base, sand-300
 │                                 │
 │  ┌─ UPCOMING ────────────────┐  │
@@ -582,23 +591,27 @@ The landing page after onboarding, and the default tab on return visits. It is a
 ```
 
 **Greeting logic:**
+
 - Time-aware: "Good morning", "Good afternoon", "Good evening"
 - Uses the user's first name from the profile
 - If there's a supervision deadline within 48 hours, the subheading changes to: "You have a check-in coming up on Friday."
 - If a milestone was logged recently (within 3 days), the subheading includes it: "You drafted a cover letter this week — nice work."
 
 **Upcoming Items card:**
+
 - Shows the next 2-3 time-sensitive items from the supervision tracker and observation stream
 - Each item has a colored left border indicating urgency: amber for within 48 hours, sky for upcoming, sage for completed-but-recent
 - Tapping an item navigates to the relevant detail view (supervision tracker, document, etc.)
 - If there are no upcoming items, this section is replaced with a reassuring message: "Nothing urgent right now. You're on track."
 
 **Recent Win card:**
+
 - Pulls from the observation stream, filtered to `event_type: milestone`
 - Shows the most recent win with a sage left border and a check icon
 - If there are no milestones yet, this section shows: "Your first milestone is waiting. Let's get started."
 
 **Quick Actions grid:**
+
 - 2x2 grid of large tappable cards
 - Each card navigates to Chat with a pre-filled prompt:
   - "Find a job" → Chat, auto-sends "I need help finding a job"
@@ -619,7 +632,7 @@ The primary surface of the application. Where the user spends 80% of their time.
 │  ← Home    Threshold     [···] │ ← top bar with overflow menu
 │─────────────────────────────────│
 │                                 │
-│  ┃ Hey Marcus. How are you     │ ← threshold message
+│  ┃ Hey Tyler. How are you     │ ← threshold message
 │  ┃ doing today? I noticed      │   (sage left border, no bg)
 │  ┃ your check-in went well     │
 │  ┃ last week — that's great.   │
@@ -668,6 +681,7 @@ The primary surface of the application. Where the user spends 80% of their time.
 **Message rendering:**
 
 Threshold's messages support full markdown rendering:
+
 - Bold, italic, lists, links
 - Links render as tappable buttons (not underlined text) when they are phone numbers or application URLs
 - Phone numbers render with a "Call" action: tapping opens the phone dialer
@@ -678,6 +692,7 @@ Threshold's messages support full markdown rendering:
 When the backend is executing a tool (searching for jobs, checking eligibility, reading a workflow file), the frontend renders an inline card in the conversation that shows real-time progress. This replaces the generic "typing..." indicator.
 
 Card anatomy:
+
 - A compact card (sand-100 bg, sand-200 border, 12px padding)
 - An icon representing the tool type (search glass for searches, clipboard for eligibility checks, pencil for document generation)
 - A plain-language description: "Searching for jobs in Hartford, CT" or "Checking SNAP eligibility for your state"
@@ -686,20 +701,20 @@ Card anatomy:
 
 Tool card types:
 
-| Backend Tool | Frontend Card Label | Icon |
-|---|---|---|
-| `search_jobs()` | "Searching for jobs near you..." | `Search` |
-| `search_housing()` | "Finding housing options..." | `Home` |
-| `check_snap_eligibility()` | "Checking SNAP eligibility..." | `ClipboardCheck` |
-| `check_medicaid_eligibility()` | "Checking Medicaid eligibility..." | `ClipboardCheck` |
-| `check_ssi_eligibility()` | "Checking SSI eligibility..." | `ClipboardCheck` |
-| `get_upcoming_requirements()` | "Looking up your schedule..." | `Calendar` |
-| `get_id_restoration_guide()` | "Finding ID restoration steps..." | `FileSearch` |
-| `check_expungement_eligibility()` | "Checking expungement options..." | `Scale` |
-| `read_user_memory()` | (no card — this is invisible to the user) | — |
-| `crisis_response()` | (triggers Crisis Mode — see Section 7) | — |
-| Workflow file read | "Preparing to draft your [document]..." | `PenTool` |
-| Subagent delegation | "Working on this — give me a moment..." | `Loader` |
+| Backend Tool                      | Frontend Card Label                       | Icon             |
+| --------------------------------- | ----------------------------------------- | ---------------- |
+| `search_jobs()`                   | "Searching for jobs near you..."          | `Search`         |
+| `search_housing()`                | "Finding housing options..."              | `Home`           |
+| `check_snap_eligibility()`        | "Checking SNAP eligibility..."            | `ClipboardCheck` |
+| `check_medicaid_eligibility()`    | "Checking Medicaid eligibility..."        | `ClipboardCheck` |
+| `check_ssi_eligibility()`         | "Checking SSI eligibility..."             | `ClipboardCheck` |
+| `get_upcoming_requirements()`     | "Looking up your schedule..."             | `Calendar`       |
+| `get_id_restoration_guide()`      | "Finding ID restoration steps..."         | `FileSearch`     |
+| `check_expungement_eligibility()` | "Checking expungement options..."         | `Scale`          |
+| `read_user_memory()`              | (no card — this is invisible to the user) | —                |
+| `crisis_response()`               | (triggers Crisis Mode — see Section 7)    | —                |
+| Workflow file read                | "Preparing to draft your [document]..."   | `PenTool`        |
+| Subagent delegation               | "Working on this — give me a moment..."   | `Loader`         |
 
 **Document preview cards:**
 
@@ -742,6 +757,7 @@ A horizontally scrollable row of contextual prompt pills that appear above the i
 Messages from the agent stream in token-by-token (via WebSocket). The text cursor is a blinking `clay-500` block at the insertion point. Once the response is complete, the cursor disappears. If the response includes tool calls, the tool execution card appears first, then the response text streams in after the tool completes.
 
 **Overflow menu (top-right `···`):**
+
 - "Clear conversation" (with confirmation: "This clears the chat display. Your data and documents are kept.")
 - "Export chat as text"
 - "Trigger reflection" (runs `synthesize_reflections()` on demand)
@@ -827,6 +843,7 @@ A clean, organized listing of all generated documents.
 ```
 
 **Overflow menu (`···`):**
+
 - "Export as .txt"
 - "Export as .pdf"
 - "Share" (generates a local file, opens OS share sheet)
@@ -901,7 +918,7 @@ The user's goals, supervision tracker, milestones, and reflections. This is the 
 │  WEEKLY REFLECTION              │
 │                                 │
 │  ┌───────────────────────────┐  │
-│  │ "Marcus has been making   │  │ ← from reflection engine
+│  │ "Tyler has been making   │  │ ← from reflection engine
 │  │  steady progress on job   │  │   italicized, sage left border
 │  │  search. He's completed   │  │
 │  │  3 applications this week │  │
@@ -920,6 +937,7 @@ The user's goals, supervision tracker, milestones, and reflections. This is the 
 
 **"Log a Check-in" flow:**
 Tapping "Log a Check-in" opens a bottom sheet (not a new page) with:
+
 1. Date picker (defaults to today)
 2. Type selector: In-person / Phone / Office
 3. Outcome selector: Completed / Missed / Rescheduled
@@ -940,17 +958,20 @@ Accessed via the avatar icon in the top-right corner. Opens as a full page (not 
 **Profile Summary** — Shows all profile fields grouped by category (Personal, Situation, Goals, Support, Preferences). Each field is tappable to edit. Offense category is shown in a collapsed section labeled "Background Information" that requires a deliberate tap to expand — it is never shown by default.
 
 **Communication Preferences** — Three toggle-style selectors:
+
 - Style: Direct / Gentle / Informational (visual radio buttons with descriptions)
 - Check-in frequency: Daily / Weekly / As needed
 - Reminders: On / Off
 
 **Privacy & Security:**
+
 - A clear statement: "All your data is encrypted and stored on this device only. Threshold never sends your personal information to any server except to process your requests."
 - "Export my data" — downloads a `.zip` of all profile, documents, and observation data
 - "Delete all my data" — double-confirmation: "Are you sure? This cannot be undone." → "Type DELETE to confirm" → deletion + redirect to welcome screen
 - Encryption key display (masked by default, tap to reveal)
 
 **About Threshold:**
+
 - Version number
 - "This is general information, not legal advice" disclaimer
 - Link to crisis resources (always accessible)
@@ -1016,12 +1037,14 @@ When the user performs a direct action (logging a check-in, editing a goal, savi
 ### 6.5 Offline Behavior
 
 The PWA has a service worker that caches:
+
 - The application shell (HTML, CSS, JS, fonts)
 - The user's profile summary (decrypted in-memory, not in IndexedDB)
 - The most recent 10 documents
 - The most recent 20 chat messages
 
 When offline:
+
 - The Home tab renders with cached data (greeting, upcoming items from last sync, recent wins)
 - The Chat tab shows a banner: "You're offline. Messages will be sent when you reconnect." The input is disabled.
 - The Docs tab shows cached documents (read-only)
@@ -1031,6 +1054,7 @@ When offline:
 ### 6.6 Notifications and Reminders
 
 If the user has enabled reminders and the app has notification permission:
+
 - Supervision check-in reminders: 24 hours before, and 2 hours before
 - Weekly reflection available: Sunday evening
 - Proactive check-in from the agent (if configured for daily/weekly)
@@ -1107,6 +1131,7 @@ When crisis mode activates, the entire UI transforms:
 ### 7.3 Exiting Crisis Mode
 
 Crisis mode ends when:
+
 - The user taps "I'm okay for now" on the crisis card
 - The user sends a new message (the crisis card collapses but remains in the chat history)
 - 10 minutes pass without interaction (the visual transformation fades back, but the crisis card remains in history)
@@ -1128,6 +1153,7 @@ WCAG 2.1 Level AA minimum. This is non-negotiable. Many users may be accessing t
 ### 8.2 Specific Requirements
 
 **Color contrast:**
+
 - All text meets 4.5:1 contrast ratio against its background (AA standard)
 - Large text (24px+) meets 3:1 ratio
 - The warm palette has been selected with contrast ratios pre-validated:
@@ -1136,11 +1162,13 @@ WCAG 2.1 Level AA minimum. This is non-negotiable. Many users may be accessing t
   - White on `clay-500`: 4.1:1 (passes AA)
 
 **Touch targets:**
+
 - Minimum 48x48px for all interactive elements
 - Minimum 8px gap between adjacent touch targets
 - Bottom tab bar icons: 56x56px active area
 
 **Screen reader support:**
+
 - All images have alt text (the Threshold logo: "Threshold — re-entry assistant")
 - Chat messages are announced as they stream in (using `aria-live="polite"` on the chat container)
 - Crisis mode triggers `aria-live="assertive"` to immediately announce crisis resources
@@ -1149,6 +1177,7 @@ WCAG 2.1 Level AA minimum. This is non-negotiable. Many users may be accessing t
 - All form inputs have visible labels (not just placeholders)
 
 **Keyboard navigation:**
+
 - Full keyboard navigation for desktop users
 - Visible focus indicators (3px `clay-500` ring, 2px offset)
 - `Enter` sends messages, `Shift+Enter` for newlines
@@ -1156,11 +1185,13 @@ WCAG 2.1 Level AA minimum. This is non-negotiable. Many users may be accessing t
 - Tab order follows visual order
 
 **Reduced motion:**
+
 - Respects `prefers-reduced-motion: reduce`
 - When active: all transitions become instant opacity changes (no sliding, scaling, or position animation)
 - Loading indicators use static "..." instead of animated dots
 
 **Text scaling:**
+
 - All text uses `rem` units
 - Layout does not break up to 200% text scaling
 - No fixed-height containers that would clip scaled text
@@ -1178,18 +1209,18 @@ WCAG 2.1 Level AA minimum. This is non-negotiable. Many users may be accessing t
 
 ### 9.1 Stack
 
-| Layer | Technology | Rationale |
-|-------|-----------|-----------|
-| Framework | React 19 + TypeScript | Component model, ecosystem, team familiarity |
-| Build | Vite 6 | Fast builds, good PWA plugin support |
-| Styling | TailwindCSS 4 | Utility-first, custom theme support, small bundle |
-| Animation | Framer Motion | Declarative, respects reduced-motion, layout animations |
-| State | Zustand | Minimal, no boilerplate, good for small-medium apps |
-| Routing | React Router 7 | File-based routing, nested layouts |
-| Markdown | react-markdown + remark-gfm | Chat message rendering |
-| PWA | vite-plugin-pwa | Service worker generation, caching strategies |
-| WebSocket | Native WebSocket API | No library needed; reconnection logic is custom |
-| Icons | Lucide React | Consistent, tree-shakeable, rounded style |
+| Layer     | Technology                  | Rationale                                               |
+| --------- | --------------------------- | ------------------------------------------------------- |
+| Framework | React 19 + TypeScript       | Component model, ecosystem, team familiarity            |
+| Build     | Vite 6                      | Fast builds, good PWA plugin support                    |
+| Styling   | TailwindCSS 4               | Utility-first, custom theme support, small bundle       |
+| Animation | Framer Motion               | Declarative, respects reduced-motion, layout animations |
+| State     | Zustand                     | Minimal, no boilerplate, good for small-medium apps     |
+| Routing   | React Router 7              | File-based routing, nested layouts                      |
+| Markdown  | react-markdown + remark-gfm | Chat message rendering                                  |
+| PWA       | vite-plugin-pwa             | Service worker generation, caching strategies           |
+| WebSocket | Native WebSocket API        | No library needed; reconnection logic is custom         |
+| Icons     | Lucide React                | Consistent, tree-shakeable, rounded style               |
 
 ### 9.2 Project Structure
 
@@ -1297,38 +1328,41 @@ frontend/
 **Zustand stores** (lightweight, no Redux boilerplate):
 
 **`chatStore`:**
+
 ```typescript
 interface ChatState {
-  messages: Message[]
-  isStreaming: boolean
-  activeToolCall: ToolExecution | null
-  suggestedPrompts: string[]
-  sendMessage: (text: string) => void
-  appendToken: (token: string) => void
-  addToolExecution: (tool: ToolExecution) => void
-  completeToolExecution: (toolId: string, summary: string) => void
-  setCrisisResponse: (content: string) => void
+  messages: Message[];
+  isStreaming: boolean;
+  activeToolCall: ToolExecution | null;
+  suggestedPrompts: string[];
+  sendMessage: (text: string) => void;
+  appendToken: (token: string) => void;
+  addToolExecution: (tool: ToolExecution) => void;
+  completeToolExecution: (toolId: string, summary: string) => void;
+  setCrisisResponse: (content: string) => void;
 }
 ```
 
 **`profileStore`:**
+
 ```typescript
 interface ProfileState {
-  profile: UserProfile | null
-  isLoaded: boolean
-  loadProfile: () => Promise<void>
-  updateField: (path: string, value: string) => Promise<void>
+  profile: UserProfile | null;
+  isLoaded: boolean;
+  loadProfile: () => Promise<void>;
+  updateField: (path: string, value: string) => Promise<void>;
 }
 ```
 
 **`uiStore`:**
+
 ```typescript
 interface UIState {
-  isCrisisMode: boolean
-  activeTab: 'home' | 'chat' | 'docs' | 'plan'
-  enterCrisisMode: () => void
-  exitCrisisMode: () => void
-  setActiveTab: (tab: string) => void
+  isCrisisMode: boolean;
+  activeTab: "home" | "chat" | "docs" | "plan";
+  enterCrisisMode: () => void;
+  exitCrisisMode: () => void;
+  setActiveTab: (tab: string) => void;
 }
 ```
 
@@ -1352,6 +1386,7 @@ backend/
 ```
 
 **FastAPI server responsibilities:**
+
 - Serve the frontend static files in production
 - Expose WebSocket endpoint for chat streaming
 - Expose REST endpoints for profile, documents, supervision data
@@ -1365,22 +1400,22 @@ backend/
 
 The backend must expose these REST endpoints for the frontend. All endpoints are local-only (bound to `127.0.0.1`).
 
-| Method | Path | Description | Request | Response |
-|--------|------|-------------|---------|----------|
-| `GET` | `/api/profile` | Load user profile | — | `UserProfile` JSON |
-| `PATCH` | `/api/profile` | Update profile field | `{ field_path, value }` | `{ ok: true }` |
-| `GET` | `/api/profile/exists` | Check if profile exists | — | `{ exists: boolean }` |
-| `GET` | `/api/documents` | List all documents | `?type=cover_letter` | `Document[]` |
-| `GET` | `/api/documents/:id` | Get document content | — | `Document` with full text |
-| `DELETE` | `/api/documents/:id` | Delete a document | — | `{ ok: true }` |
-| `GET` | `/api/supervision` | Get supervision data | — | `{ conditions, check_ins }` |
-| `POST` | `/api/supervision/check-in` | Log a check-in | `{ date, type, outcome, notes }` | `{ ok: true }` |
-| `GET` | `/api/supervision/upcoming` | Get upcoming requirements | `?days=7` | `Requirement[]` |
-| `GET` | `/api/observations/milestones` | Get recent milestones | `?limit=10` | `Observation[]` |
-| `GET` | `/api/reflections/latest` | Get latest reflection | — | `Reflection` |
-| `POST` | `/api/reflections/trigger` | Trigger reflection synthesis | — | `Reflection` |
-| `POST` | `/api/export` | Export all user data | — | `.zip` file download |
-| `DELETE` | `/api/data` | Delete all user data | `{ confirm: "DELETE" }` | `{ ok: true }` |
+| Method   | Path                           | Description                  | Request                          | Response                    |
+| -------- | ------------------------------ | ---------------------------- | -------------------------------- | --------------------------- |
+| `GET`    | `/api/profile`                 | Load user profile            | —                                | `UserProfile` JSON          |
+| `PATCH`  | `/api/profile`                 | Update profile field         | `{ field_path, value }`          | `{ ok: true }`              |
+| `GET`    | `/api/profile/exists`          | Check if profile exists      | —                                | `{ exists: boolean }`       |
+| `GET`    | `/api/documents`               | List all documents           | `?type=cover_letter`             | `Document[]`                |
+| `GET`    | `/api/documents/:id`           | Get document content         | —                                | `Document` with full text   |
+| `DELETE` | `/api/documents/:id`           | Delete a document            | —                                | `{ ok: true }`              |
+| `GET`    | `/api/supervision`             | Get supervision data         | —                                | `{ conditions, check_ins }` |
+| `POST`   | `/api/supervision/check-in`    | Log a check-in               | `{ date, type, outcome, notes }` | `{ ok: true }`              |
+| `GET`    | `/api/supervision/upcoming`    | Get upcoming requirements    | `?days=7`                        | `Requirement[]`             |
+| `GET`    | `/api/observations/milestones` | Get recent milestones        | `?limit=10`                      | `Observation[]`             |
+| `GET`    | `/api/reflections/latest`      | Get latest reflection        | —                                | `Reflection`                |
+| `POST`   | `/api/reflections/trigger`     | Trigger reflection synthesis | —                                | `Reflection`                |
+| `POST`   | `/api/export`                  | Export all user data         | —                                | `.zip` file download        |
+| `DELETE` | `/api/data`                    | Delete all user data         | `{ confirm: "DELETE" }`          | `{ ok: true }`              |
 
 ### 10.2 WebSocket Protocol
 
@@ -1471,74 +1506,79 @@ The frontend TypeScript types must mirror the backend Pydantic models:
 
 ```typescript
 interface UserProfile {
-  user_id: string
-  created_at: string
-  last_updated: string
+  user_id: string;
+  created_at: string;
+  last_updated: string;
   personal: {
-    name?: string
-    age_range: string
-    gender_identity?: string
-    home_state: string
-    release_date: string
-    time_served: string
-    offense_category: 'non-violent' | 'violent' | 'drug' | 'financial' | 'other'
-    comfort_with_technology: string
-  }
+    name?: string;
+    age_range: string;
+    gender_identity?: string;
+    home_state: string;
+    release_date: string;
+    time_served: string;
+    offense_category:
+      | "non-violent"
+      | "violent"
+      | "drug"
+      | "financial"
+      | "other";
+    comfort_with_technology: string;
+  };
   situation: {
-    housing_status: 'housed' | 'shelter' | 'couch_surfing' | 'unhoused'
-    employment_status: string
-    benefits_enrolled: string[]
-    supervision_type: 'none' | 'probation' | 'parole' | 'supervised_release'
-    supervision_end_date?: string
-    immediate_needs: string[]
-  }
+    housing_status: "housed" | "shelter" | "couch_surfing" | "unhoused";
+    employment_status: string;
+    benefits_enrolled: string[];
+    supervision_type: "none" | "probation" | "parole" | "supervised_release";
+    supervision_end_date?: string;
+    immediate_needs: string[];
+  };
   goals: {
-    short_term_goals: string[]
-    long_term_goals: string[]
-    values: string[]
-    strengths: string[]
-    concerns: string[]
-  }
+    short_term_goals: string[];
+    long_term_goals: string[];
+    values: string[];
+    strengths: string[];
+    concerns: string[];
+  };
   support: {
-    has_case_worker: boolean
-    case_worker_name?: string
-    support_contacts: string[]
-    trusted_people: string[]
-  }
+    has_case_worker: boolean;
+    case_worker_name?: string;
+    support_contacts: string[];
+    trusted_people: string[];
+  };
   preferences: {
-    communication_style: 'direct' | 'gentle' | 'informational'
-    check_in_frequency: 'daily' | 'weekly' | 'as_needed'
-    wants_reminders: boolean
-    privacy_level: 'high' | 'medium' | 'low'
-  }
+    communication_style: "direct" | "gentle" | "informational";
+    check_in_frequency: "daily" | "weekly" | "as_needed";
+    wants_reminders: boolean;
+    privacy_level: "high" | "medium" | "low";
+  };
 }
 
 interface Message {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-  timestamp: string
-  tool_executions?: ToolExecution[]
-  document_preview?: DocumentPreview
-  is_crisis_response?: boolean
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: string;
+  tool_executions?: ToolExecution[];
+  document_preview?: DocumentPreview;
+  is_crisis_response?: boolean;
 }
 
 interface ToolExecution {
-  id: string
-  tool_name: string
-  display_label: string
-  status: 'running' | 'completed' | 'error'
-  result_summary?: string
+  id: string;
+  tool_name: string;
+  display_label: string;
+  status: "running" | "completed" | "error";
+  result_summary?: string;
 }
 
 interface Document {
-  id: string
-  type: 'cover_letter' | 'resume' | 'housing_letter' | 'legal_letter'
-  title: string
-  content: string
-  created_at: string
-  word_count: number
-  path: string
+  id: string;
+  type: "cover_letter" | "resume" | "housing_letter" | "legal_letter";
+  title: string;
+  content: string;
+  created_at: string;
+  word_count: number;
+  path: string;
 }
 ```
 
@@ -1618,52 +1658,52 @@ Given the 24-hour hackathon constraint and the backend being built in parallel, 
 
 ## Appendix A: Key Design Decisions and Rationale
 
-| Decision | Rationale |
-|----------|-----------|
-| Bottom tab bar (not hamburger menu) | Users should never have to search for navigation. Tabs are always visible. |
-| 4 tabs (not 5+) | 4 is the maximum for comfortable thumb reach on mobile. Each tab represents a distinct user intent. |
-| No sidebar chat widget | This is a full application, not a support feature bolted onto something else. The conversation deserves full screen real estate. |
-| Earth-tone palette (not blue/white) | Blue/white reads as "corporate," "institutional," or "medical." These users have been in institutional environments. Warm tones communicate safety and humanity. |
-| 18px base font (not 16px) | Readability over density. Users may be reading on cheap screens, in poor lighting, or have uncorrected vision. |
-| No red anywhere | Red means "danger," "violation," "stop." Every interaction with this app should feel safe. Amber handles warnings without the emotional weight. |
-| Full-screen interview (not scrolling form) | One question at a time reduces cognitive load and anxiety. Scrolling forms signal "this will take forever." |
-| Tool cards (not "typing..." dots) | Users deserve to know what the AI is actually doing, not just that it's "thinking." Transparency builds trust. |
-| Crisis mode transforms the UI | A banner can be scrolled past. A modal can be dismissed. A full UI transformation cannot be ignored — and it shouldn't be. |
-| "Skip" always visible | Nothing is mandatory. Forcing answers violates trauma-informed principles. |
-| Local-only notifications | No push notification server. No data leaves the device. Privacy is absolute. |
-| PWA (not native app) | No app store review, no download friction, works on any device with a browser. Critical for users who may not have app store accounts or storage space. |
+| Decision                                   | Rationale                                                                                                                                                        |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bottom tab bar (not hamburger menu)        | Users should never have to search for navigation. Tabs are always visible.                                                                                       |
+| 4 tabs (not 5+)                            | 4 is the maximum for comfortable thumb reach on mobile. Each tab represents a distinct user intent.                                                              |
+| No sidebar chat widget                     | This is a full application, not a support feature bolted onto something else. The conversation deserves full screen real estate.                                 |
+| Earth-tone palette (not blue/white)        | Blue/white reads as "corporate," "institutional," or "medical." These users have been in institutional environments. Warm tones communicate safety and humanity. |
+| 18px base font (not 16px)                  | Readability over density. Users may be reading on cheap screens, in poor lighting, or have uncorrected vision.                                                   |
+| No red anywhere                            | Red means "danger," "violation," "stop." Every interaction with this app should feel safe. Amber handles warnings without the emotional weight.                  |
+| Full-screen interview (not scrolling form) | One question at a time reduces cognitive load and anxiety. Scrolling forms signal "this will take forever."                                                      |
+| Tool cards (not "typing..." dots)          | Users deserve to know what the AI is actually doing, not just that it's "thinking." Transparency builds trust.                                                   |
+| Crisis mode transforms the UI              | A banner can be scrolled past. A modal can be dismissed. A full UI transformation cannot be ignored — and it shouldn't be.                                       |
+| "Skip" always visible                      | Nothing is mandatory. Forcing answers violates trauma-informed principles.                                                                                       |
+| Local-only notifications                   | No push notification server. No data leaves the device. Privacy is absolute.                                                                                     |
+| PWA (not native app)                       | No app store review, no download friction, works on any device with a browser. Critical for users who may not have app store accounts or storage space.          |
 
 ## Appendix B: Naming and Copy Guidelines
 
 The frontend should use consistent, human language throughout. Here are the canonical terms:
 
-| Internal/Backend Term | User-Facing Copy |
-|----------------------|-----------------|
-| `orchestrator` | "Threshold" |
-| `subagent` | (invisible to user — just appears as Threshold working) |
-| `crisis_response()` | (renders as crisis resources, no tool name shown) |
-| `observation_stream` | (invisible — powers milestones and reflections) |
-| `reflection_engine` | "Weekly reflection" |
-| `supervision_tracker` | "Your schedule" or "Check-ins" |
-| `offense_category` | "Background information" (in settings, collapsed by default) |
-| `check_snap_eligibility()` | "Checking SNAP eligibility..." |
-| `UserProfile` | "Your profile" |
-| `AGENTS.md` | (invisible — internal memory file) |
+| Internal/Backend Term      | User-Facing Copy                                             |
+| -------------------------- | ------------------------------------------------------------ |
+| `orchestrator`             | "Threshold"                                                  |
+| `subagent`                 | (invisible to user — just appears as Threshold working)      |
+| `crisis_response()`        | (renders as crisis resources, no tool name shown)            |
+| `observation_stream`       | (invisible — powers milestones and reflections)              |
+| `reflection_engine`        | "Weekly reflection"                                          |
+| `supervision_tracker`      | "Your schedule" or "Check-ins"                               |
+| `offense_category`         | "Background information" (in settings, collapsed by default) |
+| `check_snap_eligibility()` | "Checking SNAP eligibility..."                               |
+| `UserProfile`              | "Your profile"                                               |
+| `AGENTS.md`                | (invisible — internal memory file)                           |
 
 No internal system names should ever appear in the UI. If a tool name leaks into a chat message (from the LLM), the frontend should strip it: any text matching `@tool`, `read_user_memory()`, `check_*_eligibility()`, etc. should be removed from rendered output.
 
 ## Appendix C: Performance Budget
 
-| Metric | Target | Rationale |
-|--------|--------|-----------|
-| First Contentful Paint | < 1.5s | Users on slow phones/connections |
-| Time to Interactive | < 3.0s | Must be usable quickly |
-| JavaScript bundle (gzipped) | < 150KB | Budget phones have limited RAM |
-| Total page weight (initial) | < 500KB | Prepaid data plans are expensive |
-| Web font load | < 100KB | Inter variable font, single file |
-| Lighthouse Performance score | > 90 | Validates overall performance |
-| Lighthouse Accessibility score | > 95 | Non-negotiable for this audience |
+| Metric                         | Target  | Rationale                        |
+| ------------------------------ | ------- | -------------------------------- |
+| First Contentful Paint         | < 1.5s  | Users on slow phones/connections |
+| Time to Interactive            | < 3.0s  | Must be usable quickly           |
+| JavaScript bundle (gzipped)    | < 150KB | Budget phones have limited RAM   |
+| Total page weight (initial)    | < 500KB | Prepaid data plans are expensive |
+| Web font load                  | < 100KB | Inter variable font, single file |
+| Lighthouse Performance score   | > 90    | Validates overall performance    |
+| Lighthouse Accessibility score | > 95    | Non-negotiable for this audience |
 
 ---
 
-*This document is the source of truth for all frontend implementation decisions. When in doubt, refer to Section 1.2 (Design Principles) and Section 1.3 (What This Frontend Must Never Do).*
+_This document is the source of truth for all frontend implementation decisions. When in doubt, refer to Section 1.2 (Design Principles) and Section 1.3 (What This Frontend Must Never Do)._

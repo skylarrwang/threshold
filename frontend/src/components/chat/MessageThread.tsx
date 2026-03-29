@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useChatStore } from '@/store/chatStore';
 import { Avatar } from '@/components/shared/Avatar';
+import { ToolCard } from './ToolCard';
 import { cn } from '@/lib/utils';
 
 const USER_ID = 'user';
@@ -36,7 +37,7 @@ function DateSeparator({ label }: { label: string }) {
 function TypingIndicator() {
   return (
     <div className="flex items-start gap-3 max-w-xs">
-      <Avatar name="Diana" size="sm" />
+      <Avatar name="AI" size="sm" />
       <div className="bg-surface-container-lowest rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm flex items-center gap-1.5">
         <span className="w-2 h-2 bg-outline rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
         <span className="w-2 h-2 bg-outline rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -47,7 +48,7 @@ function TypingIndicator() {
 }
 
 export function MessageThread() {
-  const { messages, activeConversationId, isTyping, streamingMessageId } = useChatStore();
+  const { messages, activeConversationId, isTyping, streamingMessageId, activeToolCall } = useChatStore();
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const threadMessages = messages.filter((m) => m.conversationId === activeConversationId);
@@ -57,7 +58,7 @@ export function MessageThread() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [threadMessages.length, isTyping, streamingContent]);
+  }, [threadMessages.length, isTyping, streamingContent, activeToolCall]);
 
   // Group messages by date for date separators
   const groups: { dateLabel: string; messages: typeof threadMessages }[] = [];
@@ -79,6 +80,7 @@ export function MessageThread() {
           <div className="space-y-4 mt-4">
             {group.messages.map((msg) => {
               const isOutgoing = msg.senderId === USER_ID;
+              const isStreaming = msg.id === streamingMessageId;
               return (
                 <div
                   key={msg.id}
@@ -112,6 +114,10 @@ export function MessageThread() {
                       )}
                     >
                       {msg.content}
+                      {/* Streaming cursor */}
+                      {isStreaming && (
+                        <span className="inline-block w-2 h-4 ml-0.5 bg-current rounded-sm animate-pulse align-middle opacity-70" />
+                      )}
                     </div>
                     <div className={cn('flex items-center gap-1.5 px-1', isOutgoing ? 'flex-row-reverse' : 'flex-row')}>
                       <span className="text-[10px] text-outline font-medium">{formatTime(msg.timestamp)}</span>
@@ -129,6 +135,9 @@ export function MessageThread() {
           </div>
         </div>
       ))}
+
+      {/* Tool call indicator (inline, above any streaming response) */}
+      <ToolCard activeToolCall={activeToolCall} />
 
       {/* Typing indicator */}
       {isTyping && (
