@@ -1,12 +1,23 @@
 /**
- * useChatSocket — React hook that manages the WebSocket connection to the
- * Threshold backend and dispatches incoming events to chatStore.
+ * Singleton WebSocket connection to the Threshold backend.
  *
- * Reconnects with exponential backoff: 1s → 2s → 4s → 8s → … → 30s max.
+ * Only ONE connection is maintained regardless of how many components call
+ * useChatSocket(). A ref-count tracks active consumers — the socket connects
+ * when the first consumer mounts and disconnects when the last unmounts.
+ *
+ * Reconnects with exponential backoff: 1s → 2s → 4s → … → 30s max.
  */
-import { useEffect, useRef } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useChatStore } from '@/store/chatStore';
 import type { WsMessage } from './api';
+
+// ── Singleton state (module-level, not per-hook) ────────────────────────────
+
+let ws: WebSocket | null = null;
+let refCount = 0;
+let alive = false;
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+let reconnectDelay = 1000;
 
 const TOOL_LABELS: Record<string, string> = {
   search_jobs: 'Searching for jobs near you...',
@@ -56,6 +67,24 @@ function handleMessage(msg: WsMessage) {
       store.setToolCall(null);
       break;
 
+    case 'clear_stream':
+      store.clearStreamContent();
+      break;
+
+    case 'agent_step':
+      if (msg.id && msg.step_type && msg.status && msg.label) {
+        store.addOrUpdateStep({
+          id: msg.id,
+          stepType: msg.step_type,
+          status: msg.status,
+          label: msg.label,
+          detail: msg.detail,
+          icon: msg.icon,
+          timestamp: Date.now(),
+        });
+      }
+      break;
+
     case 'crisis_response':
       store.setCrisisMode(true);
       break;
@@ -66,68 +95,94 @@ function handleMessage(msg: WsMessage) {
   }
 }
 
-export function useChatSocket() {
-  const socketRef = useRef<WebSocket | null>(null);
-  const aliveRef = useRef(true);
-  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const reconnectDelayRef = useRef(1000);
-
-  function connect() {
-    if (!aliveRef.current) return;
-
-    useChatStore.getState().setWsStatus('connecting');
-
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const url = `${protocol}//${window.location.host}/ws`;
-    const ws = new WebSocket(url);
-    socketRef.current = ws;
-
-    ws.onopen = () => {
-      reconnectDelayRef.current = 1000;
-      useChatStore.getState().setWsStatus('connected');
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const msg: WsMessage = JSON.parse(event.data as string);
-        handleMessage(msg);
-      } catch {
-        console.error('[ws] malformed message:', event.data);
-      }
-    };
-
-    ws.onclose = () => {
-      useChatStore.getState().setWsStatus('disconnected');
-      if (aliveRef.current) {
-        const delay = reconnectDelayRef.current;
-        reconnectDelayRef.current = Math.min(delay * 2, 30_000);
-        reconnectTimerRef.current = setTimeout(connect, delay);
-      }
-    };
-
-    ws.onerror = () => {
-      ws.close();
-    };
+function connect() {
+  if (!alive || ws?.readyState === WebSocket.OPEN || ws?.readyState === WebSocket.CONNECTING) {
+    return;
   }
 
-  useEffect(() => {
-    aliveRef.current = true;
+  useChatStore.getState().setWsStatus('connecting');
+
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const url = `${protocol}//${window.location.host}/ws`;
+  const socket = new WebSocket(url);
+
+  socket.onopen = () => {
+    reconnectDelay = 1000;
+    useChatStore.getState().setWsStatus('connected');
+  };
+
+  socket.onmessage = (event) => {
+    try {
+      const msg: WsMessage = JSON.parse(event.data as string);
+      handleMessage(msg);
+    } catch {
+      console.error('[ws] malformed message:', event.data);
+    }
+  };
+
+  socket.onclose = () => {
+    ws = null;
+    useChatStore.getState().setWsStatus('disconnected');
+    if (alive) {
+      const delay = reconnectDelay;
+      reconnectDelay = Math.min(delay * 2, 30_000);
+      reconnectTimer = setTimeout(connect, delay);
+    }
+  };
+
+  socket.onerror = () => {
+    socket.close();
+  };
+
+  ws = socket;
+}
+
+function acquire() {
+  refCount++;
+  if (refCount === 1) {
+    alive = true;
     connect();
-    return () => {
-      aliveRef.current = false;
-      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
-      socketRef.current?.close();
-    };
+  }
+}
+
+function release() {
+  refCount = Math.max(0, refCount - 1);
+  if (refCount === 0) {
+    alive = false;
+    if (reconnectTimer) clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+    ws?.close();
+    ws = null;
+  }
+}
+
+// ── HMR cleanup (Vite dev only) ─────────────────────────────────────────────
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    alive = false;
+    if (reconnectTimer) clearTimeout(reconnectTimer);
+    ws?.close();
+    ws = null;
+    refCount = 0;
+  });
+}
+
+// ── React hook ──────────────────────────────────────────────────────────────
+
+export function useChatSocket() {
+  useEffect(() => {
+    acquire();
+    return () => release();
   }, []);
 
-  function sendMessage(content: string) {
-    const ws = socketRef.current;
-    if (ws?.readyState !== WebSocket.OPEN) {
+  const sendMessage = useCallback((content: string) => {
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
       console.warn('[ws] not connected — message dropped');
       return;
     }
 
     const store = useChatStore.getState();
+    store.clearSteps();
     const aiMsgId = `msg-ai-${Date.now()}`;
 
     store.addMessage({
@@ -143,7 +198,7 @@ export function useChatSocket() {
     store.setStreamingMessageId(aiMsgId);
 
     ws.send(JSON.stringify({ type: 'user_message', content }));
-  }
+  }, []);
 
   return { sendMessage };
 }

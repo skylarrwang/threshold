@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom';
 import { useProfileStore } from '@/store/profileStore';
-import { StickyNote } from '@/components/shared/StickyNote';
 import { Button } from '@/components/shared/Button';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 import { StatusDot } from '@/components/shared/StatusDot';
@@ -54,7 +53,7 @@ export function ResourcesPage() {
               {/* Avatar large */}
               <div className="relative inline-flex">
                 <div className="w-20 h-20 rounded-full bg-primary-fixed flex items-center justify-center font-bold text-on-primary-fixed text-2xl">
-                  SJ
+                  DC
                 </div>
                 <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-primary border-2 border-white" />
               </div>
@@ -99,11 +98,6 @@ export function ResourcesPage() {
               </div>
             </div>
           </div>
-
-          {/* Sticky Note */}
-          <StickyNote author={counselorName}>
-            "Keep up the momentum, Tyler! Your consistency is what will make the difference. See you Thursday."
-          </StickyNote>
 
           {/* Next Milestone */}
           <div className="bg-surface-container-lowest rounded-xl p-6 space-y-4">

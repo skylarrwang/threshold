@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Conversation, Message } from '@/types';
+import type { AgentStep, Conversation, Message } from '@/types';
 
 export type WsStatus = 'connecting' | 'connected' | 'disconnected';
 
@@ -12,6 +12,7 @@ interface ChatState {
   streamingMessageId: string | null;
   activeToolCall: { tool: string; label: string } | null;
   isCrisisMode: boolean;
+  agentSteps: AgentStep[];
   setActiveConversation: (id: string) => void;
   addMessage: (message: Message) => void;
   setTyping: (typing: boolean) => void;
@@ -21,6 +22,9 @@ interface ChatState {
   setCrisisMode: (on: boolean) => void;
   setWsStatus: (s: WsStatus) => void;
   dismissCrisis: () => void;
+  clearStreamContent: () => void;
+  addOrUpdateStep: (step: AgentStep) => void;
+  clearSteps: () => void;
 }
 
 const mockConversations: Conversation[] = [
@@ -30,7 +34,7 @@ const mockConversations: Conversation[] = [
     participantType: 'counselor',
     lastMessage: "Great progress on your ID documents! Let's focus on the Ready-to-Work cert next.",
     lastTimestamp: '2024-10-20T14:30:00Z',
-    unreadCount: 1,
+    unreadCount: 0,
     isOnline: true,
   },
   {
@@ -102,6 +106,7 @@ export const useChatStore = create<ChatState>()((set) => ({
   streamingMessageId: null,
   activeToolCall: null,
   isCrisisMode: false,
+  agentSteps: [],
 
   setActiveConversation: (id) => set({ activeConversationId: id }),
 
@@ -131,4 +136,27 @@ export const useChatStore = create<ChatState>()((set) => ({
   setCrisisMode: (on) => set({ isCrisisMode: on }),
   setWsStatus: (s) => set({ wsStatus: s }),
   dismissCrisis: () => set({ isCrisisMode: false }),
+
+  clearStreamContent: () =>
+    set((state) => {
+      if (!state.streamingMessageId) return state;
+      return {
+        messages: state.messages.map((m) =>
+          m.id === state.streamingMessageId ? { ...m, content: '' } : m
+        ),
+      };
+    }),
+
+  addOrUpdateStep: (step) =>
+    set((state) => {
+      const idx = state.agentSteps.findIndex((s) => s.id === step.id);
+      if (idx >= 0) {
+        const updated = [...state.agentSteps];
+        updated[idx] = { ...updated[idx], ...step };
+        return { agentSteps: updated };
+      }
+      return { agentSteps: [...state.agentSteps, step] };
+    }),
+
+  clearSteps: () => set({ agentSteps: [] }),
 }));

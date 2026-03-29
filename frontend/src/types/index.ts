@@ -191,6 +191,16 @@ export interface Conversation {
 
 export type AgentStatus = 'running' | 'waiting' | 'completed' | 'failed';
 
+export interface AgentStep {
+  id: string;
+  stepType: 'thinking' | 'subagent' | 'tool' | 'node' | 'reasoning';
+  status: 'started' | 'completed';
+  label: string;
+  detail?: string;
+  icon?: string;
+  timestamp: number;
+}
+
 export interface GeneratedDocument {
   id: string;
   type: 'cover_letter' | 'resume' | 'housing_letter' | 'legal_letter';

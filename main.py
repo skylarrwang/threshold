@@ -57,6 +57,17 @@ def seed():
     profile = UserProfile(
         personal={
             "name": "Tyler Chen",
+            "first_name": "Tyler",
+            "last_name": "Chen",
+            "date_of_birth": "05/19/1993",
+            "address": "261 Park St",
+            "city": "New Haven",
+            "zip_code": "06511",
+            "height": "5'10",
+            "eye_color": "Brown",
+            "gender": "Male",
+            "phone": "203-555-0142",
+            "email": "tyler.chen@email.com",
             "age_range": "30-35",
             "home_state": "CT",
             "release_date": "2026-02-15",
@@ -136,6 +147,19 @@ def profile():
 
 
 @app.command()
+def clear():
+    """Clear conversation history (keeps profile intact)."""
+    import glob
+    db_files = glob.glob(str(DATA_DIR / "checkpoints.db*"))
+    if not db_files:
+        console.print("[dim]No conversation history to clear.[/dim]")
+        return
+    for f in db_files:
+        os.remove(f)
+    console.print("[green]Conversation history cleared.[/green] Profile is still intact.")
+
+
+@app.command()
 def chat():
     """Start the Threshold chat loop (default command)."""
     _ensure_encryption_key()
@@ -200,9 +224,40 @@ def chat():
             )
             messages = result.get("messages", [])
             if messages:
-                last = messages[-1]
-                content = last.content if hasattr(last, "content") else str(last)
-                console.print(f"\n[bold green]Threshold:[/bold green] {content}\n")
+                # Walk backwards through messages to find the last AI message with text
+                content = ""
+                for msg in reversed(messages):
+                    # Skip non-AI messages (user messages, tool messages, etc.)
+                    msg_type = getattr(msg, "type", "")
+                    role = ""
+                    if hasattr(msg, "role"):
+                        role = msg.role
+                    elif isinstance(msg, dict):
+                        role = msg.get("role", "")
+                    # Only look at AI/assistant messages
+                    if msg_type not in ("ai", "AIMessage", "AIMessageChunk") and role not in ("assistant", "ai"):
+                        continue
+
+                    raw = msg.content if hasattr(msg, "content") else str(msg)
+                    # Gemini returns content as a list of dicts — extract text
+                    if isinstance(raw, list):
+                        text_parts = []
+                        for block in raw:
+                            if isinstance(block, dict):
+                                if block.get("type") == "text" and block.get("text", "").strip():
+                                    text_parts.append(block["text"])
+                            elif isinstance(block, str) and block.strip():
+                                text_parts.append(block)
+                        if text_parts:
+                            content = "\n".join(text_parts)
+                            break
+                    elif isinstance(raw, str) and raw.strip():
+                        content = raw
+                        break
+                if content:
+                    console.print(f"\n[bold green]Threshold:[/bold green] {content}\n")
+                else:
+                    console.print("[dim]No response.[/dim]")
             else:
                 console.print("[dim]No response.[/dim]")
         except Exception as e:
@@ -276,6 +331,18 @@ def serve(
         port=port,
         reload=reload,
     )
+
+
+@app.command()
+def generate_docs(
+    output_dir: str = typer.Option(None, "--output", "-o", help="Output directory (default: data/demo_documents)"),
+):
+    """Generate mock documents for the OCR demo pipeline."""
+    from threshold.demo.generate import generate_all
+
+    console.print(Panel("[bold]Generating mock documents for Tyler Chen...[/bold]", title="Demo Documents"))
+    paths = generate_all(output_dir)
+    console.print(f"\n[bold green]{len(paths)} documents generated.[/bold green]")
 
 
 def _ensure_encryption_key():

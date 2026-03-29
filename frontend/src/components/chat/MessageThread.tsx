@@ -1,8 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, memo } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useChatStore } from '@/store/chatStore';
 import { useProfileStore } from '@/store/profileStore';
 import { Avatar } from '@/components/shared/Avatar';
 import { ToolCard } from './ToolCard';
+import { AgentTrace } from './AgentTrace';
 import { cn } from '@/lib/utils';
 
 function formatTime(iso: string): string {
@@ -46,8 +49,50 @@ function TypingIndicator() {
   );
 }
 
+const Markdown = memo(function Markdown({ content }: { content: string }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+        strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+        em: ({ children }) => <em className="italic">{children}</em>,
+        ul: ({ children }) => <ul className="list-disc ml-4 mb-2 space-y-1">{children}</ul>,
+        ol: ({ children }) => <ol className="list-decimal ml-4 mb-2 space-y-1">{children}</ol>,
+        li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+        h1: ({ children }) => <h3 className="font-bold text-base mb-1 mt-2 first:mt-0">{children}</h3>,
+        h2: ({ children }) => <h3 className="font-bold text-base mb-1 mt-2 first:mt-0">{children}</h3>,
+        h3: ({ children }) => <h4 className="font-semibold mb-1 mt-2 first:mt-0">{children}</h4>,
+        a: ({ href, children }) => (
+          <a href={href} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:opacity-80">
+            {children}
+          </a>
+        ),
+        code: ({ children }) => (
+          <code className="bg-black/10 rounded px-1 py-0.5 text-[13px] font-mono">{children}</code>
+        ),
+        hr: () => <hr className="my-2 border-current/20" />,
+        table: ({ children }) => (
+          <div className="overflow-x-auto my-2 rounded-lg border border-outline-variant/20">
+            <table className="w-full text-xs">{children}</table>
+          </div>
+        ),
+        thead: ({ children }) => (
+          <thead className="bg-surface-container-high/50 text-on-surface-variant font-semibold">{children}</thead>
+        ),
+        tbody: ({ children }) => <tbody className="divide-y divide-outline-variant/10">{children}</tbody>,
+        tr: ({ children }) => <tr className="hover:bg-surface-container-high/20 transition-colors">{children}</tr>,
+        th: ({ children }) => <th className="px-3 py-2 text-left text-[11px] uppercase tracking-wider">{children}</th>,
+        td: ({ children }) => <td className="px-3 py-2">{children}</td>,
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+});
+
 export function MessageThread() {
-  const { messages, activeConversationId, isTyping, streamingMessageId, activeToolCall } = useChatStore();
+  const { messages, activeConversationId, isTyping, streamingMessageId, activeToolCall, agentSteps } = useChatStore();
   const userId = useProfileStore((s) => s.profile.user_id);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -58,7 +103,7 @@ export function MessageThread() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [threadMessages.length, isTyping, streamingContent, activeToolCall]);
+  }, [threadMessages.length, isTyping, streamingContent, activeToolCall, agentSteps.length]);
 
   // Group messages by date for date separators
   const groups: { dateLabel: string; messages: typeof threadMessages }[] = [];
@@ -81,6 +126,11 @@ export function MessageThread() {
             {group.messages.map((msg) => {
               const isOutgoing = msg.senderId === userId;
               const isStreaming = msg.id === streamingMessageId;
+
+              // Hide the empty placeholder bubble while the agent is working —
+              // the AgentTrace component shows progress instead.
+              if (isStreaming && !msg.content) return null;
+
               return (
                 <div
                   key={msg.id}
@@ -109,10 +159,12 @@ export function MessageThread() {
                           : 'bg-surface-container-lowest text-on-surface rounded-2xl rounded-tl-sm'
                       )}
                     >
-                      {msg.content}
-                      {/* Streaming cursor */}
-                      {isStreaming && (
-                        <span className="inline-block w-2 h-4 ml-0.5 bg-current rounded-sm animate-pulse align-middle opacity-70" />
+                      {msg.isAI ? (
+                        <span className={isStreaming ? 'streaming-cursor' : ''}>
+                          <Markdown content={msg.content} />
+                        </span>
+                      ) : (
+                        msg.content
                       )}
                     </div>
                     <div className={cn('flex items-center gap-1.5 px-1', isOutgoing ? 'flex-row-reverse' : 'flex-row')}>
@@ -138,6 +190,9 @@ export function MessageThread() {
           </div>
         </div>
       ))}
+
+      {/* Agent trace — live step feed */}
+      <AgentTrace />
 
       {/* Tool call indicator (inline, above any streaming response) */}
       <ToolCard activeToolCall={activeToolCall} />

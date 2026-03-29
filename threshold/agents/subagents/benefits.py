@@ -38,9 +38,17 @@ the local benefits office or calling 211.
 benefits_subagent = {
     "name": "benefits",
     "description": (
-        "SNAP, Medicaid, SSI eligibility checks and benefits application guidance. "
-        "Delegate here when the user asks about government benefits, food stamps, "
-        "health insurance, or disability income."
+        "Benefits eligibility specialist for re-entry. "
+        "CAN: check SNAP/food stamp eligibility by state (including drug felony ban "
+        "status); check Medicaid eligibility; check SSI/disability eligibility; provide "
+        "links to benefits application portals. "
+        "CANNOT: actually submit benefits applications; check eligibility for programs "
+        "beyond SNAP/Medicaid/SSI (no WIC, TANF, LIHEAP, Section 8 vouchers, etc.); "
+        "check status of existing applications; check benefit balances; handle "
+        "recertifications or appeals. "
+        "Use for: 'am I eligible for SNAP', 'check my Medicaid eligibility', "
+        "'what benefits can I get'. Do NOT use for housing vouchers (use housing) "
+        "or general questions about benefits the user already has."
     ),
     "system_prompt": BENEFITS_SYSTEM_PROMPT,
     "tools": [
