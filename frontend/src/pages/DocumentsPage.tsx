@@ -323,14 +323,14 @@ function DocumentDetailPanel() {
                   <span className="material-symbols-outlined text-lg text-tertiary">document_scanner</span>
                   Raw OCR Extraction
                 </h3>
-                {selectedUpload.raw_extraction.document_type && (
+                {Boolean((selectedUpload.raw_extraction as Record<string, unknown>).document_type) && (
                   <p className="text-xs text-on-surface-variant">
-                    Detected as: <span className="font-medium text-on-surface">{String(selectedUpload.raw_extraction.document_type)}</span>
+                    Detected as: <span className="font-medium text-on-surface">{String((selectedUpload.raw_extraction as Record<string, unknown>).document_type)}</span>
                   </p>
                 )}
-                {selectedUpload.raw_extraction.issuing_authority && (
+                {Boolean((selectedUpload.raw_extraction as Record<string, unknown>).issuing_authority) && (
                   <p className="text-xs text-on-surface-variant">
-                    Issued by: <span className="font-medium text-on-surface">{String(selectedUpload.raw_extraction.issuing_authority)}</span>
+                    Issued by: <span className="font-medium text-on-surface">{String((selectedUpload.raw_extraction as Record<string, unknown>).issuing_authority)}</span>
                   </p>
                 )}
                 {typeof selectedUpload.raw_extraction.fields === 'object' && selectedUpload.raw_extraction.fields && (

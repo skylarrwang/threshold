@@ -1,20 +1,24 @@
+import { useEffect } from 'react';
 import { useJobStore } from '@/store/jobStore';
 import { KanbanCard } from './KanbanCard';
+import type { JobPipelineStage } from '@/types';
 
 interface Column {
   id: string;
   label: string;
-  status: 'applied' | 'interviewing' | 'offer';
+  // Backend stages that map to this column
+  stages: JobPipelineStage[];
   dotColor: string;
   badgeColor: string;
   badgeTextColor: string;
 }
 
+// Map the 13-stage pipeline to 3 UI columns
 const columns: Column[] = [
   {
     id: 'applied',
     label: 'Applied',
-    status: 'applied',
+    stages: ['interested', 'preparing', 'applied', 'screening'],
     dotColor: 'bg-on-surface-variant',
     badgeColor: 'bg-surface-container-high',
     badgeTextColor: 'text-on-surface-variant',
@@ -22,7 +26,7 @@ const columns: Column[] = [
   {
     id: 'interviewing',
     label: 'Interviewing',
-    status: 'interviewing',
+    stages: ['interview_scheduled', 'interviewed', 'follow_up'],
     dotColor: 'bg-primary',
     badgeColor: 'bg-primary-fixed',
     badgeTextColor: 'text-primary',
@@ -30,7 +34,7 @@ const columns: Column[] = [
   {
     id: 'offer',
     label: 'Offer Received',
-    status: 'offer',
+    stages: ['offer_received', 'negotiating', 'accepted', 'started'],
     dotColor: 'bg-secondary',
     badgeColor: 'bg-secondary-fixed',
     badgeTextColor: 'text-on-secondary-fixed',
@@ -39,11 +43,50 @@ const columns: Column[] = [
 
 export function KanbanBoard() {
   const jobs = useJobStore((s) => s.jobs);
+  const pipelineLoading = useJobStore((s) => s.pipelineLoading);
+  const pipelineError = useJobStore((s) => s.pipelineError);
+  const fetchPipeline = useJobStore((s) => s.fetchPipeline);
+
+  // Fetch pipeline data on mount
+  useEffect(() => {
+    fetchPipeline();
+  }, [fetchPipeline]);
+
+  if (pipelineLoading && jobs.length === 0) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <div className="flex items-center gap-3 text-on-surface-variant">
+          <span className="material-symbols-outlined animate-spin">progress_activity</span>
+          <span>Loading applications...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (pipelineError) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <div className="text-error text-center">
+          <span className="material-symbols-outlined text-3xl mb-2">error</span>
+          <p>Failed to load applications</p>
+          <button
+            onClick={() => fetchPipeline()}
+            className="mt-2 text-sm text-primary hover:underline"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Filter out rejected/withdrawn for the main board
+  const activeJobs = jobs.filter((j) => j.status !== 'rejected' && j.status !== 'withdrawn');
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
       {columns.map((col) => {
-        const colJobs = jobs.filter((j) => j.status === col.status);
+        const colJobs = activeJobs.filter((j) => col.stages.includes(j.status));
         return (
           <div key={col.id} className="bg-surface-container-low rounded-xl p-4 space-y-3">
             {/* Column header */}

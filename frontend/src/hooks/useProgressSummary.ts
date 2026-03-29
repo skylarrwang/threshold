@@ -22,8 +22,10 @@ export function useProgressSummary(): ProgressSummary {
   const documents = useDocumentsStore((s) => s.completionPercent);
   const overall = useProfileStore((s) => s.overallProgress);
 
-  const activeJobs = jobs.filter((j) => j.status === 'offer' || j.status === 'interviewing').length;
-  const employment = jobs.length > 0 ? Math.round((activeJobs / jobs.length) * 100) : 0;
+  // Count jobs in advanced stages (interviewing or offer-related)
+  const advancedStages = ['interview_scheduled', 'interviewed', 'follow_up', 'offer_received', 'negotiating', 'accepted', 'started'];
+  const advancedJobs = jobs.filter((j) => advancedStages.includes(j.status)).length;
+  const employment = jobs.length > 0 ? Math.round((advancedJobs / jobs.length) * 100) : 0;
 
   const enrolledBenefits = benefits.filter((b) => b.status === 'enrolled').length;
   const benefitsPercent = benefits.length > 0 ? Math.round((enrolledBenefits / benefits.length) * 100) : 0;

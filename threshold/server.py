@@ -319,9 +319,20 @@ from threshold.tools.housing_search import (
 )
 from threshold.db.crud import (
     delete_housing_application,
+    delete_job_application,
     get_housing_applications,
+    get_job_applications,
     update_housing_application,
+    update_job_application,
     upsert_housing_application,
+    upsert_job_application,
+)
+from threshold.tools.job_search import (
+    _PIPELINE_STAGES as JOB_PIPELINE_STAGES,
+    _STAGE_LABELS as JOB_STAGE_LABELS,
+    _NEXT_ACTIONS as JOB_NEXT_ACTIONS,
+    _TERMINAL_STATUSES as JOB_TERMINAL_STATUSES,
+    get_pending_job_follow_ups,
 )
 
 
@@ -477,6 +488,144 @@ async def fair_chance_laws(state: str):
         "resource": "https://www.lawhelp.org",
         "has_law": False,
     }
+
+
+# ---------------------------------------------------------------------------
+# Employment pipeline
+# ---------------------------------------------------------------------------
+
+@app.get("/api/employment/pipeline")
+async def employment_pipeline():
+    """Return the full job application pipeline as structured JSON."""
+    db = get_db()
+    try:
+        apps = get_job_applications(db, DEFAULT_USER_ID)
+    finally:
+        db.close()
+
+    active = [a for a in apps if a.get("status") not in JOB_TERMINAL_STATUSES]
+    successful = [a for a in apps if a.get("status") in ("accepted", "started")]
+
+    # Find next follow-up
+    follow_ups = sorted(
+        [a for a in apps if a.get("follow_up_date") and a.get("status") not in JOB_TERMINAL_STATUSES],
+        key=lambda a: a.get("follow_up_date", ""),
+    )
+    next_follow_up = None
+    if follow_ups:
+        next_follow_up = {
+            "company": follow_ups[0]["company"],
+            "position": follow_ups[0]["position"],
+            "date": follow_ups[0]["follow_up_date"],
+        }
+
+    # Add next_action and stage_label to each application
+    for app_item in apps:
+        app_item["next_action"] = JOB_NEXT_ACTIONS.get(app_item.get("status", ""), "")
+        app_item["stage_label"] = JOB_STAGE_LABELS.get(app_item.get("status", ""), app_item.get("status", ""))
+
+    return {
+        "applications": apps,
+        "active_count": len(active),
+        "total_count": len(apps),
+        "successful_count": len(successful),
+        "next_follow_up": next_follow_up,
+        "stages": [{"key": s, "label": JOB_STAGE_LABELS.get(s, s)} for s in JOB_PIPELINE_STAGES],
+    }
+
+
+@app.get("/api/employment/alerts")
+async def employment_alerts():
+    """Return pending follow-ups, upcoming interviews, and approaching deadlines."""
+    return get_pending_job_follow_ups()
+
+
+class JobApplicationCreate(BaseModel):
+    company: str
+    position: str
+    status: str = "interested"
+    notes: str = ""
+    apply_url: str = ""
+    follow_up_date: str = ""
+    deadline: str = ""
+    contact_name: str = ""
+    contact_email: str = ""
+    contact_phone: str = ""
+    interview_date: str = ""
+    interview_time: str = ""
+    interview_location: str = ""
+    interview_type: str = ""
+    offer_salary: str = ""
+    offer_details: str = ""
+    rejection_reason: str = ""
+    source: str = ""
+
+
+class JobApplicationUpdate(BaseModel):
+    company: str | None = None
+    position: str | None = None
+    status: str | None = None
+    notes: str | None = None
+    apply_url: str | None = None
+    follow_up_date: str | None = None
+    deadline: str | None = None
+    contact_name: str | None = None
+    contact_email: str | None = None
+    contact_phone: str | None = None
+    interview_date: str | None = None
+    interview_time: str | None = None
+    interview_location: str | None = None
+    interview_type: str | None = None
+    offer_salary: str | None = None
+    offer_details: str | None = None
+    rejection_reason: str | None = None
+    source: str | None = None
+
+
+@app.post("/api/employment/applications")
+async def create_job_application(body: JobApplicationCreate):
+    """Log or update a job application."""
+    db = get_db()
+    try:
+        result = upsert_job_application(
+            db, DEFAULT_USER_ID, body.company, body.position, body.status,
+            notes=body.notes, apply_url=body.apply_url, follow_up_date=body.follow_up_date,
+            deadline=body.deadline, contact_name=body.contact_name,
+            contact_email=body.contact_email, contact_phone=body.contact_phone,
+            interview_date=body.interview_date, interview_time=body.interview_time,
+            interview_location=body.interview_location, interview_type=body.interview_type,
+            offer_salary=body.offer_salary, offer_details=body.offer_details,
+            rejection_reason=body.rejection_reason, source=body.source,
+        )
+    finally:
+        db.close()
+    return result
+
+
+@app.patch("/api/employment/applications/{job_id}")
+async def edit_job_application(job_id: str, body: JobApplicationUpdate):
+    """Update a job application by ID (partial update)."""
+    db = get_db()
+    try:
+        result = update_job_application(db, job_id, body.model_dump(exclude_none=True))
+    finally:
+        db.close()
+    if result is None:
+        raise HTTPException(status_code=404, detail="Application not found")
+    return result
+
+
+@app.delete("/api/employment/applications/{job_id}")
+async def remove_job_application(job_id: str):
+    """Delete a job application by ID."""
+    db = get_db()
+    try:
+        deleted = delete_job_application(db, job_id)
+    finally:
+        db.close()
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Application not found")
+    return {"ok": True}
 
 
 # ---------------------------------------------------------------------------

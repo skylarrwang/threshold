@@ -41,9 +41,6 @@ export function SectionCard({
   const icon = SECTION_ICONS[section.key] ?? 'category';
   const data = isEditing ? editDraft : sectionData;
 
-  // Build a parent-field lookup so we can check conditional visibility
-  const fieldByKey = new Map(section.fields.map((f) => [f.key, f]));
-
   // For conditional fields, find the parent: the field right before them in the list
   // that is a boolean field (the backend inserts conditionals after their parent).
   function getParentField(field: MatrixField, idx: number): MatrixField | undefined {

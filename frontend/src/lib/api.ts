@@ -188,6 +188,41 @@ export async function fetchFairChanceLaws(state: string) {
 }
 
 // ---------------------------------------------------------------------------
+// Employment pipeline
+// ---------------------------------------------------------------------------
+
+export async function fetchEmploymentPipeline() {
+  return get<import('@/types').JobPipelineSummary>('/employment/pipeline');
+}
+
+export async function fetchEmploymentAlerts() {
+  return get<import('@/types').JobAlerts>('/employment/alerts');
+}
+
+export async function logJobApplication(data: {
+  company: string;
+  position: string;
+  status?: string;
+  notes?: string;
+  apply_url?: string;
+  follow_up_date?: string;
+  deadline?: string;
+  contact_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
+}) {
+  return post<import('@/types').JobApplication>('/employment/applications', data);
+}
+
+export async function updateJobApplication(id: string, data: Record<string, string>) {
+  return patch<import('@/types').JobApplication>(`/employment/applications/${id}`, data);
+}
+
+export async function deleteJobApplication(id: string) {
+  return del<{ ok: boolean }>(`/employment/applications/${id}`);
+}
+
+// ---------------------------------------------------------------------------
 // WebSocket
 // ---------------------------------------------------------------------------
 

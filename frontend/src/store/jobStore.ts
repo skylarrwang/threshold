@@ -1,46 +1,124 @@
 import { create } from 'zustand';
-import type { JobApplication } from '@/types';
+import type { JobPipelineSummary, JobApplication, JobAlerts } from '@/types';
+import {
+  fetchEmploymentPipeline,
+  fetchEmploymentAlerts,
+  logJobApplication,
+  updateJobApplication,
+  deleteJobApplication,
+} from '@/lib/api';
 
 interface JobState {
+  pipeline: JobPipelineSummary | null;
+  pipelineLoading: boolean;
+  pipelineError: string | null;
+
+  alerts: JobAlerts | null;
+  alertsLoading: boolean;
+
+  // Convenience accessor for legacy components
   jobs: JobApplication[];
+
+  // Modal state
+  logModalOpen: boolean;
+  editModalOpen: boolean;
+  editingApplication: JobApplication | null;
+
+  // Actions
+  fetchPipeline: () => Promise<void>;
+  fetchAlerts: () => Promise<void>;
+  logApplication: (data: {
+    company: string;
+    position: string;
+    status?: string;
+    notes?: string;
+    apply_url?: string;
+    follow_up_date?: string;
+    deadline?: string;
+    contact_name?: string;
+    contact_email?: string;
+    contact_phone?: string;
+  }) => Promise<JobApplication | null>;
+  updateApplication: (id: string, data: Record<string, string>) => Promise<JobApplication | null>;
+  deleteApplication: (id: string) => Promise<boolean>;
+  setLogModalOpen: (open: boolean) => void;
+  setEditModalOpen: (open: boolean, app?: JobApplication) => void;
 }
 
-const mockJobs: JobApplication[] = [
-  {
-    id: 'job-001',
-    company: 'Hartford Culinary Group',
-    title: 'Line Cook',
-    status: 'applied',
-    appliedDate: '2024-10-18',
-    location: 'Hartford, CT',
-    salary: '$18-22/hr',
-    notes: 'Second Chance employer',
-    logoInitial: 'H',
-  },
-  {
-    id: 'job-002',
-    company: 'New England Groundskeeping',
-    title: 'Landscape Technician',
-    status: 'interviewing',
-    appliedDate: '2024-10-10',
-    location: 'New Haven, CT',
-    salary: '$20/hr',
-    notes: 'Phone screen Oct 27',
-    logoInitial: 'N',
-  },
-  {
-    id: 'job-003',
-    company: 'CT Transit',
-    title: 'Bus Maintenance Tech',
-    status: 'offer',
-    appliedDate: '2024-09-28',
-    location: 'Hartford, CT',
-    salary: '$26/hr',
-    notes: 'Offer received Oct 20 — reviewing benefits',
-    logoInitial: 'C',
-  },
-];
+export const useJobStore = create<JobState>()((set, get) => ({
+  pipeline: null,
+  pipelineLoading: false,
+  pipelineError: null,
 
-export const useJobStore = create<JobState>()(() => ({
-  jobs: mockJobs,
+  alerts: null,
+  alertsLoading: false,
+
+  jobs: [],
+
+  logModalOpen: false,
+  editModalOpen: false,
+  editingApplication: null,
+
+  async fetchPipeline() {
+    set({ pipelineLoading: true, pipelineError: null });
+    try {
+      const data = await fetchEmploymentPipeline();
+      set({
+        pipeline: data,
+        jobs: data.applications,
+        pipelineLoading: false,
+      });
+    } catch (e) {
+      set({ pipelineError: (e as Error).message, pipelineLoading: false });
+    }
+  },
+
+  async fetchAlerts() {
+    set({ alertsLoading: true });
+    try {
+      const data = await fetchEmploymentAlerts();
+      set({ alerts: data, alertsLoading: false });
+    } catch {
+      set({ alertsLoading: false });
+    }
+  },
+
+  async logApplication(data) {
+    try {
+      const result = await logJobApplication(data);
+      // Re-fetch pipeline to get updated state
+      await get().fetchPipeline();
+      return result;
+    } catch {
+      return null;
+    }
+  },
+
+  async updateApplication(id, data) {
+    try {
+      const result = await updateJobApplication(id, data);
+      await get().fetchPipeline();
+      return result;
+    } catch {
+      return null;
+    }
+  },
+
+  async deleteApplication(id) {
+    try {
+      await deleteJobApplication(id);
+      await get().fetchPipeline();
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  setLogModalOpen(open: boolean) {
+    set({ logModalOpen: open });
+  },
+
+  setEditModalOpen(open: boolean, app?: JobApplication) {
+    set({ editModalOpen: open, editingApplication: app ?? null });
+  },
 }));

@@ -51,18 +51,80 @@ export interface UserProfile {
   preferences: PreferenceContext;
 }
 
-export type JobStatus = 'applied' | 'interviewing' | 'offer' | 'rejected' | 'saved';
+// 13-stage job application pipeline (matches backend)
+export type JobPipelineStage =
+  | 'interested'
+  | 'preparing'
+  | 'applied'
+  | 'screening'
+  | 'interview_scheduled'
+  | 'interviewed'
+  | 'follow_up'
+  | 'offer_received'
+  | 'negotiating'
+  | 'accepted'
+  | 'started'
+  | 'rejected'
+  | 'withdrawn';
 
 export interface JobApplication {
   id: string;
+  user_id: string;
   company: string;
-  title: string;
-  status: JobStatus;
-  appliedDate: string;
-  location: string;
-  salary?: string;
-  notes?: string;
-  logoInitial: string;
+  position: string;
+  status: JobPipelineStage;
+  notes: string;
+  apply_url?: string;
+  follow_up_date?: string;
+  deadline?: string;
+  contact_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  interview_date?: string;
+  interview_time?: string;
+  interview_location?: string;
+  interview_type?: string;
+  offer_salary?: string;
+  offer_details?: string;
+  rejection_reason?: string;
+  source?: string;
+  created_at: string;
+  updated_at: string;
+  next_action?: string;
+  stage_label?: string;
+  history?: { status: string; notes: string; date: string }[];
+}
+
+export interface JobAlertItem {
+  company: string;
+  position: string;
+  status?: string;
+  follow_up_date?: string;
+  days_overdue?: number;
+  days_until?: number;
+  contact_email?: string;
+  contact_phone?: string;
+  interview_date?: string;
+  interview_time?: string;
+  interview_location?: string;
+  deadline?: string;
+  days_left?: number;
+}
+
+export interface JobAlerts {
+  overdue: JobAlertItem[];
+  upcoming_7_days: JobAlertItem[];
+  interviews_upcoming: JobAlertItem[];
+  deadlines_soon: JobAlertItem[];
+}
+
+export interface JobPipelineSummary {
+  applications: JobApplication[];
+  active_count: number;
+  total_count: number;
+  successful_count: number;
+  next_follow_up?: { company: string; position: string; date: string };
+  stages: { key: JobPipelineStage; label: string }[];
 }
 
 export type HousingPipelineStage =

@@ -51,10 +51,8 @@ const workshops = [
 ];
 
 export function EmploymentPage() {
-  const jobs = useJobStore((s) => s.jobs);
-  const activeCount = jobs.filter(
-    (j) => j.status === 'applied' || j.status === 'interviewing' || j.status === 'offer'
-  ).length;
+  const pipeline = useJobStore((s) => s.pipeline);
+  const activeCount = pipeline?.active_count ?? 0;
 
   return (
     <div className="px-8 md:px-12 py-10 space-y-10 max-w-7xl mx-auto">
