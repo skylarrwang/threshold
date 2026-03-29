@@ -5,7 +5,7 @@ from datetime import datetime
 
 from deepagents import create_deep_agent
 from deepagents.backends import FilesystemBackend
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 
 from .subagents.benefits import benefits_subagent
 from .subagents.employment import employment_subagent
@@ -20,7 +20,8 @@ from ..tools import (
 )
 
 DATA_DIR = os.getenv("THRESHOLD_DATA_DIR", "./data")
-MODEL = os.getenv("THRESHOLD_MODEL", "gemini-2.5-flash")
+MODEL = os.getenv("THRESHOLD_MODEL", "grok-4-1-fast")
+XAI_API_KEY = os.getenv("XAI_API_KEY", "")
 
 
 SYSTEM_PROMPT_TEMPLATE = """\
@@ -151,7 +152,11 @@ def create_orchestrator(**kwargs):
     Accepts optional overrides (e.g. checkpointer) passed through to create_deep_agent.
     """
     return create_deep_agent(
-        model=ChatGoogleGenerativeAI(model=MODEL),
+        model=ChatOpenAI(
+            model=MODEL,
+            base_url="https://api.x.ai/v1",
+            api_key=XAI_API_KEY or "not-set",
+        ),
         system_prompt=build_system_prompt(),
         tools=[
             crisis_response,

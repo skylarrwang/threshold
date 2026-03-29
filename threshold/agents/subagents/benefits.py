@@ -1,3 +1,7 @@
+import os
+
+from langchain_openai import ChatOpenAI
+
 from ...tools import (
     check_medicaid_eligibility,
     check_snap_eligibility,
@@ -46,5 +50,9 @@ benefits_subagent = {
         check_ssi_eligibility,
         get_benefits_links,
     ],
-    "model": "claude-haiku-4-5-20251001",
+    "model": ChatOpenAI(
+        model=os.getenv("THRESHOLD_BENEFITS_MODEL", "grok-4-1-fast"),
+        base_url="https://api.x.ai/v1",
+        api_key=os.getenv("XAI_API_KEY", "not-set"),
+    ),
 }

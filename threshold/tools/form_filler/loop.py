@@ -3,7 +3,9 @@ from __future__ import annotations
 import base64
 import logging
 
-from langchain_anthropic import ChatAnthropic
+import os
+
+from langchain_openai import ChatOpenAI
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
 from .browser import BrowserSession
@@ -91,8 +93,10 @@ def run_form_fill(request: FormFillRequest, max_steps: int = 50) -> FormFillResu
     Opens a visible browser, navigates to the URL, and uses Claude's computer use
     to fill form fields. Never clicks submit. Returns a summary of what was filled.
     """
-    model = ChatAnthropic(
-        model="claude-sonnet-4-6",
+    model = ChatOpenAI(
+        model=os.getenv("THRESHOLD_FORM_FILLER_MODEL", "grok-4-1-fast"),
+        base_url="https://api.x.ai/v1",
+        api_key=os.getenv("XAI_API_KEY", "not-set"),
     ).bind_tools([COMPUTER_TOOL_DEF])
 
     session = BrowserSession(
