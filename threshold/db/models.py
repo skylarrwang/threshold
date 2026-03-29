@@ -27,13 +27,25 @@ class UserIdentity(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     legal_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    first_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    last_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     date_of_birth: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     ssn_encrypted: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     current_address: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    city: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    zip_code: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     mailing_address: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     phone_number: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    email: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    height: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    eye_color: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    gender: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     gender_identity: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    age_range: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     state_of_release: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    release_date: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    time_served: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    offense_category: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     preferred_language: Mapped[Optional[str]] = mapped_column(String, nullable=True, default="en")
 
 
@@ -353,3 +365,56 @@ class UserPreferences(Base):
     privacy_level: Mapped[Optional[str]] = mapped_column(String, nullable=True, default="high")
     comfort_with_technology: Mapped[Optional[str]] = mapped_column(String, nullable=True, default="medium")
     literacy_concerns: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True, default=False)
+    immediate_needs: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="[]")
+
+
+class UserGoals(Base):
+    """Goals, strengths, values, concerns — stored as JSON arrays."""
+    __tablename__ = "user_goals"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str] = mapped_column(String, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    short_term_goals: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="[]")
+    long_term_goals: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="[]")
+    values: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="[]")
+    strengths: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="[]")
+    concerns: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="[]")
+
+
+class UserSupport(Base):
+    """Support network — case worker and contacts."""
+    __tablename__ = "user_support"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str] = mapped_column(String, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    has_case_worker: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True, default=False)
+    case_worker_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    support_contacts: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="[]")
+    trusted_people: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="[]")
+
+
+class UserFinancial(Base):
+    """Financial context for benefits eligibility. Nested objects stored as JSON."""
+    __tablename__ = "user_financial"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str] = mapped_column(String, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    household_size: Mapped[Optional[int]] = mapped_column(nullable=True, default=1)
+    household_members: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="[]")
+    num_dependents_under_19: Mapped[Optional[int]] = mapped_column(nullable=True, default=0)
+    is_employed: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True, default=False)
+    has_worked_in_past_5_years: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True, default=False)
+    is_caregiver: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True, default=False)
+    income: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="{}")
+    child_support_paid: Mapped[Optional[float]] = mapped_column(Float, nullable=True, default=0.0)
+    dependent_care_costs: Mapped[Optional[float]] = mapped_column(Float, nullable=True, default=0.0)
+    medical_expenses_elderly_disabled: Mapped[Optional[float]] = mapped_column(Float, nullable=True, default=0.0)
+    housing_expenses: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="{}")
+    assets: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="{}")
+    has_received_cash_assistance: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True, default=False)

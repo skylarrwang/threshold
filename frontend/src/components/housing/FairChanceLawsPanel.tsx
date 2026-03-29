@@ -31,7 +31,7 @@ export function FairChanceLawsPanel({ law, loading }: FairChanceLawsPanelProps) 
           <span className="material-symbols-outlined text-xl text-primary">gavel</span>
           <div>
             <h3 className="text-sm font-bold text-on-surface">
-              Fair Chance Housing Laws \u2014 {law.state}
+              Fair Chance Housing Laws (2014) - {law.state}
             </h3>
             <p className="text-xs text-on-surface-variant">
               {law.has_law ? `Scope: ${law.scope}` : 'Federal protections apply'}

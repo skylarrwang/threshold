@@ -179,12 +179,6 @@ export function EmploymentPage() {
           )}
         </div>
       </div>
-
-      {/* Counselor sticky note */}
-      <StickyNote author="Diana, Employment Specialist">
-        Focus on the Kitchen Lead application. Your previous experience in the community garden
-        gives you a unique edge — lead with that in your cover letter.
-      </StickyNote>
     </div>
   );
 }

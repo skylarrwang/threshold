@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { GeneratedDocument } from '@/types';
 import {
   fetchGeneratedDocuments as apiFetchGeneratedDocuments,
@@ -30,7 +31,9 @@ interface DocumentsState {
   fetchProfileMatrix: () => Promise<void>;
 }
 
-export const useDocumentsStore = create<DocumentsState>()((set) => ({
+export const useDocumentsStore = create<DocumentsState>()(
+  persist(
+    (set) => ({
   uploads: [],
   uploadsLoading: true,
   generatedDocuments: [],
@@ -92,4 +95,10 @@ export const useDocumentsStore = create<DocumentsState>()((set) => ({
       // Backend not available yet
     }
   },
-}));
+    }),
+    {
+      name: 'threshold-documents',
+      partialize: (state) => ({ completionPercent: state.completionPercent, uploads: state.uploads, generatedDocuments: state.generatedDocuments }),
+    },
+  ),
+);

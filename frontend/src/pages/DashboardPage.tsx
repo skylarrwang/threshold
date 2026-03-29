@@ -1,5 +1,5 @@
+import { useEffect } from 'react';
 import { useProfileStore } from '@/store/profileStore';
-import { ProgressBar } from '@/components/shared/ProgressBar';
 import { ActionPlanCard } from '@/components/dashboard/ActionPlanCard';
 import { AppointmentCard } from '@/components/dashboard/AppointmentCard';
 import { MilestonesStepper } from '@/components/dashboard/MilestonesStepper';
@@ -62,7 +62,9 @@ const milestones: Milestone[] = [
 ];
 
 export function DashboardPage() {
-  const { profile, overallProgress } = useProfileStore();
+  const { profile, overallProgress, loadProfile } = useProfileStore();
+
+  useEffect(() => { loadProfile(); }, [loadProfile]);
 
   return (
     <div className="px-6 md:px-10 py-8 relative">
@@ -77,22 +79,6 @@ export function DashboardPage() {
           <p className="text-on-surface-variant max-w-2xl font-body leading-relaxed">
             Focus on the next concrete step. Your dashboard keeps the essentials close without the extra noise.
           </p>
-
-          <div className="mt-6 bg-surface-container-lowest rounded-2xl border border-outline-variant/12 shadow-[0_2px_10px_rgba(26,28,28,0.05)] p-5 md:p-6">
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <div>
-                <p className="text-sm font-bold text-on-surface">Overall Progress</p>
-                <p className="text-sm text-on-surface-variant mt-1">
-                  9 of 14 milestones reached across housing, work, benefits, and documents.
-                </p>
-              </div>
-              <div className="text-right shrink-0">
-                <p className="text-3xl font-headline font-extrabold text-primary">{overallProgress}%</p>
-                <p className="text-[11px] uppercase tracking-[0.18em] text-outline mt-1">On track</p>
-              </div>
-            </div>
-            <ProgressBar value={overallProgress} />
-          </div>
         </div>
 
         <div className="mt-6">

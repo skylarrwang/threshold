@@ -9,7 +9,8 @@ import httpx
 from dotenv import load_dotenv
 from langchain_core.tools import tool
 
-from ..memory.profile import load_profile
+from ..db.database import get_db
+from ..db.profile_bridge import load_profile_from_db
 
 load_dotenv()
 
@@ -432,7 +433,11 @@ def search_jobs(query: str, location: str = "") -> str:
         }
     )
 
-    profile = load_profile()
+    db = get_db()
+    try:
+        profile = load_profile_from_db(db)
+    finally:
+        db.close()
     where = (location or "").strip()
     if not where and profile is not None:
         where = (profile.personal.home_state or "").strip()

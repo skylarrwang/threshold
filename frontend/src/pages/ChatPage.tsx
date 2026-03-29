@@ -13,13 +13,22 @@ export function ChatPage() {
   const { sendMessage } = useChatSocket();
 
   // Capture prompt from URL on mount, then clear it
+  const isInterview = searchParams.get('interview') === 'true';
   const promptParam = searchParams.get('prompt') || '';
-  const capturedPrompt = useRef(promptParam);
+  const capturedPrompt = useRef(
+    isInterview
+      ? "I just finished basic onboarding. Help me fill in the rest of my profile — start with the most important missing information."
+      : promptParam
+  );
 
   useEffect(() => {
     if (!capturedPrompt.current) return;
     createConversation();
     setSearchParams({}, { replace: true });
+    // Auto-send the interview prompt
+    if (isInterview) {
+      setTimeout(() => sendMessage(capturedPrompt.current), 300);
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (

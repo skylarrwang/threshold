@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { JobPipelineSummary, JobApplication, JobAlerts } from '@/types';
 import {
   fetchEmploymentPipeline,
@@ -45,7 +46,9 @@ interface JobState {
   setEditModalOpen: (open: boolean, app?: JobApplication) => void;
 }
 
-export const useJobStore = create<JobState>()((set, get) => ({
+export const useJobStore = create<JobState>()(
+  persist(
+    (set, get) => ({
   pipeline: null,
   pipelineLoading: false,
   pipelineError: null,
@@ -121,4 +124,10 @@ export const useJobStore = create<JobState>()((set, get) => ({
   setEditModalOpen(open: boolean, app?: JobApplication) {
     set({ editModalOpen: open, editingApplication: app ?? null });
   },
-}));
+    }),
+    {
+      name: 'threshold-jobs',
+      partialize: (state) => ({ pipeline: state.pipeline, jobs: state.jobs }),
+    },
+  ),
+);

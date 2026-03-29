@@ -9,7 +9,8 @@ from typing import TypedDict
 from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.graph import END, StateGraph
 
-from ...memory.profile import load_profile
+from ...db.database import get_db
+from ...db.profile_bridge import load_profile_from_db
 from ...tools.form_filler import FormFillRequest, run_form_fill
 from ...tools.form_filler.safety import filter_profile_for_form, is_url_allowed
 
@@ -50,7 +51,11 @@ def fill_node(state: FormFillerState) -> dict:
         )]}
 
     # Load user profile and filter safe fields
-    profile = load_profile()
+    db = get_db()
+    try:
+        profile = load_profile_from_db(db)
+    finally:
+        db.close()
     form_data: dict[str, str] = {}
     if profile:
         form_data = filter_profile_for_form(profile)

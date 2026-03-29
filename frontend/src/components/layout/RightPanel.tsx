@@ -1,16 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useProfileStore } from '@/store/profileStore';
 import { useDocumentsStore } from '@/store/documentsStore';
+import { useHousingStore } from '@/store/housingStore';
+import { useJobStore } from '@/store/jobStore';
 import { useProgressSummary } from '@/hooks/useProgressSummary';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 
 const progressItems = [
-  { path: '/housing', icon: 'home_work', label: 'Housing', key: 'housing' as const },
-  { path: '/employment', icon: 'work_history', label: 'Employment', key: 'employment' as const },
-  { path: '/benefits', icon: 'volunteer_activism', label: 'Benefits', key: 'benefits' as const },
-  { path: '/documents', icon: 'description', label: 'Documents', key: 'documents' as const },
+  { path: '/housing', icon: 'home_work', label: 'Housing', key: 'housing' as const, stageLabelKey: 'housingStageLabel' as const },
+  { path: '/employment', icon: 'work_history', label: 'Employment', key: 'employment' as const, stageLabelKey: 'employmentStageLabel' as const },
+  { path: '/benefits', icon: 'volunteer_activism', label: 'Benefits', key: 'benefits' as const, stageLabelKey: undefined },
+  { path: '/documents', icon: 'description', label: 'Documents', key: 'documents' as const, stageLabelKey: undefined },
 ];
 
 interface RightPanelProps {
@@ -24,14 +26,50 @@ export function RightPanel({
   isCollapsed = false,
   onToggleCollapse,
 }: RightPanelProps) {
-  const { profile } = useProfileStore();
+  const { profile, loadProfile, isLoading } = useProfileStore();
+  const housingAlerts = useHousingStore((s) => s.alerts);
+  const jobAlerts = useJobStore((s) => s.alerts);
   const progress = useProgressSummary();
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
+    loadProfile();
     useDocumentsStore.getState().fetchCompletion();
-  }, []);
+    useHousingStore.getState().fetchPipeline();
+    useHousingStore.getState().fetchAlerts();
+    useJobStore.getState().fetchPipeline();
+    useJobStore.getState().fetchAlerts();
+  }, [loadProfile]);
+
+  // Build prioritized alert nudges (max 2)
+  const alertNudges = useMemo(() => {
+    const items: { color: string; text: string; path: string }[] = [];
+
+    // Overdue items (red)
+    for (const o of housingAlerts?.overdue ?? []) {
+      items.push({ color: 'bg-error', text: `${o.program} — ${o.days_overdue}d overdue`, path: '/housing' });
+    }
+    for (const o of jobAlerts?.overdue ?? []) {
+      items.push({ color: 'bg-error', text: `${o.company} — ${o.days_overdue}d overdue`, path: '/employment' });
+    }
+    // Deadlines (amber)
+    for (const d of housingAlerts?.deadlines_soon ?? []) {
+      items.push({ color: 'bg-tertiary', text: `${d.program} deadline in ${d.days_left}d`, path: '/housing' });
+    }
+    for (const d of jobAlerts?.deadlines_soon ?? []) {
+      items.push({ color: 'bg-tertiary', text: `${d.company} deadline in ${d.days_left}d`, path: '/employment' });
+    }
+    // Upcoming interviews (blue)
+    for (const i of housingAlerts?.interviews_upcoming ?? []) {
+      items.push({ color: 'bg-secondary', text: `${i.program} interview ${i.interview_date}`, path: '/housing' });
+    }
+    for (const i of jobAlerts?.interviews_upcoming ?? []) {
+      items.push({ color: 'bg-secondary', text: `${i.company} interview ${i.interview_date}`, path: '/employment' });
+    }
+
+    return items.slice(0, 2);
+  }, [housingAlerts, jobAlerts]);
 
   return (
     <div
@@ -65,8 +103,8 @@ export function RightPanel({
           )}
         >
           <div className={cn('flex items-center min-w-0', isCollapsed ? 'justify-center' : 'gap-3')}>
-            <div className="w-9 h-9 rounded-full bg-primary-fixed flex items-center justify-center text-sm font-bold text-on-primary-fixed shrink-0">
-              T
+            <div className="w-9 h-9 rounded-full bg-primary-fixed flex items-center justify-center shrink-0 overflow-hidden">
+              <img src="/threshold.png" alt="Threshold" className="w-12 h-12 object-contain" />
             </div>
             {!isCollapsed && (
               <div>
@@ -164,6 +202,7 @@ export function RightPanel({
           <div className="space-y-1">
             {progressItems.map((item) => {
               const value = progress[item.key];
+              const stageLabel = item.stageLabelKey ? progress[item.stageLabelKey] : undefined;
               return (
                 <button
                   key={item.path}
@@ -189,7 +228,7 @@ export function RightPanel({
                           <span className="text-sm font-label text-on-surface">{item.label}</span>
                           <span className="text-xs font-bold text-on-surface-variant">{value}%</span>
                         </div>
-                        <ProgressBar value={value} />
+                        <ProgressBar value={value} stageLabel={stageLabel} />
                       </div>
                       <span className="material-symbols-outlined text-base text-outline opacity-0 group-hover:opacity-100 transition-opacity">
                         chevron_right
@@ -200,6 +239,25 @@ export function RightPanel({
               );
             })}
           </div>
+
+          {/* Alert nudges */}
+          {!isCollapsed && alertNudges.length > 0 && (
+            <div className="mx-3 mt-3 rounded-lg bg-surface-container p-3 space-y-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-outline">Action needed</p>
+              {alertNudges.map((nudge, i) => (
+                <button
+                  key={i}
+                  onClick={() => { navigate(nudge.path); onClose?.(); }}
+                  className="flex items-center gap-2 w-full text-left group/nudge"
+                >
+                  <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', nudge.color)} />
+                  <span className="text-xs text-on-surface-variant group-hover/nudge:text-on-surface transition-colors truncate">
+                    {nudge.text}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* User profile + settings */}
@@ -212,7 +270,7 @@ export function RightPanel({
             title={isCollapsed ? profile.personal.name : undefined}
           >
             <div className="w-9 h-9 rounded-full bg-primary-fixed flex items-center justify-center text-sm font-bold text-on-primary-fixed">
-              {profile.personal.name
+              {(profile.personal.name || '?')
                 .split(' ')
                 .map((n) => n[0])
                 .join('')
@@ -220,7 +278,7 @@ export function RightPanel({
             </div>
             {!isCollapsed && (
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-bold text-on-surface">{profile.personal.name}</div>
+                <div className="text-sm font-bold text-on-surface">{profile.personal.name || (isLoading ? 'Loading...' : 'Guest')}</div>
                 <div className="text-[10px] uppercase text-on-surface-variant tracking-widest">Member</div>
               </div>
             )}

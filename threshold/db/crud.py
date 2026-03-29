@@ -22,8 +22,11 @@ from .models import (
     JobApplication,
     SupervisionProfile,
     UserDocuments,
+    UserFinancial,
+    UserGoals,
     UserIdentity,
     UserPreferences,
+    UserSupport,
 )
 
 TABLE_MAP: dict[str, type] = {
@@ -35,6 +38,9 @@ TABLE_MAP: dict[str, type] = {
     "health": HealthProfile,
     "benefits": BenefitsProfile,
     "preferences": UserPreferences,
+    "goals": UserGoals,
+    "support": UserSupport,
+    "financial": UserFinancial,
 }
 
 _JSON_FIELDS = {
@@ -42,6 +48,9 @@ _JSON_FIELDS = {
     "certifications", "trade_skills",
     "chronic_conditions", "current_medications", "mental_health_diagnoses",
     "benefits_enrolled", "benefits_applied_pending",
+    "short_term_goals", "long_term_goals", "values", "strengths", "concerns",
+    "support_contacts", "trusted_people", "immediate_needs",
+    "household_members", "income", "housing_expenses", "assets",
 }
 
 # ---------------------------------------------------------------------------

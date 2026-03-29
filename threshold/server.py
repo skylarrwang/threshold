@@ -123,10 +123,14 @@ async def get_profile():
 
 @app.get("/api/profile/exists")
 async def profile_exists():
+    """Check if the user has completed initial setup (has a name)."""
     db = get_db()
     try:
         populated = get_populated_fields(db, DEFAULT_USER_ID)
-        has_data = any(len(fields) > 0 for fields in populated.values())
+        # A user "exists" only if they've set their name (via onboarding).
+        # Default fields like preferred_language="en" don't count.
+        identity = populated.get("identity", {})
+        has_data = bool(identity.get("legal_name"))
         return {"exists": has_data}
     finally:
         db.close()
@@ -243,6 +247,47 @@ async def upload_document(file: UploadFile = File(...)):
     except Exception as e:
         logger.error("OCR processing failed: %s", e)
         return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/documents")
+async def list_generated_documents():
+    """List generated documents (cover letters, resumes, etc.) from data/documents/."""
+    docs_dir = DATA_DIR / "documents"
+    if not docs_dir.exists():
+        return []
+
+    TYPE_PREFIXES = {
+        "cover_letter": "cover_letter",
+        "resume": "resume",
+        "housing_letter": "housing_letter",
+        "legal_letter": "legal_letter",
+    }
+
+    results = []
+    for fp in sorted(docs_dir.iterdir(), key=lambda f: f.stat().st_mtime, reverse=True):
+        if fp.is_dir() or fp.suffix not in (".md", ".txt"):
+            continue
+
+        content = fp.read_text(encoding="utf-8", errors="replace")
+        stem = fp.stem.lower()
+        doc_type = "cover_letter"  # default
+        for prefix, dtype in TYPE_PREFIXES.items():
+            if prefix in stem:
+                doc_type = dtype
+                break
+
+        title = content.split("\n", 1)[0].lstrip("# ").strip() or fp.stem.replace("_", " ").title()
+
+        results.append({
+            "id": fp.stem,
+            "type": doc_type,
+            "title": title,
+            "content": content,
+            "createdAt": datetime.fromtimestamp(fp.stat().st_mtime).isoformat(),
+            "wordCount": len(content.split()),
+        })
+
+    return results
 
 
 @app.get("/api/documents/uploads")

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { HousingPipelineSummary, HousingApplication, HousingAlerts, FairChanceLaw } from '@/types';
 import {
   fetchHousingPipeline,
@@ -43,7 +44,9 @@ interface HousingState {
   setEditModalOpen: (open: boolean, app?: HousingApplication) => void;
 }
 
-export const useHousingStore = create<HousingState>()((set, get) => ({
+export const useHousingStore = create<HousingState>()(
+  persist(
+    (set, get) => ({
   pipeline: null,
   pipelineLoading: false,
   pipelineError: null,
@@ -126,4 +129,10 @@ export const useHousingStore = create<HousingState>()((set, get) => ({
   setEditModalOpen(open: boolean, app?: HousingApplication) {
     set({ editModalOpen: open, editingApplication: app ?? null });
   },
-}));
+    }),
+    {
+      name: 'threshold-housing',
+      partialize: (state) => ({ pipeline: state.pipeline }),
+    },
+  ),
+);

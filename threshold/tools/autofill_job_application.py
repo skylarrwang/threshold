@@ -12,7 +12,8 @@ from urllib.parse import urlparse
 from langchain_core.tools import tool
 from playwright.sync_api import Page, sync_playwright
 
-from ..memory.profile import load_profile
+from ..db.database import get_db
+from ..db.profile_bridge import load_profile_from_db
 from .form_filler.safety import filter_profile_for_form
 
 _DISPLAY_WIDTH = 1280
@@ -360,7 +361,11 @@ def _build_fill_data(
     city: str,
     zip_code: str,
 ) -> dict[str, str]:
-    profile = load_profile()
+    db = get_db()
+    try:
+        profile = load_profile_from_db(db)
+    finally:
+        db.close()
     base: dict[str, str] = {}
     if profile is not None:
         base = filter_profile_for_form(profile)

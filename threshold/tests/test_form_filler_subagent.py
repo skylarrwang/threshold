@@ -43,10 +43,10 @@ class FillNodeTests(unittest.TestCase):
             fields_filled={"name": "Marcus"},
         )
 
-        with patch("threshold.agents.subagents.form_filler.load_profile", return_value=profile), patch(
-            "threshold.agents.subagents.form_filler.run_form_fill",
-            return_value=run_result,
-        ) as run_form_fill_mock:
+        with patch("threshold.agents.subagents.form_filler.get_db"), \
+             patch("threshold.agents.subagents.form_filler.load_profile_from_db", return_value=profile), \
+             patch("threshold.agents.subagents.form_filler.run_form_fill",
+                   return_value=run_result) as run_form_fill_mock:
             result = fill_node(
                 {"messages": [HumanMessage(content="Fill https://www.irs.gov/apply using my profile")]}
             )
@@ -61,10 +61,10 @@ class FillNodeTests(unittest.TestCase):
         self.assertIn("submit it yourself", content)
 
     def test_fill_node_handles_form_fill_errors(self) -> None:
-        with patch("threshold.agents.subagents.form_filler.load_profile", return_value=None), patch(
-            "threshold.agents.subagents.form_filler.run_form_fill",
-            side_effect=RuntimeError("browser failed"),
-        ):
+        with patch("threshold.agents.subagents.form_filler.get_db"), \
+             patch("threshold.agents.subagents.form_filler.load_profile_from_db", return_value=None), \
+             patch("threshold.agents.subagents.form_filler.run_form_fill",
+                   side_effect=RuntimeError("browser failed")):
             result = fill_node(
                 {"messages": [HumanMessage(content="Fill https://www.irs.gov/apply using my profile")]}
             )
@@ -73,10 +73,10 @@ class FillNodeTests(unittest.TestCase):
         self.assertIn("browser failed", result["messages"][0].content)
 
     def test_fill_node_handles_non_string_message_content(self) -> None:
-        with patch("threshold.agents.subagents.form_filler.load_profile", return_value=None), patch(
-            "threshold.agents.subagents.form_filler.run_form_fill",
-            return_value=FormFillResult(status="failed", summary="Could not proceed.", fields_filled={}),
-        ):
+        with patch("threshold.agents.subagents.form_filler.get_db"), \
+             patch("threshold.agents.subagents.form_filler.load_profile_from_db", return_value=None), \
+             patch("threshold.agents.subagents.form_filler.run_form_fill",
+                   return_value=FormFillResult(status="failed", summary="Could not proceed.", fields_filled={})):
             result = fill_node(
                 {"messages": [HumanMessage(content=[{"type": "text", "text": "Fill https://www.irs.gov/apply"}])]}
             )

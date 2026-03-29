@@ -8,10 +8,12 @@ from deepagents.backends import FilesystemBackend
 from langchain_openai import ChatOpenAI
 
 from .subagents.benefits import benefits_subagent
+from .subagents.community import community_subagent
 from .subagents.employment import employment_subagent
 from .subagents.housing import housing_subagent
 from .subagents.form_filler import form_filler_subagent
 from .subagents.legal import legal_subagent
+from .subagents.supervision import supervision_subagent
 from ..tools import (
     crisis_response,
     log_event,
@@ -106,10 +108,19 @@ applications; write cover letters and resumes; guided job application autofill (
 reviews and submits). CANNOT: submit applications without the user; access employer
 portals for status; schedule interviews; search for job training programs.
 
-**legal** — CAN: track supervision conditions; log check-ins; show upcoming requirements;
-provide ID restoration guides; check expungement eligibility by state. CANNOT: file
-legal documents, contact PO, provide legal representation, schedule court dates, handle
-fines/restitution, provide immigration advice.
+**legal** — CAN: provide ID restoration guides; check expungement eligibility by state.
+CANNOT: file legal documents, contact PO, provide legal representation, schedule court
+dates, handle fines/restitution, provide immigration advice.
+
+**supervision** — CAN: track supervision conditions (curfew, drug tests, travel restrictions);
+log check-ins with PO; show upcoming supervision requirements and deadlines. CANNOT:
+contact the PO, file motions, provide legal advice on violations, schedule court dates,
+access case management or DOC systems.
+
+**community** — CAN: find emergency shelters; search re-entry housing programs; look up
+community services (food banks, clothing, transportation); find substance abuse and mental
+health programs via SAMHSA; suggest peer support. CANNOT: make referrals or appointments,
+enroll in programs, verify program availability or current capacity.
 
 **form-filler** — CAN: auto-fill fields on approved .gov forms using profile data (never
 submits). CANNOT: submit forms, work on non-.gov sites, handle CAPTCHAs, upload documents,
@@ -147,8 +158,14 @@ question first — not fabricate a table of jobs.
 Route to "housing" subagent when: user asks about apartments, housing programs, transitional housing,
 shelters, lease applications, housing restrictions, tenant rights.
 
-Route to "legal" subagent when: user asks about parole, probation, check-ins, supervision conditions,
-getting an ID, birth certificate, Social Security card, expungement, record sealing, clearing their record.
+Route to "legal" subagent when: user asks about getting an ID, birth certificate, Social Security card,
+expungement, record sealing, clearing their record.
+
+Route to "supervision" subagent when: user asks about parole, probation, check-ins, supervision
+conditions, curfew, drug tests, travel restrictions, upcoming requirements, logging a check-in.
+
+Route to "community" subagent when: user asks about community resources, shelters, food banks,
+clothing, recovery housing, peer support groups, 211 services, SAMHSA programs, or general local services.
 
 Route to "form-filler" subagent when: user wants to fill out an online form, schedule a DMV appointment
 online, complete a benefits application online, or needs help with any government website form.
@@ -270,15 +287,28 @@ def _format_housing_alerts(alerts: dict) -> str:
 
 
 def build_system_prompt() -> str:
-    from ..memory.profile import load_profile
+    from ..db.database import get_db
+    from ..db.profile_bridge import load_profile_from_db
     from ..memory.reflection import build_memory_context
     from ..tools.housing_search import get_pending_follow_ups
+    from ..tools.memory_tools import _build_applications_supplement
 
-    profile = load_profile()
+    db = get_db()
+    try:
+        profile = load_profile_from_db(db)
+    finally:
+        db.close()
+
     if profile is None:
         return FALLBACK_SYSTEM_PROMPT
 
     memory_context = build_memory_context(profile)
+
+    # Append application tracking data
+    apps_supplement = _build_applications_supplement()
+    if apps_supplement:
+        memory_context += "\n\n" + apps_supplement
+
     name = profile.personal.name or "someone"
     release = profile.personal.release_date
 
@@ -322,9 +352,11 @@ def create_orchestrator(**kwargs):
         ],
         subagents=[
             benefits_subagent,
+            community_subagent,
             employment_subagent,
             housing_subagent,
             legal_subagent,
+            supervision_subagent,
             form_filler_subagent,
         ],
         backend=FilesystemBackend(root_dir=DATA_DIR),

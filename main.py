@@ -52,59 +52,72 @@ def seed():
 
     _ensure_data_dirs()
 
-    from threshold.memory.profile import UserProfile, save_profile
+    import json
+    from threshold.db.database import get_db, init_db
+    from threshold.db.crud import create_user, upsert_fields, user_exists
 
-    profile = UserProfile(
-        personal={
-            "name": "Tyler Chen",
+    DEFAULT_USER_ID = os.getenv("THRESHOLD_USER_ID", "default-user")
+
+    init_db()
+    db = get_db()
+    try:
+        if not user_exists(db, DEFAULT_USER_ID):
+            create_user(db, DEFAULT_USER_ID)
+
+        upsert_fields(db, DEFAULT_USER_ID, "identity", {
+            "legal_name": "Tyler Chen",
             "first_name": "Tyler",
             "last_name": "Chen",
-            "date_of_birth": "05/19/1993",
-            "address": "261 Park St",
+            "date_of_birth": "1993-05-19",
+            "current_address": "261 Park St",
             "city": "New Haven",
             "zip_code": "06511",
             "height": "5'10",
             "eye_color": "Brown",
             "gender": "Male",
-            "phone": "203-555-0142",
+            "phone_number": "203-555-0142",
             "email": "tyler.chen@email.com",
             "age_range": "30-35",
-            "home_state": "CT",
+            "gender_identity": "male",
+            "state_of_release": "CT",
             "release_date": "2026-02-15",
             "time_served": "3 years",
             "offense_category": "non-violent",
-            "comfort_with_technology": "moderate",
-        },
-        situation={
+        })
+        upsert_fields(db, DEFAULT_USER_ID, "housing", {
             "housing_status": "shelter",
+        })
+        upsert_fields(db, DEFAULT_USER_ID, "employment", {
             "employment_status": "unemployed",
-            "benefits_enrolled": [],
+        })
+        upsert_fields(db, DEFAULT_USER_ID, "supervision", {
             "supervision_type": "parole",
             "supervision_end_date": "2028-02-15",
-            "immediate_needs": ["housing", "employment", "ID restoration"],
-        },
-        goals={
-            "short_term_goals": ["Find stable housing", "Get a job", "Restore ID documents"],
-            "long_term_goals": ["Career in construction", "Own apartment", "Reconnect with family"],
-            "values": ["independence", "stability", "family"],
-            "strengths": ["Carpentry skills", "Reliability", "GED completed", "Forklift certification"],
-            "concerns": ["Background check barriers", "Finding affordable housing in Hartford"],
-        },
-        support={
-            "has_case_worker": True,
-            "case_worker_name": "Diana",
-            "support_contacts": ["Diana (case worker)", "Mom"],
-            "trusted_people": ["Mom", "Brother"],
-        },
-        preferences={
+        })
+        upsert_fields(db, DEFAULT_USER_ID, "preferences", {
             "communication_style": "direct",
             "check_in_frequency": "weekly",
             "wants_reminders": True,
             "privacy_level": "high",
-        },
-    )
+            "comfort_with_technology": "moderate",
+            "immediate_needs": json.dumps(["housing", "employment", "ID restoration"]),
+        })
+        upsert_fields(db, DEFAULT_USER_ID, "goals", {
+            "short_term_goals": json.dumps(["Find stable housing", "Get a job", "Restore ID documents"]),
+            "long_term_goals": json.dumps(["Career in construction", "Own apartment", "Reconnect with family"]),
+            "values": json.dumps(["independence", "stability", "family"]),
+            "strengths": json.dumps(["Carpentry skills", "Reliability", "GED completed", "Forklift certification"]),
+            "concerns": json.dumps(["Background check barriers", "Finding affordable housing in Hartford"]),
+        })
+        upsert_fields(db, DEFAULT_USER_ID, "support", {
+            "has_case_worker": True,
+            "case_worker_name": "Diana",
+            "support_contacts": json.dumps(["Diana (case worker)", "Mom"]),
+            "trusted_people": json.dumps(["Mom", "Brother"]),
+        })
+    finally:
+        db.close()
 
-    save_profile(profile)
     console.print(Panel(
         "[bold green]Test profile created for Tyler Chen.[/bold green]\n\n"
         "30-35 y/o, released 2026-02-15 from CT (Hartford area).\n"
@@ -118,10 +131,14 @@ def seed():
 @app.command()
 def profile():
     """Display the current user profile."""
-    _ensure_encryption_key()
-    from threshold.memory.profile import load_profile
+    from threshold.db.database import get_db
+    from threshold.db.profile_bridge import load_profile_from_db
 
-    p = load_profile()
+    db = get_db()
+    try:
+        p = load_profile_from_db(db)
+    finally:
+        db.close()
     if p is None:
         console.print("[yellow]No profile found. Run 'python main.py seed' to create a test profile.[/yellow]")
         raise typer.Exit(1)
@@ -162,12 +179,17 @@ def clear():
 @app.command()
 def chat():
     """Start the Threshold chat loop (default command)."""
-    _ensure_encryption_key()
     _ensure_data_dirs()
 
-    from threshold.memory.profile import profile_exists
+    from threshold.db.database import get_db
+    from threshold.db.profile_bridge import load_profile_from_db
 
-    if not profile_exists():
+    db = get_db()
+    try:
+        _profile_check = load_profile_from_db(db)
+    finally:
+        db.close()
+    if _profile_check is None:
         console.print(Panel(
             "[yellow]No profile found.[/yellow]\n\n"
             "Run [bold]python main.py seed[/bold] to create a test profile for demo,\n"
@@ -283,11 +305,16 @@ def _show_help():
 
 
 def _run_reflect():
+    from threshold.db.database import get_db
+    from threshold.db.profile_bridge import load_profile_from_db
     from threshold.memory.observation_stream import get_recent_observations
-    from threshold.memory.profile import load_profile
     from threshold.memory.reflection import save_reflections, synthesize_reflections
 
-    p = load_profile()
+    db = get_db()
+    try:
+        p = load_profile_from_db(db)
+    finally:
+        db.close()
     if p is None:
         console.print("[yellow]No profile to reflect on.[/yellow]")
         return
@@ -343,6 +370,50 @@ def generate_docs(
     console.print(Panel("[bold]Generating mock documents for Tyler Chen...[/bold]", title="Demo Documents"))
     paths = generate_all(output_dir)
     console.print(f"\n[bold green]{len(paths)} documents generated.[/bold green]")
+
+
+@app.command()
+def tasks():
+    """Show active tasks from the tracking log."""
+    tracking_dir = DATA_DIR / "tracking"
+    if not tracking_dir.exists() or not any(tracking_dir.iterdir()):
+        console.print("[dim]No active tasks found.[/dim]")
+        raise typer.Exit()
+
+    table = Table(title="Active Tasks", show_lines=True)
+    table.add_column("File", style="cyan")
+    table.add_column("Content", style="white")
+
+    for fp in sorted(tracking_dir.iterdir()):
+        if fp.is_file():
+            content = fp.read_text(encoding="utf-8", errors="replace").strip()
+            table.add_row(fp.name, content[:200])
+
+    console.print(table)
+
+
+@app.command()
+def export(
+    output: str = typer.Argument(..., help="Directory to export generated documents to"),
+):
+    """Copy generated documents to the specified directory."""
+    import shutil
+
+    docs_dir = DATA_DIR / "documents"
+    if not docs_dir.exists() or not any(docs_dir.iterdir()):
+        console.print("[yellow]No generated documents to export.[/yellow]")
+        raise typer.Exit()
+
+    dest = Path(output)
+    dest.mkdir(parents=True, exist_ok=True)
+
+    count = 0
+    for fp in docs_dir.iterdir():
+        if fp.is_file():
+            shutil.copy2(fp, dest / fp.name)
+            count += 1
+
+    console.print(f"[bold green]Exported {count} document(s) to {dest}[/bold green]")
 
 
 def _ensure_encryption_key():
