@@ -83,21 +83,17 @@ export function MessageThread() {
                 <div
                   key={msg.id}
                   className={cn(
-                    'flex items-start gap-3',
-                    isOutgoing ? 'flex-row-reverse' : 'flex-row'
+                    'flex gap-3',
+                    isOutgoing ? 'justify-end pl-16 sm:pl-24 lg:pl-32' : 'justify-start pr-16 sm:pr-24 lg:pr-32'
                   )}
                 >
-                  {/* Avatar */}
-                  {!isOutgoing ? (
+                  {/* Avatar (AI only) */}
+                  {!isOutgoing && (
                     <Avatar name={msg.senderName} size="sm" className="flex-shrink-0 mt-1" />
-                  ) : (
-                    <div className="w-8 h-8 bg-primary/10 rounded-full flex-shrink-0 mt-1 flex items-center justify-center">
-                      <span className="material-symbols-outlined text-sm text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>person</span>
-                    </div>
                   )}
 
                   {/* Bubble */}
-                  <div className={cn('flex flex-col gap-1.5 max-w-sm lg:max-w-md', isOutgoing ? 'items-end' : 'items-start')}>
+                  <div className={cn('flex flex-col gap-1.5 min-w-0', isOutgoing ? 'items-end' : 'items-start')}>
                     {!isOutgoing && (
                       <span className="text-[11px] font-semibold text-on-surface-variant px-1">
                         {msg.senderName}
@@ -123,6 +119,13 @@ export function MessageThread() {
                       )}
                     </div>
                   </div>
+
+                  {/* Avatar (user only) */}
+                  {isOutgoing && (
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex-shrink-0 mt-1 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-sm text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>person</span>
+                    </div>
+                  )}
                 </div>
               );
             })}
