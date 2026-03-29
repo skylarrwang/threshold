@@ -56,7 +56,7 @@ def seed():
 
     profile = UserProfile(
         personal={
-            "name": "Marcus Chen",
+            "name": "Tyler Chen",
             "age_range": "30-35",
             "home_state": "CT",
             "release_date": "2026-02-15",

@@ -12,9 +12,14 @@ from .job_search import get_ban_the_box_status, log_job_application, search_jobs
 from .housing_search import (
     get_fair_chance_housing_laws,
     get_fair_market_rents,
+    get_housing_pipeline_status,
     log_housing_application,
     search_housing,
 )
+from .shelter_finder import find_emergency_shelter
+from .reentry_housing_db import find_reentry_housing
+from .housing_application_prep import prepare_housing_application
+from .pha_guide import get_pha_guide
 
 __all__ = [
     "crisis_response",
@@ -37,4 +42,9 @@ __all__ = [
     "log_housing_application",
     "get_fair_market_rents",
     "get_fair_chance_housing_laws",
+    "get_housing_pipeline_status",
+    "find_emergency_shelter",
+    "find_reentry_housing",
+    "prepare_housing_application",
+    "get_pha_guide",
 ]

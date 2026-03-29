@@ -2,10 +2,15 @@ import { useState, useRef, useEffect } from 'react';
 import { useChatStore } from '@/store/chatStore';
 import { cn } from '@/lib/utils';
 
-export function ChatInput() {
-  const sendMessage = useChatStore((s) => s.sendMessage);
-  const isTyping = useChatStore((s) => s.isTyping);
-  const streamingMessageId = useChatStore((s) => s.streamingMessageId);
+const USER_ID = 'tyler-001';
+const USER_NAME = 'Tyler Chen';
+
+interface ChatInputProps {
+  onSend: (content: string) => void;
+}
+
+export function ChatInput({ onSend }: ChatInputProps) {
+  const { activeConversationId, addMessage, wsStatus, isTyping, streamingMessageId } = useChatStore();
   const [text, setText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -29,13 +34,38 @@ export function ChatInput() {
     const trimmed = text.trim();
     if (!trimmed || isBusy) return;
 
-    sendMessage(trimmed);
-    setText('');
+    // Add user message to the thread immediately
+    addMessage({
+      id: `msg-user-${Date.now()}`,
+      conversationId: activeConversationId,
+      senderId: USER_ID,
+      senderName: USER_NAME,
+      content: trimmed,
+      timestamp: new Date().toISOString(),
+      isRead: false,
+    });
 
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-    }
+    setText('');
+    if (textareaRef.current) textareaRef.current.style.height = 'auto';
+
+    // Send over WebSocket (or fall back gracefully if disconnected)
+    onSend(trimmed);
   }
+
+  // Connection status dot
+  const dotColor =
+    wsStatus === 'connected'
+      ? 'bg-green-500'
+      : wsStatus === 'connecting'
+        ? 'bg-amber-400'
+        : 'bg-outline/40';
+
+  const dotTitle =
+    wsStatus === 'connected'
+      ? 'Connected'
+      : wsStatus === 'connecting'
+        ? 'Connecting...'
+        : 'Disconnected';
 
   return (
     <div className="p-4 bg-surface-container-lowest flex-shrink-0">
@@ -46,13 +76,16 @@ export function ChatInput() {
             'focus-within:ring-2 focus-within:ring-primary/20 transition-all'
           )}
         >
-          {/* Attach */}
-          <button
-            aria-label="Attach file"
-            className="p-2 hover:bg-surface-container-high rounded-xl transition-colors text-outline flex-shrink-0 mb-0.5"
-          >
-            <span className="material-symbols-outlined text-xl">attach_file</span>
-          </button>
+          {/* Connection status dot */}
+          <div className="flex items-center flex-shrink-0 mb-2 ml-0.5" title={dotTitle}>
+            <span
+              className={cn(
+                'w-2 h-2 rounded-full transition-colors duration-500',
+                dotColor,
+                wsStatus === 'connecting' && 'animate-pulse'
+              )}
+            />
+          </div>
 
           {/* Textarea */}
           <textarea

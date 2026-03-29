@@ -37,17 +37,17 @@ The Vite dev server proxies `/api/*` and `/ws` to `localhost:8000` automatically
 
 ## REST Endpoints
 
-| Method | Path | What it does |
-|--------|------|--------------|
-| `GET` | `/api/health` | Health check |
-| `GET` | `/api/profile` | Full profile (all sections from DB) |
-| `GET` | `/api/profile/exists` | Whether any profile data has been entered |
-| `PATCH` | `/api/profile` | Update fields in a section: `{section, fields}` |
-| `GET` | `/api/profile/completion` | Completion % with per-section breakdown |
-| `GET` | `/api/intake/status` | Missing fields by priority (critical/important) |
-| `GET` | `/api/intake/interview-context` | Prompt context for the interview agent |
-| `GET` | `/api/intake/post-ocr-summary` | User-facing summary after document upload |
-| `POST` | `/api/documents/upload` | Upload a document image for OCR extraction |
+| Method  | Path                            | What it does                                    |
+| ------- | ------------------------------- | ----------------------------------------------- |
+| `GET`   | `/api/health`                   | Health check                                    |
+| `GET`   | `/api/profile`                  | Full profile (all sections from DB)             |
+| `GET`   | `/api/profile/exists`           | Whether any profile data has been entered       |
+| `PATCH` | `/api/profile`                  | Update fields in a section: `{section, fields}` |
+| `GET`   | `/api/profile/completion`       | Completion % with per-section breakdown         |
+| `GET`   | `/api/intake/status`            | Missing fields by priority (critical/important) |
+| `GET`   | `/api/intake/interview-context` | Prompt context for the interview agent          |
+| `GET`   | `/api/intake/post-ocr-summary`  | User-facing summary after document upload       |
+| `POST`  | `/api/documents/upload`         | Upload a document image for OCR extraction      |
 
 ### Example: Upload a document
 
@@ -57,13 +57,14 @@ curl -X POST http://localhost:8000/api/documents/upload \
 ```
 
 Returns:
+
 ```json
 {
   "ok": true,
   "document_type": "Conditions of Supervision",
   "raw_extraction": { ... },
   "mapped_fields": {
-    "identity": {"legal_name": "Marcus Johnson"},
+    "identity": {"legal_name": "Tyler Johnson"},
     "supervision": {"supervision_type": "parole", "po_name": "Officer Williams"}
   },
   "fields_written": 8,
@@ -108,7 +109,7 @@ The `token` messages stream the response in small chunks. The frontend accumulat
 `frontend/src/lib/api.ts` provides typed functions for all endpoints:
 
 ```typescript
-import { fetchProfile, uploadDocument, createChatSocket } from '@/lib/api';
+import { fetchProfile, uploadDocument, createChatSocket } from "@/lib/api";
 
 // REST
 const profile = await fetchProfile();
@@ -116,8 +117,8 @@ const result = await uploadDocument(file);
 
 // WebSocket
 const socket = createChatSocket((msg) => {
-  if (msg.type === 'token') appendToResponse(msg.content);
-  if (msg.type === 'message_complete') finishResponse();
+  if (msg.type === "token") appendToResponse(msg.content);
+  if (msg.type === "message_complete") finishResponse();
 });
 socket.sendMessage("I need help with SNAP");
 ```

@@ -432,30 +432,110 @@ def get_fair_chance_housing_laws(state: str) -> str:
     return "\n".join(lines)
 
 
+_PIPELINE_STAGES = [
+    "discovered",       # Found the program, added to list
+    "documents_ready",  # Have the docs needed for this application
+    "applied",          # Application submitted
+    "waitlisted",       # On waitlist
+    "interview_scheduled",  # Interview or intake scheduled
+    "approved",         # Accepted
+    "denied",           # Denied (with appeal info)
+    "moved_in",         # Successfully housed
+]
+
+_STAGE_LABELS = {
+    "discovered": "Found Program",
+    "documents_ready": "Documents Ready",
+    "applied": "Applied",
+    "waitlisted": "On Waitlist",
+    "interview_scheduled": "Interview Scheduled",
+    "approved": "Approved",
+    "denied": "Denied",
+    "moved_in": "Moved In",
+}
+
+_NEXT_ACTIONS: dict[str, str] = {
+    "discovered": "Gather required documents. Use `prepare_housing_application()` for a checklist.",
+    "documents_ready": "Submit the application. Call the program to confirm how to apply.",
+    "applied": "Follow up in 1-2 weeks if you haven't heard back. Keep a record of who you spoke to.",
+    "waitlisted": "Check in monthly. Apply to other programs in parallel — don't wait on one.",
+    "interview_scheduled": "Prepare: bring all documents, arrive early, dress presentably. Practice your story.",
+    "approved": "Review the lease carefully before signing. Ask about move-in costs and timeline.",
+    "denied": "Request denial reason IN WRITING. You have 14 days to appeal. Contact legal aid: lawhelp.org",
+    "moved_in": "Congratulations! Set up mail forwarding, update your address with PO and benefits.",
+}
+
+
 @tool
-def log_housing_application(program: str, status: str, notes: str = "") -> str:
-    """Log a housing application for tracking.
+def log_housing_application(
+    program: str,
+    status: str,
+    notes: str = "",
+    follow_up_date: str = "",
+    contact_name: str = "",
+    contact_phone: str = "",
+) -> str:
+    """Log or update a housing application in the pipeline tracker.
 
     Args:
         program: Housing program or landlord name
-        status: One of: applied, waitlisted, interview_scheduled, approved, denied
-        notes: Any additional notes
+        status: One of: discovered, documents_ready, applied, waitlisted, interview_scheduled, approved, denied, moved_in
+        notes: Any additional notes (what happened, what they said, etc.)
+        follow_up_date: When to follow up (YYYY-MM-DD format)
+        contact_name: Name of person you spoke to
+        contact_phone: Phone number for follow-up
     """
     HOUSING_APPS_LOG.parent.mkdir(parents=True, exist_ok=True)
-    apps = []
+    apps: list[dict] = []
     if HOUSING_APPS_LOG.exists():
         try:
             apps = json.loads(HOUSING_APPS_LOG.read_text())
         except (json.JSONDecodeError, OSError):
             pass
 
-    apps.append({
-        "id": str(uuid4()),
-        "program": program,
-        "status": status,
-        "notes": notes,
-        "applied_at": datetime.now().isoformat(),
-    })
+    # Check if this program already exists — update it instead of duplicating
+    existing = None
+    for app in apps:
+        if app["program"].lower() == program.lower():
+            existing = app
+            break
+
+    now = datetime.now().isoformat()
+
+    if existing:
+        # Update existing entry
+        old_status = existing.get("status", "")
+        existing["status"] = status
+        existing["updated_at"] = now
+        if notes:
+            history = existing.get("history", [])
+            history.append({"status": old_status, "notes": notes, "date": now})
+            existing["history"] = history
+        if follow_up_date:
+            existing["follow_up_date"] = follow_up_date
+        if contact_name:
+            existing["contact_name"] = contact_name
+        if contact_phone:
+            existing["contact_phone"] = contact_phone
+    else:
+        # New entry
+        entry: dict = {
+            "id": str(uuid4()),
+            "program": program,
+            "status": status,
+            "notes": notes,
+            "created_at": now,
+            "updated_at": now,
+            "history": [],
+        }
+        if follow_up_date:
+            entry["follow_up_date"] = follow_up_date
+        if contact_name:
+            entry["contact_name"] = contact_name
+        if contact_phone:
+            entry["contact_phone"] = contact_phone
+        apps.append(entry)
+
     HOUSING_APPS_LOG.write_text(json.dumps(apps, indent=2))
 
     from ..memory.observation_stream import log_observation
@@ -466,4 +546,91 @@ def log_housing_application(program: str, status: str, notes: str = "") -> str:
         content=f"Housing application: {program} — {status}",
         tags=["housing", "application"],
     )
-    return f"Housing application logged: {program} ({status})"
+
+    next_action = _NEXT_ACTIONS.get(status, "")
+    label = _STAGE_LABELS.get(status, status)
+    result = f"**{program}** — {label}"
+    if next_action:
+        result += f"\n**Next step:** {next_action}"
+    if follow_up_date:
+        result += f"\n**Follow up by:** {follow_up_date}"
+    return result
+
+
+@tool
+def get_housing_pipeline_status() -> str:
+    """Show the status of all housing applications in the pipeline.
+
+    Returns a summary of every program the user has tracked, organized by
+    pipeline stage, with next actions for each.
+    """
+    apps: list[dict] = []
+    if HOUSING_APPS_LOG.exists():
+        try:
+            apps = json.loads(HOUSING_APPS_LOG.read_text())
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    if not apps:
+        return (
+            "**No housing applications tracked yet.**\n\n"
+            "Start your housing search:\n"
+            "1. Use `find_reentry_housing()` to find programs that accept people with records\n"
+            "2. Use `find_emergency_shelter()` if you need immediate shelter\n"
+            "3. Use `get_pha_guide()` for Section 8 / public housing info\n"
+            "4. Once you find programs, use `log_housing_application(program, 'discovered')` to start tracking"
+        )
+
+    # Group by stage
+    by_stage: dict[str, list[dict]] = {}
+    for app in apps:
+        stage = app.get("status", "discovered")
+        by_stage.setdefault(stage, []).append(app)
+
+    lines = ["## Your Housing Pipeline\n"]
+
+    # Count active applications
+    active = [a for a in apps if a.get("status") not in ("denied", "moved_in")]
+    resolved = [a for a in apps if a.get("status") in ("approved", "moved_in")]
+    lines.append(f"**{len(active)} active** | **{len(apps)} total** | "
+                 f"**{len(resolved)} approved/housed**\n")
+
+    # Show pipeline in stage order
+    for stage in _PIPELINE_STAGES:
+        stage_apps = by_stage.get(stage, [])
+        if not stage_apps:
+            continue
+
+        label = _STAGE_LABELS.get(stage, stage)
+        lines.append(f"### {label} ({len(stage_apps)})\n")
+
+        for app in stage_apps:
+            lines.append(f"**{app['program']}**")
+            if app.get("contact_name"):
+                lines.append(f"   Contact: {app['contact_name']}"
+                             + (f" — {app['contact_phone']}" if app.get("contact_phone") else ""))
+            if app.get("follow_up_date"):
+                lines.append(f"   Follow up by: {app['follow_up_date']}")
+            if app.get("notes"):
+                lines.append(f"   Notes: {app['notes']}")
+            updated = app.get("updated_at", app.get("created_at", ""))
+            if updated:
+                lines.append(f"   Last updated: {updated[:10]}")
+            next_action = _NEXT_ACTIONS.get(stage, "")
+            if next_action:
+                lines.append(f"   **Next:** {next_action}")
+            lines.append("")
+
+    # Follow-up reminders
+    follow_ups = [a for a in apps if a.get("follow_up_date") and a.get("status") not in ("denied", "moved_in")]
+    if follow_ups:
+        follow_ups.sort(key=lambda a: a.get("follow_up_date", ""))
+        lines.append("### Upcoming Follow-ups\n")
+        for app in follow_ups:
+            lines.append(f"- **{app['follow_up_date']}** — {app['program']} ({_STAGE_LABELS.get(app['status'], app['status'])})")
+        lines.append("")
+
+    lines.append("---")
+    lines.append("*Apply to multiple programs in parallel. Don't wait on one waitlist. "
+                 "The more applications out there, the faster you get housed.*")
+    return "\n".join(lines)

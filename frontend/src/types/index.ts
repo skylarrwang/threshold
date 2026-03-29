@@ -136,6 +136,15 @@ export interface Conversation {
 
 export type AgentStatus = 'running' | 'waiting' | 'completed' | 'failed';
 
+export interface GeneratedDocument {
+  id: string;
+  type: 'cover_letter' | 'resume' | 'housing_letter' | 'legal_letter';
+  title: string;
+  content: string;
+  createdAt: string;
+  wordCount: number;
+}
+
 export interface Milestone {
   id: string;
   label: string;

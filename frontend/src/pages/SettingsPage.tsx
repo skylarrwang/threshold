@@ -43,7 +43,7 @@ export function SettingsPage() {
   const { profile } = useProfileStore();
 
   const [name, setName] = useState(profile.personal.name);
-  const [email, setEmail] = useState('marcus.chen@example.com');
+  const [email, setEmail] = useState('Tyler.chen@example.com');
   const [phone, setPhone] = useState('(510) 555-0193');
   const [commStyle, setCommStyle] = useState<'direct' | 'gentle' | 'informational'>(profile.preferences.communication_style);
 
