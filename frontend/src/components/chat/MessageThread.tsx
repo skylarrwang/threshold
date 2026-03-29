@@ -1,10 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { useChatStore } from '@/store/chatStore';
+import { useProfileStore } from '@/store/profileStore';
 import { Avatar } from '@/components/shared/Avatar';
 import { ToolCard } from './ToolCard';
 import { cn } from '@/lib/utils';
-
-const USER_ID = 'user';
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
@@ -49,6 +48,7 @@ function TypingIndicator() {
 
 export function MessageThread() {
   const { messages, activeConversationId, isTyping, streamingMessageId, activeToolCall } = useChatStore();
+  const userId = useProfileStore((s) => s.profile.user_id);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const threadMessages = messages.filter((m) => m.conversationId === activeConversationId);
@@ -79,7 +79,7 @@ export function MessageThread() {
           <DateSeparator label={group.dateLabel} />
           <div className="space-y-4 mt-4">
             {group.messages.map((msg) => {
-              const isOutgoing = msg.senderId === USER_ID;
+              const isOutgoing = msg.senderId === userId;
               const isStreaming = msg.id === streamingMessageId;
               return (
                 <div

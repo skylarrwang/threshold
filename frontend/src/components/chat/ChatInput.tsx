@@ -1,9 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useChatStore } from '@/store/chatStore';
+import { useProfileStore } from '@/store/profileStore';
 import { cn } from '@/lib/utils';
-
-const USER_ID = 'tyler-001';
-const USER_NAME = 'Tyler Chen';
 
 interface ChatInputProps {
   onSend: (content: string) => void;
@@ -11,6 +9,7 @@ interface ChatInputProps {
 
 export function ChatInput({ onSend }: ChatInputProps) {
   const { activeConversationId, addMessage, wsStatus, isTyping, streamingMessageId } = useChatStore();
+  const profile = useProfileStore((s) => s.profile);
   const [text, setText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -38,8 +37,8 @@ export function ChatInput({ onSend }: ChatInputProps) {
     addMessage({
       id: `msg-user-${Date.now()}`,
       conversationId: activeConversationId,
-      senderId: USER_ID,
-      senderName: USER_NAME,
+      senderId: profile.user_id,
+      senderName: profile.personal.name,
       content: trimmed,
       timestamp: new Date().toISOString(),
       isRead: false,
