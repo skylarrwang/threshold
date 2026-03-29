@@ -46,7 +46,18 @@ from threshold.services.interview_context import (
     build_post_ocr_summary,
 )
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(message)s",
+    datefmt="%H:%M:%S",
+)
 logger = logging.getLogger(__name__)
+
+# Suppress noisy uvicorn WebSocket accept/close logs
+logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("openai").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 DATA_DIR = Path(os.getenv("THRESHOLD_DATA_DIR", "./data"))
 DEFAULT_USER_ID = os.getenv("THRESHOLD_USER_ID", "default-user")
@@ -364,10 +375,18 @@ async def fair_chance_laws(state: str):
 @app.websocket("/ws")
 async def websocket_chat(ws: WebSocket):
     await ws.accept()
-    logger.info("WebSocket connected")
 
-    agent = None
-    config = {"configurable": {"thread_id": f"threshold-ws-{DEFAULT_USER_ID}"}}
+    config = {
+        "configurable": {"thread_id": f"threshold-ws-{DEFAULT_USER_ID}"},
+        "recursion_limit": 75,
+    }
+
+    # Pre-warm the agent immediately on connect (don't wait for first message)
+    import time
+    t0 = time.monotonic()
+    logger.info("[ws] connected — loading orchestrator...")
+    agent = await _create_agent()
+    logger.info("[ws] orchestrator ready (%.1fs)", time.monotonic() - t0)
 
     try:
         while True:
@@ -385,10 +404,6 @@ async def websocket_chat(ws: WebSocket):
                 if not content:
                     continue
 
-                # Lazy-init the orchestrator (expensive, do once per connection)
-                if agent is None:
-                    agent = await _create_agent()
-
                 await _handle_chat_message(ws, agent, config, content)
 
             elif msg_type == "ping":
@@ -401,7 +416,7 @@ async def websocket_chat(ws: WebSocket):
                 })
 
     except WebSocketDisconnect:
-        logger.info("WebSocket disconnected")
+        pass
     except Exception as e:
         logger.error("WebSocket error: %s\n%s", e, traceback.format_exc())
         try:
@@ -418,68 +433,278 @@ async def _create_agent():
 
 
 async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content: str):
-    """Send a user message to the orchestrator and stream the response back."""
-    from langchain_core.messages import AIMessageChunk, ToolMessage
+    """Send a user message to the orchestrator and stream the response back.
+
+    Uses astream_events (v2) to capture events from ALL nested runnables,
+    including subagent LLM calls, tool invocations, and reasoning.
+
+    Emits `agent_step` events to the frontend for real-time trace display.
+    """
+    import time
+
+    logger.info("=" * 70)
+    logger.info("[user] %s", content[:200])
+
+    step_counter = 0
+
+    def _step_id() -> str:
+        nonlocal step_counter
+        step_counter += 1
+        return f"step-{step_counter}"
+
+    async def _send_step(
+        step_type: str,
+        status: str,
+        label: str,
+        *,
+        step_id: str | None = None,
+        detail: str | None = None,
+        icon: str | None = None,
+    ):
+        payload: dict[str, Any] = {
+            "type": "agent_step",
+            "id": step_id or _step_id(),
+            "step_type": step_type,
+            "status": status,
+            "label": label,
+        }
+        if detail:
+            payload["detail"] = detail
+        if icon:
+            payload["icon"] = icon
+        await ws.send_json(payload)
 
     await ws.send_json({"type": "thinking"})
+    await _send_step("thinking", "started", "Analyzing your message...", icon="psychology")
 
-    active_tool: str | None = None
     emitted_tokens = False
+    token_count = 0
+    t_start = time.monotonic()
+    t_first_token: float | None = None
+
+    orchestrator_tool: str | None = None
+    in_subagent = False
+    seen_nodes: set[str] = set()
+    subagent_step_id: str | None = None
+    active_tool_step_ids: dict[str, str] = {}
+    pre_tool_buffer: list[str] = []  # accumulates text sent before any tool call
 
     try:
-        async for msg, metadata in agent.astream(
+        async for event in agent.astream_events(
             {"messages": [{"role": "user", "content": content}]},
             config,
-            stream_mode="messages",
+            version="v2",
         ):
-            if DEBUG_WS_STREAM:
-                logger.debug(
-                    "[ws-stream] node=%s type=%s repr=%s",
-                    metadata.get("langgraph_node"),
-                    type(msg).__name__,
-                    repr(msg)[:200],
-                )
+            evt = event["event"]
+            name = event.get("name", "")
+            data = event.get("data", {})
+            meta = event.get("metadata", {})
+            node = meta.get("langgraph_node", "")
+            tags = event.get("tags", [])
 
-            if isinstance(msg, AIMessageChunk):
-                # Text tokens — handle both plain strings and Gemini block lists
-                raw = msg.content
+            # ── Node transitions ─────────────────────────────────────
+            if node and node not in seen_nodes:
+                seen_nodes.add(node)
+                logger.info("[node] entered: %s", node)
+
+            # ── LLM streaming tokens ────────────────────────────────
+            if evt == "on_chat_model_stream":
+                chunk = data.get("chunk")
+                if not chunk:
+                    continue
+
+                raw = chunk.content if hasattr(chunk, "content") else ""
+
                 if isinstance(raw, list):
+                    for b in raw:
+                        if isinstance(b, dict) and b.get("type") not in ("text", None):
+                            reasoning = b.get("text", "")
+                            if reasoning:
+                                logger.info("[%s] reasoning: %s", node or name, reasoning[:300])
                     text = "".join(
-                        b.get("text", "") if isinstance(b, dict) else str(b)
+                        b.get("text", "")
                         for b in raw
+                        if isinstance(b, dict) and b.get("type") == "text"
                     )
                 else:
                     text = str(raw) if raw else ""
 
-                if text:
+                is_orchestrator = node == "model" or not in_subagent
+                if text and is_orchestrator and not orchestrator_tool:
+                    if t_first_token is None:
+                        t_first_token = time.monotonic()
+                        logger.info("[timing] first token in %.2fs", t_first_token - t_start)
                     await ws.send_json({"type": "token", "content": text})
+                    pre_tool_buffer.append(text)
                     emitted_tokens = True
+                    token_count += len(text)
 
-                # Tool call starting — emit on first chunk that carries a name
-                if msg.tool_call_chunks:
-                    name = msg.tool_call_chunks[0].get("name", "")
-                    if name and active_tool is None:
-                        active_tool = name
-                        if name == "task":
-                            await ws.send_json({"type": "subagent_start"})
-                        elif name == "crisis_response":
-                            await ws.send_json({"type": "crisis_response"})
-                            await ws.send_json({"type": "tool_start", "tool_name": name})
-                        else:
-                            await ws.send_json({"type": "tool_start", "tool_name": name})
+                if text and in_subagent:
+                    if not hasattr(_handle_chat_message, "_sub_buf"):
+                        _handle_chat_message._sub_buf = ""
+                    _handle_chat_message._sub_buf += text
 
-            elif isinstance(msg, ToolMessage):
-                if active_tool == "task":
+                if hasattr(chunk, "tool_call_chunks") and chunk.tool_call_chunks:
+                    for tc_chunk in chunk.tool_call_chunks:
+                        tc_name = tc_chunk.get("name", "")
+                        if tc_name:
+                            if in_subagent:
+                                logger.info("[%s] calling tool: %s", node, tc_name)
+                                sid = _step_id()
+                                active_tool_step_ids[tc_name] = sid
+                                await _send_step(
+                                    "tool", "started",
+                                    _tool_display_label(tc_name),
+                                    step_id=sid,
+                                    icon=_tool_icon(tc_name),
+                                )
+                            else:
+                                # Reclassify pre-tool text as reasoning ONLY for
+                                # intermediate tools (read_user_memory, etc.).
+                                # Text before task() is the user-facing
+                                # acknowledgment ("Let me look into that") — keep it.
+                                is_subagent_call = tc_name == "task"
+                                if emitted_tokens and pre_tool_buffer and not is_subagent_call:
+                                    reasoning_text = "".join(pre_tool_buffer).strip()
+                                    if reasoning_text:
+                                        logger.info("[orchestrator] reclassifying %d chars as reasoning", len(reasoning_text))
+                                        preview = reasoning_text[:120].replace("\n", " ")
+                                        await _send_step(
+                                            "reasoning", "completed",
+                                            f"Thinking: {preview}{'...' if len(reasoning_text) > 120 else ''}",
+                                            icon="psychology",
+                                            detail=reasoning_text,
+                                        )
+                                    await ws.send_json({"type": "clear_stream"})
+                                    pre_tool_buffer.clear()
+                                    token_count = 0
+                                    emitted_tokens = False
+
+                                orchestrator_tool = tc_name
+                                if tc_name == "task":
+                                    logger.info("[orchestrator] delegating to subagent...")
+                                    in_subagent = True
+                                    _handle_chat_message._sub_buf = ""
+                                    subagent_step_id = _step_id()
+                                    await _send_step(
+                                        "subagent", "started",
+                                        "Delegating to specialist...",
+                                        step_id=subagent_step_id,
+                                        icon="smart_toy",
+                                    )
+                                    await ws.send_json({"type": "subagent_start"})
+                                elif tc_name == "crisis_response":
+                                    logger.info("[orchestrator] !!! crisis_response")
+                                    await ws.send_json({"type": "crisis_response"})
+                                    await ws.send_json({"type": "tool_start", "tool_name": tc_name})
+                                else:
+                                    logger.info("[orchestrator] calling tool: %s", tc_name)
+                                    sid = _step_id()
+                                    active_tool_step_ids[tc_name] = sid
+                                    await _send_step(
+                                        "tool", "started",
+                                        _tool_display_label(tc_name),
+                                        step_id=sid,
+                                        icon=_tool_icon(tc_name),
+                                    )
+                                    await ws.send_json({"type": "tool_start", "tool_name": tc_name})
+
+            # ── Tool start (from any level) ──────────────────────────
+            elif evt == "on_tool_start":
+                tool_input = data.get("input", {})
+                input_preview = json.dumps(tool_input)[:300] if isinstance(tool_input, (dict, list)) else str(tool_input)[:300]
+                if in_subagent and name == "task":
+                    # This is the orchestrator-level task() call — in_subagent
+                    # was already set when we detected the tool_call_chunk.
+                    logger.info("[orchestrator] task(%s)", input_preview)
+                    task_input = data.get("input", {})
+                    task_desc = ""
+                    subagent_type = ""
+                    if isinstance(task_input, dict):
+                        task_desc = task_input.get("description", "") or task_input.get("task", "")
+                        subagent_type = task_input.get("subagent_type", "")
+                    if task_desc and subagent_step_id:
+                        await _send_step(
+                            "subagent", "started",
+                            _subagent_label(task_desc),
+                            step_id=subagent_step_id,
+                            icon="smart_toy",
+                        )
+                    if not emitted_tokens:
+                        ack = _subagent_acknowledgment(subagent_type, task_desc)
+                        await ws.send_json({"type": "token", "content": ack})
+                        emitted_tokens = True
+                elif in_subagent:
+                    logger.info("[subagent] tool_start: %s(%s)", name, input_preview)
+                else:
+                    logger.info("[orchestrator] tool_start: %s(%s)", name, input_preview)
+
+            # ── Tool end (from any level) ────────────────────────────
+            elif evt == "on_tool_end":
+                output = data.get("output", "")
+                output_str = str(output.content) if hasattr(output, "content") else str(output)
+                if in_subagent and name != "task":
+                    logger.info("[subagent] tool_end: %s -> %s", name, output_str[:300])
+                    sid = active_tool_step_ids.pop(name, None)
+                    if sid:
+                        await _send_step(
+                            "tool", "completed",
+                            _tool_display_label(name, done=True),
+                            step_id=sid,
+                            icon=_tool_icon(name),
+                        )
+                elif name == "task":
+                    sub_buf = getattr(_handle_chat_message, "_sub_buf", "")
+                    if sub_buf:
+                        logger.info("[subagent] reasoning: %s", sub_buf[:500])
+                    logger.info("[subagent] <<< returned (%d chars): %s", len(output_str), output_str[:300])
+                    in_subagent = False
+                    orchestrator_tool = None
+                    if subagent_step_id:
+                        await _send_step(
+                            "subagent", "completed", "Specialist finished",
+                            step_id=subagent_step_id, icon="smart_toy",
+                        )
+                    subagent_step_id = None
                     await ws.send_json({"type": "subagent_end"})
                 else:
+                    logger.info("[orchestrator] tool_end: %s -> %s", name, output_str[:300])
+                    orchestrator_tool = None
+                    sid = active_tool_step_ids.pop(name, None)
+                    if sid:
+                        await _send_step(
+                            "tool", "completed",
+                            _tool_display_label(name, done=True),
+                            step_id=sid,
+                            icon=_tool_icon(name),
+                        )
                     await ws.send_json({"type": "tool_end"})
-                active_tool = None
+
+            # ── LLM start (log which model is being called) ──────────
+            elif evt == "on_chat_model_start":
+                model_name = name or "unknown"
+                if in_subagent:
+                    logger.info("[subagent] llm_start: %s (node=%s)", model_name, node)
+                    await _send_step(
+                        "reasoning", "started", "Specialist is thinking...",
+                        icon="neurology",
+                    )
+                elif DEBUG_WS_STREAM:
+                    logger.info("[orchestrator] llm_start: %s (node=%s)", model_name, node)
 
         if not emitted_tokens:
             await ws.send_json({
                 "type": "token",
                 "content": "I'm sorry, I wasn't able to process that. Could you try again?",
             })
+
+        t_end = time.monotonic()
+        logger.info(
+            "[done] streamed %d chars in %.1fs (TTFT: %.2fs)",
+            token_count, t_end - t_start, (t_first_token or t_end) - t_start,
+        )
+        logger.info("=" * 70)
+        await _send_step("thinking", "completed", "Done", icon="check_circle")
         await ws.send_json({"type": "message_complete"})
 
     except Exception as e:
@@ -488,3 +713,56 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
             "type": "error",
             "message": f"Something went wrong: {str(e)}",
         })
+
+
+def _tool_display_label(name: str, *, done: bool = False) -> str:
+    labels: dict[str, tuple[str, str]] = {
+        "search_jobs": ("Searching for jobs...", "Job search complete"),
+        "search_housing": ("Finding housing options...", "Housing search complete"),
+        "read_user_memory": ("Reading your profile...", "Profile loaded"),
+        "log_event": ("Logging activity...", "Logged"),
+    }
+    if name.startswith("check_") and name.endswith("_eligibility"):
+        benefit = name.replace("check_", "").replace("_eligibility", "").replace("_", " ").title()
+        return f"{benefit} eligibility checked" if done else f"Checking {benefit} eligibility..."
+    pair = labels.get(name)
+    if pair:
+        return pair[1] if done else pair[0]
+    pretty = name.replace("_", " ").title()
+    return f"{pretty} done" if done else f"Running {pretty}..."
+
+
+def _tool_icon(name: str) -> str:
+    icons: dict[str, str] = {
+        "search_jobs": "work",
+        "search_housing": "home",
+        "read_user_memory": "person",
+        "log_event": "edit_note",
+    }
+    if name.startswith("check_") and name.endswith("_eligibility"):
+        return "fact_check"
+    return icons.get(name, "build")
+
+
+def _subagent_label(description: str) -> str:
+    desc_lower = description.lower()
+    if "hous" in desc_lower:
+        return "Housing specialist working..."
+    if "employ" in desc_lower or "job" in desc_lower:
+        return "Employment specialist working..."
+    if "benefit" in desc_lower or "eligib" in desc_lower or "snap" in desc_lower:
+        return "Benefits specialist working..."
+    if "legal" in desc_lower:
+        return "Legal specialist working..."
+    return f"Specialist working: {description[:60]}..."
+
+
+def _subagent_acknowledgment(subagent_type: str, description: str) -> str:
+    messages: dict[str, str] = {
+        "housing": "Let me look into housing options for you.\n\n",
+        "benefits": "Let me check on benefits eligibility for you.\n\n",
+        "employment": "Let me look into employment options for you.\n\n",
+        "legal": "Let me look into that for you.\n\n",
+        "form-filler": "Let me help fill out that form.\n\n",
+    }
+    return messages.get(subagent_type, "Let me look into that for you.\n\n")

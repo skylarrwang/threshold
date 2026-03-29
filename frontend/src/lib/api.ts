@@ -2,7 +2,7 @@
  * API client for the Threshold backend.
  *
  * All REST calls go through fetch() to /api/* (proxied to :8000 by Vite).
- * WebSocket connects to /ws (proxied to ws://localhost:8000/ws).
+ * WebSocket is managed by useChatSocket() in lib/websocket.ts.
  */
 
 const API_BASE = '/api';
@@ -138,6 +138,8 @@ export type WsMessageType =
   | 'crisis_response'
   | 'subagent_start'
   | 'subagent_end'
+  | 'agent_step'
+  | 'clear_stream'
   | 'error'
   | 'pong';
 
@@ -148,77 +150,12 @@ export interface WsMessage {
   tool_id?: string;
   tool_name?: string;
   display_label?: string;
+  id?: string;
+  step_type?: 'thinking' | 'subagent' | 'tool' | 'node' | 'reasoning';
+  status?: 'started' | 'completed';
+  label?: string;
+  detail?: string;
+  icon?: string;
   [key: string]: unknown;
 }
 
-export type WsHandler = (msg: WsMessage) => void;
-
-/**
- * Creates a managed WebSocket connection to the backend.
- * Handles reconnection automatically.
- */
-export function createChatSocket(onMessage: WsHandler) {
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const url = `${protocol}//${window.location.host}/ws`;
-
-  let ws: WebSocket | null = null;
-  let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-  let alive = true;
-
-  function connect() {
-    if (!alive) return;
-
-    ws = new WebSocket(url);
-
-    ws.onopen = () => {
-      console.log('[ws] connected');
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const msg: WsMessage = JSON.parse(event.data);
-        onMessage(msg);
-      } catch {
-        console.error('[ws] bad message', event.data);
-      }
-    };
-
-    ws.onclose = () => {
-      console.log('[ws] disconnected');
-      if (alive) {
-        reconnectTimer = setTimeout(connect, 2000);
-      }
-    };
-
-    ws.onerror = (err) => {
-      console.error('[ws] error', err);
-      ws?.close();
-    };
-  }
-
-  connect();
-
-  return {
-    send(msg: Record<string, unknown>) {
-      if (ws?.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify(msg));
-      } else {
-        console.warn('[ws] not connected, message dropped');
-      }
-    },
-
-    sendMessage(content: string) {
-      this.send({ type: 'user_message', content });
-    },
-
-    close() {
-      alive = false;
-      if (reconnectTimer) clearTimeout(reconnectTimer);
-      ws?.close();
-    },
-
-    get connected() {
-      return ws?.readyState === WebSocket.OPEN;
-    },
-  };
-}

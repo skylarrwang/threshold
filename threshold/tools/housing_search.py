@@ -466,6 +466,45 @@ _NEXT_ACTIONS: dict[str, str] = {
 }
 
 
+def _fuzzy_match_program(apps: list[dict], program: str) -> dict | None:
+    """Find an existing application by program name using fuzzy matching.
+
+    Matches on: exact name, one contains the other, or shared significant words.
+    """
+    name_lower = program.lower().strip()
+    name_words = set(name_lower.split()) - {"the", "a", "an", "of", "for", "in", "and", "-", "program"}
+
+    best: dict | None = None
+    best_score = 0
+
+    for app in apps:
+        existing_lower = app["program"].lower().strip()
+
+        # Exact match
+        if existing_lower == name_lower:
+            return app
+
+        # One contains the other
+        if name_lower in existing_lower or existing_lower in name_lower:
+            score = min(len(name_lower), len(existing_lower))
+            if score > best_score:
+                best = app
+                best_score = score
+                continue
+
+        # Shared significant words (at least 2 matching words of 4+ chars)
+        existing_words = set(existing_lower.split()) - {"the", "a", "an", "of", "for", "in", "and", "-", "program"}
+        overlap = name_words & existing_words
+        long_overlap = [w for w in overlap if len(w) >= 4]
+        if len(long_overlap) >= 2:
+            score = len(long_overlap)
+            if score > best_score:
+                best = app
+                best_score = score
+
+    return best
+
+
 @tool
 def log_housing_application(
     program: str,
@@ -477,8 +516,12 @@ def log_housing_application(
 ) -> str:
     """Log or update a housing application in the pipeline tracker.
 
+    If a program with a similar name already exists, updates it instead of
+    creating a duplicate. Always call get_housing_pipeline_status() first
+    to see what's already tracked before logging.
+
     Args:
-        program: Housing program or landlord name
+        program: Housing program or landlord name (use the exact name from pipeline if updating)
         status: One of: discovered, documents_ready, applied, waitlisted, interview_scheduled, approved, denied, moved_in
         notes: Any additional notes (what happened, what they said, etc.)
         follow_up_date: When to follow up (YYYY-MM-DD format)
@@ -493,24 +536,28 @@ def log_housing_application(
         except (json.JSONDecodeError, OSError):
             pass
 
-    # Check if this program already exists — update it instead of duplicating
-    existing = None
-    for app in apps:
-        if app["program"].lower() == program.lower():
-            existing = app
-            break
+    existing = _fuzzy_match_program(apps, program)
 
     now = datetime.now().isoformat()
+    action = "updated"
 
     if existing:
-        # Update existing entry
         old_status = existing.get("status", "")
+        old_notes = existing.get("notes", "")
+
+        # Record status change in history
+        history = existing.get("history", [])
+        history.append({
+            "from_status": old_status,
+            "to_status": status,
+            "notes": notes or f"Status changed from {old_status} to {status}",
+            "date": now,
+        })
+        existing["history"] = history
         existing["status"] = status
         existing["updated_at"] = now
         if notes:
-            history = existing.get("history", [])
-            history.append({"status": old_status, "notes": notes, "date": now})
-            existing["history"] = history
+            existing["notes"] = notes
         if follow_up_date:
             existing["follow_up_date"] = follow_up_date
         if contact_name:
@@ -518,7 +565,7 @@ def log_housing_application(
         if contact_phone:
             existing["contact_phone"] = contact_phone
     else:
-        # New entry
+        action = "created"
         entry: dict = {
             "id": str(uuid4()),
             "program": program,
@@ -543,13 +590,16 @@ def log_housing_application(
     log_observation(
         agent="housing",
         event_type="milestone",
-        content=f"Housing application: {program} — {status}",
+        content=f"Housing application: {program} — {status} ({action})",
         tags=["housing", "application"],
     )
 
     next_action = _NEXT_ACTIONS.get(status, "")
     label = _STAGE_LABELS.get(status, status)
-    result = f"**{program}** — {label}"
+    matched_name = existing["program"] if existing else program
+    result = f"**{matched_name}** — {label} ({action})"
+    if existing and action == "updated":
+        result += f"\n*Updated existing entry (was: {existing['history'][-1]['from_status']})*"
     if next_action:
         result += f"\n**Next step:** {next_action}"
     if follow_up_date:

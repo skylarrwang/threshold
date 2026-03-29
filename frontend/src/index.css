@@ -79,3 +79,18 @@ body {
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+@keyframes shimmer {
+  0% { transform: translateX(-200%); }
+  100% { transform: translateX(300%); }
+}
+
+.streaming-cursor *:last-child::after {
+  content: '▍';
+  animation: blink 1s step-end infinite;
+  opacity: 0.7;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}

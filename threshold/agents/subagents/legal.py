@@ -39,10 +39,17 @@ When discussing expungement, always include the "not legal advice" disclaimer.
 legal_subagent = {
     "name": "legal",
     "description": (
-        "Supervision tracking (conditions, check-ins, upcoming requirements), "
-        "ID restoration guides, and expungement eligibility. Delegate here when "
-        "the user asks about parole/probation, check-ins, getting an ID, or "
-        "clearing their record."
+        "Legal and supervision specialist for re-entry. "
+        "CAN: track supervision conditions (curfew, drug tests, travel restrictions); "
+        "log parole/probation check-ins; show upcoming supervision requirements; "
+        "provide ID restoration guides (birth certificate → SSN → state ID); check "
+        "expungement/record sealing eligibility by state. "
+        "CANNOT: file legal documents or court motions; contact parole/probation "
+        "officers; provide actual legal representation; schedule court dates; access "
+        "case management systems; start expungement proceedings; handle traffic "
+        "tickets, fines, or restitution payments; provide immigration advice. "
+        "Use for: 'when is my next check-in', 'how do I get my ID back', 'can I "
+        "get my record sealed in [state]', 'add a new parole condition'."
     ),
     "system_prompt": LEGAL_SYSTEM_PROMPT,
     "tools": [

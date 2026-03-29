@@ -16,9 +16,6 @@ from ...tools import (
     search_housing,
 )
 
-XAI_API_KEY = os.getenv("XAI_API_KEY", "")
-HOUSING_MODEL = os.getenv("THRESHOLD_HOUSING_MODEL", "grok-4-1-fast")
-
 HOUSING_SYSTEM_PROMPT = """\
 You are a housing specialist for people in re-entry after incarceration.
 You understand felony-friendly housing programs, Fair Housing Act protections,
@@ -74,6 +71,9 @@ You have tools for every stage of the housing journey. Use them in this order:
 
 ## Rules
 - Always load the user's memory first with read_user_memory()
+- Always call get_housing_pipeline_status() BEFORE logging any application — check what's
+  already tracked so you update existing entries instead of creating duplicates
+- When logging, use the EXACT program name from the pipeline if updating an existing entry
 - Always use the user's offense_category when searching so ineligible programs are filtered
 - Apply to MULTIPLE programs in parallel — never put all hope in one waitlist
 - Log every application and milestone with log_event()
@@ -86,9 +86,18 @@ You have tools for every stage of the housing journey. Use them in this order:
 housing_subagent = {
     "name": "housing",
     "description": (
-        "Housing search, housing applications, tenant rights, shelter locations, "
-        "transitional housing, Section 8 guidance, felony-friendly housing. "
-        "Delegate here when the user asks about finding a place to live."
+        "Housing specialist for re-entry. "
+        "CAN: search emergency shelters by location; search re-entry/felony-friendly "
+        "housing programs by state+city; look up Section 8 / public housing authority "
+        "info and waitlists; check fair chance housing laws by state; get fair market "
+        "rent data; generate application checklists and talking points for specific "
+        "housing types; track housing applications through stages (discovered → applied "
+        "→ waitlisted → approved → moved_in). "
+        "CANNOT: actually submit applications; contact landlords or programs; negotiate "
+        "leases; search private listing sites (Zillow, Apartments.com); help with home "
+        "ownership or mortgages; set up utilities; schedule tours. "
+        "Use for: 'find shelters near me', 'search for housing programs in [city]', "
+        "'what do I need to apply for transitional housing', 'check my housing applications'."
     ),
     "system_prompt": HOUSING_SYSTEM_PROMPT,
     "tools": [
@@ -104,9 +113,5 @@ housing_subagent = {
         prepare_housing_application,
         get_pha_guide,
     ],
-    "model": ChatOpenAI(
-        model=HOUSING_MODEL,
-        base_url="https://api.x.ai/v1",
-        api_key=XAI_API_KEY or "not-set",
-    ),
+    "model": ChatOpenAI(model="grok-3-fast", base_url="https://api.x.ai/v1", api_key=os.getenv("XAI_API_KEY", "")),
 }

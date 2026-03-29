@@ -1,3 +1,7 @@
+import os
+
+from langchain_openai import ChatOpenAI
+
 from ...tools import (
     get_ban_the_box_status,
     log_event,
@@ -29,8 +33,15 @@ Be practical. The user needs real jobs they can actually get, not aspirational s
 employment_subagent = {
     "name": "employment",
     "description": (
-        "Job search, job applications, resume, cover letter, ban-the-box research. "
-        "Delegate here when the user asks about finding work or applying to jobs."
+        "Employment specialist for re-entry. "
+        "CAN: search for job listings; check ban-the-box laws by state; track job "
+        "applications; write cover letters and resumes using workflow templates. "
+        "CANNOT: actually submit job applications; access employer portals; schedule "
+        "interviews; check application statuses with employers; run background checks; "
+        "search for job training programs or vocational education; handle unemployment "
+        "benefits (use benefits subagent for that). "
+        "Use for: 'search for jobs near me', 'write me a cover letter', 'is [state] "
+        "ban-the-box', 'help me with my resume'."
     ),
     "system_prompt": EMPLOYMENT_SYSTEM_PROMPT,
     "tools": [
@@ -40,5 +51,5 @@ employment_subagent = {
         log_job_application,
         get_ban_the_box_status,
     ],
-    "model": "claude-sonnet-4-6",
+    "model": ChatOpenAI(model="grok-3-fast", base_url="https://api.x.ai/v1", api_key=os.getenv("XAI_API_KEY", "")),
 }
