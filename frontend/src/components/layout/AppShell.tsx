@@ -5,6 +5,7 @@ import { BottomNav } from './BottomNav';
 
 export function AppShell() {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const location = useLocation();
 
   // Close drawer on route change
@@ -16,11 +17,18 @@ export function AppShell() {
     <div className="min-h-screen bg-surface">
       {/* Desktop left panel */}
       <div className="hidden md:block fixed left-0 top-0 z-50">
-        <RightPanel />
+        <RightPanel
+          isCollapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed((collapsed) => !collapsed)}
+        />
       </div>
 
       {/* Main content */}
-      <main className="md:ml-72 pb-20 md:pb-0 min-h-screen">
+      <main
+        className={`pb-20 md:pb-0 min-h-screen transition-[margin] duration-300 ease-in-out ${
+          sidebarCollapsed ? 'md:ml-20' : 'md:ml-72'
+        }`}
+      >
         <Outlet />
       </main>
 
