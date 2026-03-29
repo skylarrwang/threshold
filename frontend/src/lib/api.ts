@@ -149,7 +149,11 @@ export async function healthCheck() {
 // ---------------------------------------------------------------------------
 
 export async function fetchGeneratedDocuments() {
-  return get<import('@/types').GeneratedDocument[]>('/documents');
+  return get<import('@/types').GeneratedDocument[]>('/documents/generated');
+}
+
+export function getGeneratedDocumentDownloadUrl(docId: string) {
+  return `/api/documents/generated/${docId}/download`;
 }
 
 // ---------------------------------------------------------------------------

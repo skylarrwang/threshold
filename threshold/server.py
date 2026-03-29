@@ -389,6 +389,84 @@ async def get_uploaded_document_file(doc_id: str):
     return FileResponse(fp, media_type=doc.get("mime_type", "application/octet-stream"))
 
 
+# ---------------------------------------------------------------------------
+# Generated documents (resumes, cover letters, etc.)
+# ---------------------------------------------------------------------------
+
+from threshold.tools.document_writer import list_generated_documents, get_generated_document
+
+
+@app.get("/api/documents/generated")
+async def list_generated_docs():
+    """List all generated documents (resumes, cover letters, etc.)."""
+    return list_generated_documents()
+
+
+@app.get("/api/documents/generated/{doc_id}")
+async def get_generated_doc(doc_id: str):
+    """Get a specific generated document with content."""
+    doc = get_generated_document(doc_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return doc
+
+
+@app.get("/api/documents/generated/{doc_id}/download")
+async def download_generated_doc(doc_id: str, format: str = "pdf"):
+    """Download a generated document as a file.
+
+    Args:
+        doc_id: The document ID
+        format: Output format - "pdf" (default), "md", or "txt"
+    """
+    from fastapi.responses import FileResponse, Response
+
+    doc = get_generated_document(doc_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    fp = doc.get("file_path")
+    if not fp or not Path(fp).exists():
+        raise HTTPException(status_code=404, detail="File not found on disk")
+
+    file_path = Path(fp)
+    base_filename = file_path.stem  # filename without extension
+
+    # If format is PDF and source is markdown, convert
+    if format.lower() == "pdf" and file_path.suffix == ".md":
+        from threshold.tools.pdf_converter import convert_resume_to_pdf
+
+        try:
+            pdf_bytes = convert_resume_to_pdf(file_path)
+            pdf_filename = f"{base_filename}.pdf"
+            return Response(
+                content=pdf_bytes,
+                media_type="application/pdf",
+                headers={"Content-Disposition": f"attachment; filename={pdf_filename}"},
+            )
+        except Exception as e:
+            logger.error(f"PDF conversion failed: {e}")
+            raise HTTPException(status_code=500, detail=f"PDF conversion failed: {e}")
+
+    # Return markdown file as-is
+    if format.lower() == "md" and file_path.suffix == ".md":
+        return FileResponse(
+            fp,
+            media_type="text/markdown",
+            filename=doc.get("filename", f"{doc_id}.md"),
+            headers={"Content-Disposition": f"attachment; filename={doc.get('filename', f'{doc_id}.md')}"},
+        )
+
+    # Default: return as plain text
+    filename = doc.get("filename", f"{doc_id}.txt")
+    return FileResponse(
+        fp,
+        media_type="text/plain",
+        filename=filename,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
 @app.get("/api/profile/completion/fields")
 async def profile_completion_fields():
     """Per-field completion status: {section: {field: bool}}."""
@@ -894,11 +972,14 @@ async def websocket_chat(ws: WebSocket):
                 })
 
     except WebSocketDisconnect:
-        pass
+        logger.info("[ws] client disconnected")
     except Exception as e:
         logger.error("WebSocket error: %s\n%s", e, traceback.format_exc())
         try:
             await ws.send_json({"type": "error", "message": str(e)})
+        except (WebSocketDisconnect, RuntimeError):
+            # Client already disconnected, ignore
+            pass
         except Exception:
             pass
 
@@ -946,6 +1027,19 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
         step_counter += 1
         return f"step-{step_counter}"
 
+    # Track if client disconnected mid-processing
+    disconnected = False
+
+    async def _safe_send(payload: dict):
+        """Send JSON to WebSocket, silently ignoring if disconnected."""
+        nonlocal disconnected
+        if disconnected:
+            return
+        try:
+            await ws.send_json(payload)
+        except (WebSocketDisconnect, RuntimeError):
+            disconnected = True
+
     async def _send_step(
         step_type: str,
         status: str,
@@ -966,9 +1060,9 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
             payload["detail"] = detail
         if icon:
             payload["icon"] = icon
-        await ws.send_json(payload)
+        await _safe_send(payload)
 
-    await ws.send_json({"type": "thinking"})
+    await _safe_send({"type": "thinking"})
     await _send_step("thinking", "started", "Analyzing your message...", icon="psychology")
 
     emitted_tokens = False
@@ -1037,7 +1131,7 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                     if t_first_token is None:
                         t_first_token = time.monotonic()
                         logger.info("[timing] first token in %.2fs", t_first_token - t_start)
-                    await ws.send_json({"type": "token", "content": text})
+                    await _safe_send({"type": "token", "content": text})
                     pre_tool_buffer.append(text)
                     emitted_tokens = True
                     token_count += len(text)
@@ -1086,7 +1180,7 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                                             icon="psychology",
                                             detail=reasoning_text,
                                         )
-                                    await ws.send_json({"type": "clear_stream"})
+                                    await _safe_send({"type": "clear_stream"})
                                     pre_tool_buffer.clear()
                                     token_count = 0
                                     emitted_tokens = False
@@ -1103,17 +1197,17 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                                         step_id=subagent_step_id,
                                         icon="smart_toy",
                                     )
-                                    await ws.send_json({"type": "subagent_start"})
+                                    await _safe_send({"type": "subagent_start"})
                                 elif tc_name == "crisis_response":
                                     logger.info("[orchestrator] !!! crisis_response")
-                                    await ws.send_json({"type": "crisis_response"})
-                                    await ws.send_json({
+                                    await _safe_send({"type": "crisis_response"})
+                                    await _safe_send({
                                         "type": "workflow_update",
                                         "domain": "crisis",
                                         "workflow_event": "crisis",
                                         "label": "Crisis protocol activated",
                                     })
-                                    await ws.send_json({"type": "tool_start", "tool_name": tc_name})
+                                    await _safe_send({"type": "tool_start", "tool_name": tc_name})
                                 else:
                                     logger.info("[orchestrator] calling tool: %s", tc_name)
                                     sid = _step_id()
@@ -1124,7 +1218,7 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                                         step_id=sid,
                                         icon=_tool_icon(tc_name),
                                     )
-                                    await ws.send_json({"type": "tool_start", "tool_name": tc_name})
+                                    await _safe_send({"type": "tool_start", "tool_name": tc_name})
 
             # ── Tool start (from any level) ──────────────────────────
             elif evt == "on_tool_start":
@@ -1143,7 +1237,7 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                     # Track domain for workflow_update events
                     if subagent_type and subagent_type in _DOMAIN_TOOL_STAGES:
                         active_domain = subagent_type
-                        await ws.send_json({
+                        await _safe_send({
                             "type": "workflow_update",
                             "domain": active_domain,
                             "workflow_event": "start",
@@ -1159,7 +1253,7 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                         )
                     if not emitted_tokens:
                         ack = _subagent_acknowledgment(subagent_type)
-                        await ws.send_json({"type": "token", "content": ack})
+                        await _safe_send({"type": "token", "content": ack})
                         emitted_tokens = True
                 elif in_subagent:
                     logger.info("[subagent] tool_start: %s(%s)", name, input_preview)
@@ -1193,7 +1287,7 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                                 label = f"{stage_label} — found {payload['count']}"
                             elif payload.get("program"):
                                 label = f"{stage_label}: {payload['program']}"
-                            await ws.send_json({
+                            await _safe_send({
                                 "type": "workflow_update",
                                 "domain": active_domain,
                                 "workflow_event": "tool_result",
@@ -1226,14 +1320,14 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                     subagent_step_id = None
                     # Emit workflow_update end for domain dashboards
                     if active_domain:
-                        await ws.send_json({
+                        await _safe_send({
                             "type": "workflow_update",
                             "domain": active_domain,
                             "workflow_event": "end",
                             "label": f"{active_domain.title()} specialist finished",
                         })
                         active_domain = None
-                    await ws.send_json({"type": "subagent_end"})
+                    await _safe_send({"type": "subagent_end"})
                 else:
                     logger.info("[orchestrator] tool_end: %s -> %s", name, output_str[:300])
                     orchestrator_tool = None
@@ -1247,7 +1341,7 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                         )
                     else:
                         logger.warning("[orchestrator] tool_end without matching start for: %s (known: %s)", name, list(active_tool_step_ids.keys()))
-                    await ws.send_json({"type": "tool_end"})
+                    await _safe_send({"type": "tool_end"})
 
             # ── LLM start (log which model is being called) ──────────
             elif evt == "on_chat_model_start":
@@ -1269,7 +1363,7 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
                     logger.info("[orchestrator] llm_start: %s (node=%s)", model_name, node)
 
         if not emitted_tokens:
-            await ws.send_json({
+            await _safe_send({
                 "type": "token",
                 "content": "I'm sorry, I wasn't able to process that. Could you try again?",
             })
@@ -1281,16 +1375,16 @@ async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content:
         )
         logger.info("=" * 70)
         await _send_step("thinking", "completed", "Done", icon="check_circle")
-        await ws.send_json({"type": "message_complete"})
+        await _safe_send({"type": "message_complete"})
 
     except Exception as e:
         logger.error("Agent error: %s\n%s", e, traceback.format_exc())
-        await ws.send_json({
+        await _safe_send({
             "type": "error",
             "message": f"Something went wrong: {str(e)}",
         })
         # Signal completion so the frontend cleans up any stuck steps
-        await ws.send_json({"type": "message_complete"})
+        await _safe_send({"type": "message_complete"})
 
 
 def _tool_display_label(name: str, *, done: bool = False) -> str:

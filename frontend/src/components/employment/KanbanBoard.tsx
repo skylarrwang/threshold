@@ -13,12 +13,20 @@ interface Column {
   badgeTextColor: string;
 }
 
-// Map the 13-stage pipeline to 3 UI columns
+// Map the 13-stage pipeline to 4 UI columns
 const columns: Column[] = [
+  {
+    id: 'in_progress',
+    label: 'In Progress',
+    stages: ['interested', 'preparing'],
+    dotColor: 'bg-tertiary',
+    badgeColor: 'bg-tertiary-fixed',
+    badgeTextColor: 'text-on-tertiary-fixed',
+  },
   {
     id: 'applied',
     label: 'Applied',
-    stages: ['interested', 'preparing', 'applied', 'screening'],
+    stages: ['applied', 'screening'],
     dotColor: 'bg-on-surface-variant',
     badgeColor: 'bg-surface-container-high',
     badgeTextColor: 'text-on-surface-variant',
@@ -81,7 +89,7 @@ export function KanbanBoard() {
   const activeJobs = jobs.filter((j) => j.status !== 'rejected' && j.status !== 'withdrawn');
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
       {columns.map((col) => {
         const colJobs = activeJobs.filter((j) => col.stages.includes(j.status));
         return (

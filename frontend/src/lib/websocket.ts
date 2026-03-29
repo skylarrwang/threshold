@@ -18,7 +18,11 @@ let ws: WebSocket | null = null;
 let refCount = 0;
 let alive = false;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+let pingTimer: ReturnType<typeof setInterval> | null = null;
 let reconnectDelay = 1000;
+
+// Ping interval to keep connection alive during long agent processing
+const PING_INTERVAL_MS = 15_000;
 
 const TOOL_LABELS: Record<string, string> = {
   search_jobs: 'Searching for jobs near you...',
@@ -122,6 +126,14 @@ function connect() {
   socket.onopen = () => {
     reconnectDelay = 1000;
     useChatStore.getState().setWsStatus('connected');
+
+    // Start ping interval to keep connection alive
+    if (pingTimer) clearInterval(pingTimer);
+    pingTimer = setInterval(() => {
+      if (ws?.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'ping' }));
+      }
+    }, PING_INTERVAL_MS);
   };
 
   socket.onmessage = (event) => {
@@ -135,6 +147,10 @@ function connect() {
 
   socket.onclose = () => {
     ws = null;
+    if (pingTimer) {
+      clearInterval(pingTimer);
+      pingTimer = null;
+    }
     useChatStore.getState().setWsStatus('disconnected');
     if (alive) {
       const delay = reconnectDelay;
@@ -164,6 +180,8 @@ function release() {
     alive = false;
     if (reconnectTimer) clearTimeout(reconnectTimer);
     reconnectTimer = null;
+    if (pingTimer) clearInterval(pingTimer);
+    pingTimer = null;
     ws?.close();
     ws = null;
   }
@@ -174,6 +192,8 @@ if (import.meta.hot) {
   import.meta.hot.dispose(() => {
     alive = false;
     if (reconnectTimer) clearTimeout(reconnectTimer);
+    if (pingTimer) clearInterval(pingTimer);
+    pingTimer = null;
     ws?.close();
     ws = null;
     refCount = 0;
