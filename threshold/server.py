@@ -50,6 +50,7 @@ logger = logging.getLogger(__name__)
 
 DATA_DIR = Path(os.getenv("THRESHOLD_DATA_DIR", "./data"))
 DEFAULT_USER_ID = os.getenv("THRESHOLD_USER_ID", "default-user")
+DEBUG_WS_STREAM = os.getenv("DEBUG_WS_STREAM") == "1"
 
 # ---------------------------------------------------------------------------
 # App lifecycle
@@ -272,46 +273,67 @@ async def _create_agent():
 
 async def _handle_chat_message(ws: WebSocket, agent: Any, config: dict, content: str):
     """Send a user message to the orchestrator and stream the response back."""
-    # Let the frontend know we're processing
+    from langchain_core.messages import AIMessageChunk, ToolMessage
+
     await ws.send_json({"type": "thinking"})
 
+    active_tool: str | None = None
+    emitted_tokens = False
+
     try:
-        # Run the synchronous agent.invoke in a thread pool
-        result = await asyncio.to_thread(
-            agent.invoke,
+        async for msg, metadata in agent.astream(
             {"messages": [{"role": "user", "content": content}]},
             config,
-        )
+            stream_mode="messages",
+        ):
+            if DEBUG_WS_STREAM:
+                logger.debug(
+                    "[ws-stream] node=%s type=%s repr=%s",
+                    metadata.get("langgraph_node"),
+                    type(msg).__name__,
+                    repr(msg)[:200],
+                )
 
-        messages = result.get("messages", [])
-        if not messages:
+            if isinstance(msg, AIMessageChunk):
+                # Text tokens — handle both plain strings and Gemini block lists
+                raw = msg.content
+                if isinstance(raw, list):
+                    text = "".join(
+                        b.get("text", "") if isinstance(b, dict) else str(b)
+                        for b in raw
+                    )
+                else:
+                    text = str(raw) if raw else ""
+
+                if text:
+                    await ws.send_json({"type": "token", "content": text})
+                    emitted_tokens = True
+
+                # Tool call starting — emit on first chunk that carries a name
+                if msg.tool_call_chunks:
+                    name = msg.tool_call_chunks[0].get("name", "")
+                    if name and active_tool is None:
+                        active_tool = name
+                        if name == "task":
+                            await ws.send_json({"type": "subagent_start"})
+                        elif name == "crisis_response":
+                            await ws.send_json({"type": "crisis_response"})
+                            await ws.send_json({"type": "tool_start", "tool_name": name})
+                        else:
+                            await ws.send_json({"type": "tool_start", "tool_name": name})
+
+            elif isinstance(msg, ToolMessage):
+                if active_tool == "task":
+                    await ws.send_json({"type": "subagent_end"})
+                else:
+                    await ws.send_json({"type": "tool_end"})
+                active_tool = None
+
+        if not emitted_tokens:
             await ws.send_json({
                 "type": "token",
                 "content": "I'm sorry, I wasn't able to process that. Could you try again?",
             })
-            await ws.send_json({"type": "message_complete"})
-            return
-
-        # Get the last assistant message — Gemini returns content as a list
-        # of block objects like [{"type": "text", "text": "..."}] instead of
-        # a plain string, so we need to extract the text.
-        last = messages[-1]
-        raw = last.content if hasattr(last, "content") else str(last)
-        if isinstance(raw, list):
-            response_text = "".join(
-                block.get("text", "") if isinstance(block, dict) else str(block)
-                for block in raw
-            )
-        else:
-            response_text = str(raw)
-
-        # Stream character-by-character for a natural feel
-        chunk_size = 4
-        for i in range(0, len(response_text), chunk_size):
-            chunk = response_text[i:i + chunk_size]
-            await ws.send_json({"type": "token", "content": chunk})
-            await asyncio.sleep(0.01)
-
         await ws.send_json({"type": "message_complete"})
 
     except Exception as e:
